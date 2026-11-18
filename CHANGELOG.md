@@ -38,7 +38,8 @@ The first release, 0.1.0.
 - Keyboard: arrow keys move the selection, ⌘[ and ⌘] go back and forward, ⌘F focuses the search
   field, Esc clears it, ⌘W closes the window, ⌘, opens it. Typing a page's title selects its row.
   VoiceOver reads each row's title and selected state, and the back and forward labels.
-- The kit's words localized in English and Simplified Chinese, each replaceable through
+- The kit's words localized in English and Simplified Chinese, shown in the language the app
+  declares and runs in, English otherwise; each replaceable through
   `SidebarSettingsConfiguration.strings`.
 - macOS 26: the sidebar keeps Liquid Glass, its rows fade at the scroll edge, and the detail sits
   on the window's own background.

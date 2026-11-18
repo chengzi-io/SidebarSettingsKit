@@ -201,6 +201,27 @@ let settings = SidebarSettingsWindow(pages: Pane.allCases, configuration: config
 
 The configuration is fixed when the window object is created.
 
+## Languages
+
+The kit owns four words: Back, Forward, Search and Settings…. It ships them in English and
+Simplified Chinese and shows them in the language the app runs in, as AppKit does its menus:
+
+| The app | The kit's words |
+| --- | --- |
+| declares Simplified Chinese (`CFBundleLocalizations` or a `zh-Hans.lproj` in the app bundle) and runs in it | Chinese |
+| runs in English, or in a language the kit does not ship | English |
+| declares no language (a bare `swift run` executable, or an app bundle without the entry) | English, whatever the Mac's language |
+
+An app in another language, or whose text is written in one language without localization,
+passes its own words:
+
+```swift
+configuration.strings = .init(back: "戻る", forward: "進む", searchPrompt: "検索", settingsMenuItem: "設定…")
+```
+
+A word given as a key the app's string catalog translates follows the app's language like the
+rest of its text.
+
 ## Open on a page
 
 ```swift
@@ -260,8 +281,6 @@ a style, adds the dependency and moves an existing `Settings` scene over.
 - `configuration.detailScrolling` applies to every page of a window, not one page.
 - A window's pages and configuration are fixed at creation; to change them, close it and create
   another one.
-- The kit's own words follow the language the app runs in, as AppKit's do: they read in Chinese
-  only when the app declares Simplified Chinese (a `zh-Hans.lproj` or `CFBundleLocalizations`).
 
 Planned work is in [docs/ROADMAP.md](docs/ROADMAP.md).
 

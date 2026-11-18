@@ -172,7 +172,10 @@ own words (the Window menu, the search field's Cancel) do: Foundation chooses am
 languages the app declares, and without a locale the resource would follow the system's
 language, so an English-only app on a Chinese Mac would show Chinese back and forward beside an
 English page. An app shows the kit's Chinese only when it declares Simplified Chinese itself
-(`CFBundleLocalizations` or a `zh-Hans.lproj` in its bundle).
+(`CFBundleLocalizations` or a `zh-Hans.lproj` in its bundle); every other language falls back to
+the development language, English, and an app in such a language passes its own words through
+`configuration.strings`. The kit cannot tell the language of text an app writes without
+localizing it, so it does not guess from the system's language.
 
 Page titles, keywords and anything else user-visible come from the app, so the kit never writes
 a literal user-visible string.
