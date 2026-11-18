@@ -1,0 +1,17 @@
+# Build output
+.build/
+.swiftpm/
+
+# Xcode per-user state
+xcuserdata/
+DerivedData/
+*.xcuserstate
+
+# No dependencies to lock; also covers the Example package
+Package.resolved
+
+# Screenshots from a manual run
+/screenshots/
+
+# macOS
+.DS_Store
