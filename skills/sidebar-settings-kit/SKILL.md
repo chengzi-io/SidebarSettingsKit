@@ -53,6 +53,11 @@ Infer what you can; ask the user only what the code cannot tell you, in one mess
   many times, and each run would build a new window with a new history.
 - **Header and footer.** Only for UI the app already has that belongs beside the pages: an
   account row on top, a version line or upgrade button at the bottom.
+- **Language.** The kit's four words (Back, Forward, Search, Settings…) ship in English and
+  Simplified Chinese. An app in any other language, or whose text is written in one language
+  without localization, passes its words through `configuration.strings`
+  ([references/configuration.md](references/configuration.md)). Judge the language from the
+  app's text and string catalogs, not from the Mac's language.
 
 ## 3. Add the dependency
 

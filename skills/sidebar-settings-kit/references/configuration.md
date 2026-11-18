@@ -27,23 +27,28 @@ create a new `SidebarSettingsWindow`, after closing the old one.
 | `search` | `.enabled` | `.disabled` | only a handful of pages |
 | `navigationPersistence` | `.session` | `.resetOnShow` | the window should always open on the first page |
 | `detailScrolling` | `true` | `false` | a page scrolls by itself, such as a `List` (see below) |
-| `strings` | the kit's (English, Simplified Chinese) | `Strings(back:forward:searchPrompt:settingsMenuItem:)` | the app is localized into other languages, or its menu says "Preferences…" |
+| `strings` | the kit's (English, Simplified Chinese) | `Strings(back:forward:searchPrompt:settingsMenuItem:)` | the app's language is not English or Simplified Chinese, its text is not localized, or its menu says "Preferences…" |
 
 ## Strings
 
 The kit localizes its four words in English and Simplified Chinese, and shows them in the
 language the app runs in: one the app declares (`CFBundleLocalizations` or a `<language>.lproj`
-in the app bundle), as AppKit does for its menus. For another language, or other wording, pass
-your own resources; leave out the ones to keep:
+in the app bundle), as AppKit does for its menus; any other language gets English. For another
+language, for an app whose text is written in one language without localization, or for other
+wording, pass your own words; leave out the ones to keep:
 
 ```swift
+// An app written in Japanese, not localized: the words show as written.
+configuration.strings = .init(back: "戻る", forward: "進む", searchPrompt: "検索", settingsMenuItem: "設定…")
+
+// A localized app: keys its string catalog translates, so they follow the app's language.
 configuration.strings = .init(
     searchPrompt: LocalizedStringResource("Find a setting"),
     settingsMenuItem: LocalizedStringResource("Preferences…")
 )
 ```
 
-These resolve from the app's own string catalog, so add the keys there.
+Add each key to the app's string catalog in every language it ships.
 
 ## Initial page
 
