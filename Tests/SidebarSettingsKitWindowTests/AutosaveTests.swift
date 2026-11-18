@@ -25,16 +25,26 @@ extension WindowTestSuite {
             }
         }
 
+        /// A spot away from where `center()` puts `window`, with the whole frame inside the
+        /// screen: AppKit moves a restored frame into the visible area, which Stage Manager
+        /// narrows on the left and a CI runner's 1024-point screen leaves little room in.
+        private static func spotInsideTheScreen(for window: NSWindow) throws -> NSPoint {
+            let screen = try require(window.screen ?? NSScreen.main, "a screen").visibleFrame
+            return NSPoint(
+                x: (screen.maxX - window.frame.width - 20).rounded(.down),
+                y: (screen.minY + 20).rounded(.down))
+        }
+
         @Test func namedWindowSavesItsFrameWhenItCloses() async throws {
             let name = Self.uniqueName()
             let key = WindowTest.frameDefaultsPrefix + name
             defer { UserDefaults.standard.removeObject(forKey: key) }
-            let moved = NSPoint(x: 120, y: 140)
 
             let settings = Self.makeSettings(name: name)
             defer { settings.close() }
             settings.show()
             let window = try await WindowUnderTest.attach(settings)
+            let moved = try Self.spotInsideTheScreen(for: window.window)
             window.window.setFrameOrigin(moved)
             try await WindowTest.wait(for: "the window to move") {
                 window.window.frame.origin == moved
@@ -55,10 +65,7 @@ extension WindowTestSuite {
             let name = Self.uniqueName()
             let key = WindowTest.frameDefaultsPrefix + name
             defer { UserDefaults.standard.removeObject(forKey: key) }
-            // Well inside the screen: AppKit moves a restored frame into the visible area,
-            // which Stage Manager narrows by its strip on the left.
-            let screen = try require(NSScreen.main, "a screen").visibleFrame
-            let moved = NSPoint(x: screen.midX - 200, y: screen.minY + 40)
+            var moved = NSPoint.zero
 
             // An app replaces a window object by dropping the old one; AppKit refuses a name
             // while a live window holds it, so the first window must be gone.
@@ -68,6 +75,7 @@ extension WindowTestSuite {
                 first.show()
                 let window = try await WindowUnderTest.attach(first)
                 firstWindow = window.window
+                moved = try Self.spotInsideTheScreen(for: window.window)
                 window.window.setFrameOrigin(moved)
                 try await WindowTest.wait(for: "the window to move") {
                     window.window.frame.origin == moved

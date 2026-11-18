@@ -306,37 +306,29 @@ struct WindowUnderTest {
         allViews(in: sidebarView).compactMap { $0 as? NSTableView }.first
     }
 
-    /// The rows that draw a page, counted by the icon each row carries. A group's heading row
-    /// carries none, so this is the number of pages the sidebar shows, groups aside.
+    /// The rows that show a page: the rows the list lets the user select. A group's heading
+    /// row and the header cannot be selected, so this is the number of pages the sidebar shows,
+    /// groups aside.
     func sidebarPageRowCount() -> Int {
-        guard let table = sidebarTable() else { return 0 }
-        return (0..<table.numberOfRows).count(where: { row in
-            guard let cell = table.view(atColumn: 0, row: row, makeIfNecessary: true) else {
-                return false
-            }
-            return allViews(in: cell).contains(where: Self.isPageIcon)
-        })
+        guard let outline = sidebarTable() as? NSOutlineView else { return 0 }
+        return (0..<outline.numberOfRows).count { Self.isPageRow($0, in: outline) }
     }
 
-    /// The group heading rows the sidebar shows.
+    /// The rows that show no page: group headings, and the header when there is one.
     func sidebarHeadingRowCount() -> Int {
-        guard let table = sidebarTable() else { return 0 }
-        return (0..<table.numberOfRows).count(where: { row in
-            guard let cell = table.view(atColumn: 0, row: row, makeIfNecessary: true) else {
-                return false
-            }
-            return !allViews(in: cell).contains(where: Self.isPageIcon)
-        })
+        guard let outline = sidebarTable() as? NSOutlineView else { return 0 }
+        return (0..<outline.numberOfRows).count { !Self.isPageRow($0, in: outline) }
     }
 
     func searchField() -> NSSearchField? {
         allViews(in: sidebarView).compactMap { $0 as? NSSearchField }.first
     }
 
-    /// A sidebar row's icon: SwiftUI draws a symbol or image in a view of its graphics class, a
-    /// heading row shows text alone.
-    private static func isPageIcon(_ view: NSView) -> Bool {
-        String(describing: type(of: view)).contains("GraphicsView")
+    /// Asked of the list rather than read from how a row draws, which changes between macOS
+    /// versions: a page row carries a selection tag, a heading or the header does not.
+    private static func isPageRow(_ row: Int, in outline: NSOutlineView) -> Bool {
+        guard let item = outline.item(atRow: row) else { return false }
+        return outline.delegate?.outlineView?(outline, shouldSelectItem: item) ?? false
     }
 }
 
