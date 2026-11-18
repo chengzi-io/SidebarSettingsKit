@@ -222,6 +222,12 @@ configuration.strings = .init(back: "戻る", forward: "進む", searchPrompt: "
 A word given as a key the app's string catalog translates follows the app's language like the
 rest of its text.
 
+The window reads the language once, when it is built. Changing the app's language in System
+Settings relaunches the app, so everything follows. An app that switches language without a
+relaunch, through `.environment(\.locale, …)`, reaches only the pages, and only if it applies the
+locale inside `detail`: the sidebar's titles, the window title and the kit's words keep the
+launch language until the app relaunches.
+
 ## Open on a page
 
 ```swift
