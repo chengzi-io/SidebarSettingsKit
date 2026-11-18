@@ -31,8 +31,10 @@ create a new `SidebarSettingsWindow`, after closing the old one.
 
 ## Strings
 
-The kit localizes its four words in English and Simplified Chinese. For another language, or
-other wording, pass your own resources; leave out the ones to keep:
+The kit localizes its four words in English and Simplified Chinese, and shows them in the
+language the app runs in: one the app declares (`CFBundleLocalizations` or a `<language>.lproj`
+in the app bundle), as AppKit does for its menus. For another language, or other wording, pass
+your own resources; leave out the ones to keep:
 
 ```swift
 configuration.strings = .init(

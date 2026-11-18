@@ -179,3 +179,7 @@ use them: [references/configuration.md](references/configuration.md). Styles, ic
    keyword finds its page; back and forward work; closing and reopening keeps the page; quitting
    and relaunching starts on the first page.
 3. The app menu has exactly one "Settings…" item.
+4. A localized app declares its languages in the app bundle: `CFBundleLocalizations` in its
+   Info.plist, or a `<language>.lproj` folder. The kit's words (Back, Forward, Search,
+   Settings…) follow those languages, as AppKit's menus do, so an app with Chinese pages that
+   declares only English shows them in English. Add the missing entry and tell the user.
