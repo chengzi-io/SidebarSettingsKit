@@ -121,7 +121,9 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             case .followsPage, .hidden: navigation.pageTitle()
             case .fixed(let resource): String(localized: resource)
             }
-        } onChange: {
+        } onChange: { [weak self] in
+            // Weak here, not only in the task: the navigator keeps this closure, and the
+            // window's views keep the navigator.
             Task { @MainActor [weak self] in self?.followTitle() }
         }
         window?.title = title
@@ -141,7 +143,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             if #available(macOS 15.0, *) {
                 let isScrolled = withObservationTracking {
                     scrollState.isScrolled
-                } onChange: {
+                } onChange: { [weak self] in
                     Task { @MainActor [weak self] in self?.followSeparator() }
                 }
                 style = isScrolled ? .line : .none
