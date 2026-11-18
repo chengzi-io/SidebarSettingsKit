@@ -21,6 +21,19 @@ toolbar. Two looks: the system sidebar, or a branded one with icons on colored t
   <img src="docs/assets/screenshots/macos-26-branded-dark-scenario-1.png" width="49%" alt="The settings window with the branded sidebar, macOS 26, dark appearance">
 </p>
 
+## Add it with an AI agent
+
+```sh
+npx skills add chengzi-io/SidebarSettingsKit
+```
+
+The [skills CLI](https://github.com/vercel-labs/skills) installs the repo's agent skill into the
+project for Claude Code, Codex, Cursor and the other agents it knows; `-g` installs it for every
+project. Then ask the agent to give the app sidebar settings: the skill reads the project, picks
+pages and a style, adds the dependency, moves an existing `Settings` scene over and checks the
+result. An agent without the CLI can follow
+[`skills/sidebar-settings-kit/SKILL.md`](skills/sidebar-settings-kit/SKILL.md) directly.
+
 ## Why
 
 | What you want | SwiftUI's `Settings` scene | SwiftUI's `NavigationSplitView` | SidebarSettingsKit |
@@ -261,16 +274,6 @@ struct MenuBarSettingsApp: App {
 
 `OpenSidebarSettingsButton` opens the window on any page, with the kit's word for the menu item
 ("Settings…") or a label of yours. A `Settings` scene kept only to give the app a scene can go.
-
-## Use it with an AI agent
-
-The repo ships an agent skill, `skills/sidebar-settings-kit/`: it reads a project, picks pages and
-a style, adds the dependency and moves an existing `Settings` scene over.
-
-- Claude Code: copy the folder to `.claude/skills/sidebar-settings-kit/` in the project, or to
-  `~/.claude/skills/` for every project.
-- Other agents: point them at `skills/sidebar-settings-kit/SKILL.md`, which links its reference
-  files (`references/integration.md`, `configuration.md`, `styling.md`).
 
 ## Requirements
 
