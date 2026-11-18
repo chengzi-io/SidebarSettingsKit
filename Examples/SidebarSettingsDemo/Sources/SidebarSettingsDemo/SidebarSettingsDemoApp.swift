@@ -1,5 +1,4 @@
 import AppKit
-import SidebarSettingsKit
 import SwiftUI
 
 @main
@@ -8,10 +7,26 @@ struct SidebarSettingsDemoApp: App {
 
     var body: some Scene {
         WindowGroup("Sidebar Settings Demo") {
-            DemoRootView(demo: delegate.demo)
+            ControlPanelView(demo: delegate.demo)
         }
         .commands {
-            SidebarSettingsCommands(window: delegate.demo.settingsWindow)
+            DemoCommands(demo: delegate.demo)
+        }
+    }
+}
+
+/// The app menu's Settings… item. The kit's ``SidebarSettingsCommands`` keeps the window it
+/// was built with, which the control panel replaces, so the demo asks the panel for the
+/// current window instead.
+struct DemoCommands: Commands {
+    let demo: Demo
+
+    var body: some Commands {
+        CommandGroup(replacing: .appSettings) {
+            Button(String(localized: demo.settingsWindow.configuration.strings.settingsMenuItem)) {
+                demo.showSettings()
+            }
+            .keyboardShortcut(",")
         }
     }
 }

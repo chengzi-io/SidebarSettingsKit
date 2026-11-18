@@ -67,7 +67,14 @@ extension DemoArguments {
             case "--window-id-file":
                 result.windowIDFile = try value(of: option, in: arguments, at: &index)
             default:
-                throw ParseError.unknownOption(option)
+                guard option.hasPrefix("-"), !option.hasPrefix("--") else {
+                    throw ParseError.unknownOption(option)
+                }
+                // A default in the argument domain, such as `-AppleLanguages (zh-Hans)` for
+                // scenario 7: the system reads it, the demo only steps over it and its value.
+                if arguments.indices.contains(index + 1), !arguments[index + 1].hasPrefix("-") {
+                    index += 1
+                }
             }
             index += 1
         }
@@ -131,6 +138,11 @@ extension DemoArguments.Style {
         case .branded: .branded
         }
     }
+}
+
+extension DemoArguments.Style: DemoChoice {
+    /// The control panel's row of text for this style.
+    var label: String { rawValue.capitalized }
 }
 
 extension DemoArguments.Appearance {

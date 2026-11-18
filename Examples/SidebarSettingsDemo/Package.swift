@@ -1,5 +1,10 @@
 // swift-tools-version: 6.2
+import Foundation
 import PackageDescription
+
+// Linker flags take paths, not paths relative to the package.
+let packageDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
+let infoPlist = "\(packageDirectory)/Sources/SidebarSettingsDemo/Info.plist"
 
 let package = Package(
     name: "SidebarSettingsDemo",
@@ -26,6 +31,19 @@ let package = Package(
             dependencies: [
                 "DemoFixtures",
                 .product(name: "SidebarSettingsKit", package: "SidebarSettingsKit"),
+            ],
+            exclude: ["Info.plist"],
+            // SwiftPM's bare executable has no app bundle, so its Info.plist is embedded in
+            // __TEXT instead. The demo has to say it speaks English and Simplified Chinese for
+            // the kit's own words to follow the app's language. A root package nobody depends
+            // on may use unsafeFlags.
+            linkerSettings: [
+                .unsafeFlags([
+                    "-Xlinker", "-sectcreate",
+                    "-Xlinker", "__TEXT",
+                    "-Xlinker", "__info_plist",
+                    "-Xlinker", infoPlist,
+                ])
             ]
         ),
     ]

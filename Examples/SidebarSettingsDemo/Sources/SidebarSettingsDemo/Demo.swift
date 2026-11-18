@@ -1,31 +1,29 @@
 import AppKit
 import DemoFixtures
+import Observation
 import SidebarSettingsKit
-import SwiftUI
 
-/// The demo's state, created once at launch: the settings window has to outlive the main
-/// window's body, which runs many times.
+/// The demo's state, created once at launch: the control panel's options and the settings
+/// window they built, which has to outlive the main window's body.
 @MainActor
+@Observable
 final class Demo {
     /// What the command line asked for.
     let arguments: DemoArguments
 
-    /// The settings window the menu item and the main window's button open.
-    let settingsWindow: SidebarSettingsWindow<FixturePage>
+    /// The options the settings window on screen was built from.
+    private(set) var options: DemoOptions
 
-    /// The short page the scenarios that need one open the window on.
-    let shortPage: FixturePage
+    /// The settings window, replaced rather than reconfigured when the options change.
+    private(set) var settingsWindow: SidebarSettingsWindow<FixturePage>
 
-    /// A demo of `arguments`, its settings window on the three fixture pages.
+    /// A demo of `arguments`, its settings window on the default options.
     init(arguments: DemoArguments) {
         self.arguments = arguments
-        let pages = FixturePages.three
-        shortPage = pages.first { $0.contentKind == .short } ?? pages[0]
-        settingsWindow = SidebarSettingsWindow(
-            sections: [SettingsPageSection(pages: pages)],
-            style: arguments.style.sidebarStyle,
-            detail: { FixtureDetail(page: $0) }
-        )
+        var options = DemoOptions()
+        options.style = arguments.style
+        self.options = options
+        settingsWindow = SettingsWindowFactory.make(options: options)
     }
 
     /// Applies the appearance and opens the scenario the command line asked for, once the app
@@ -36,24 +34,27 @@ final class Demo {
         }
         arguments.scenario?.run(in: self)
     }
-}
 
-/// The demo's main window, standing in for a host app's own: a button that opens the settings
-/// window, as the ⌘, menu item does.
-struct DemoRootView: View {
-    let demo: Demo
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Text("Sidebar Settings Kit")
-                .font(.largeTitle)
-            Text("The settings window opens on its own, as System Settings does.")
-                .foregroundStyle(.secondary)
-            OpenSidebarSettingsButton(window: demo.settingsWindow) {
-                Text("Open Settings")
-            }
+    /// Closes the settings window and opens a new one for `options`, on `page` and with
+    /// `searchText` typed into the search field.
+    func apply(
+        _ options: DemoOptions,
+        startScrolled: Bool = false,
+        selecting page: FixturePage? = nil,
+        searchText: String? = nil
+    ) {
+        self.options = options
+        settingsWindow.close()
+        let window = SettingsWindowFactory.make(options: options, startScrolled: startScrolled)
+        if let searchText {
+            window.navigator.searchText = searchText
         }
-        .padding(40)
-        .frame(minWidth: 460, minHeight: 240)
+        settingsWindow = window
+        window.show(page: page)
+    }
+
+    /// Brings the settings window on screen, as the ⌘, item does.
+    func showSettings() {
+        settingsWindow.show()
     }
 }

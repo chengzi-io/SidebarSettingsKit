@@ -1,24 +1,25 @@
 import AppKit
+import DemoFixtures
 import Foundation
 
-/// A demo scenario a `--scenario` argument selects: how the settings window is set up, so a
+/// A demo scene a `--scenario` argument selects: how the settings window is set up, so a
 /// screenshot or a manual check sees one particular behaviour.
 enum Scenario: String, Sendable, CaseIterable {
     /// Three pages, opening on a short page, the window at its default 715 × 600.
     case one = "1"
-    /// Not set up yet.
+    /// A long grouped Form scrolled to its end, so the line under the toolbar shows.
     case two = "2"
-    /// Not set up yet.
+    /// The 40+ page set, opened on its last page with the sidebar scrolled to it.
     case three = "3"
-    /// Not set up yet.
+    /// Titled and untitled groups mixed in one sidebar.
     case four = "4"
-    /// Not set up yet.
+    /// An account header and the tall login area as the footer.
     case five = "5"
-    /// Not set up yet.
+    /// A search that finds pages.
     case six = "6"
-    /// Not set up yet.
+    /// A search that finds nothing.
     case sixB = "6b"
-    /// Not set up yet.
+    /// A page with a 60-character title, the kit's own words in Simplified Chinese.
     case seven = "7"
 }
 
@@ -31,13 +32,36 @@ extension Scenario {
     /// window's number there once the window is on screen and laid out.
     @MainActor
     func run(in demo: Demo) {
+        var options = demo.options
+        var page: FixturePage?
+        var searchText: String?
+        var startScrolled = false
         switch self {
         case .one:
-            demo.settingsWindow.show(page: demo.shortPage)
-            Task { @MainActor in await Self.writeWindowID(to: demo.arguments.windowIDFile) }
-        case .two, .three, .four, .five, .six, .sixB, .seven:
-            DemoArguments.exit("Scenario \(rawValue) is not implemented yet.")
+            break
+        case .two:
+            // The window's own scroll view, scrolled from inside the page.
+            page = FixturePages.appearance
+            startScrolled = true
+        case .three:
+            options.pages = .many
+            page = options.pages.fixturePages.last
+        case .four:
+            options.grouping = .mixed
+        case .five:
+            options.chrome = .both
+            options.tallFooter = true
+        case .six:
+            page = FixturePages.appearance
+            searchText = "app"
+        case .sixB:
+            searchText = "zzz"
+        case .seven:
+            options.pages = .many
+            page = FixturePages.longEnglishTitle
         }
+        demo.apply(options, startScrolled: startScrolled, selecting: page, searchText: searchText)
+        Task { @MainActor in await Self.writeWindowID(to: demo.arguments.windowIDFile) }
     }
 
     /// Writes the settings window's number, which is also its CGWindowID.

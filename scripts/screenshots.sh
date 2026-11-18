@@ -83,13 +83,23 @@ capture() {
     local window_id_file=$work_dir/window-id
     local shot=$output_dir/macos-$macos_major-$style-$appearance-scenario-$scenario.png
     local window_id
+    local language_args=()
+
+    # Scenario 7 shows the kit's own words in Simplified Chinese. The demo declares English and
+    # Simplified Chinese in its embedded Info.plist, so the argument domain's AppleLanguages is
+    # what the app's language follows; it changes this launch only, nothing is written to the
+    # persistent defaults.
+    if [[ $scenario == 7 ]]; then
+        language_args=(-AppleLanguages "(zh-Hans)")
+    fi
 
     rm -f "$window_id_file"
     ./"$DEMO_BINARY" \
         --style "$style" \
         --appearance "$appearance" \
         --scenario "$scenario" \
-        --window-id-file "$window_id_file" &
+        --window-id-file "$window_id_file" \
+        ${language_args[@]+"${language_args[@]}"} &
     demo_pid=$!
 
     if ! wait_for_window_id "$window_id_file" "$demo_pid"; then
