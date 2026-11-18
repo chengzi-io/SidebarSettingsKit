@@ -127,4 +127,4 @@ exist to make that fail loudly.
 | No macOS 14 runner: GitHub retired `macos-14` on 2026-11-02 | `#available(macOS 15.0, *)` tests the live behavior; the `else` branch asserts the documented fallback, such as `separator == .line` |
 | Stage Manager narrows the visible screen, and AppKit moves a restored frame into the visible area | a test that places a window puts it well inside `NSScreen.main.visibleFrame` |
 | Window tests read views and state, never pixels | they need no Screen Recording permission; that is for `scripts/screenshots.sh` |
-| CI runs both targets on `macos-15` and `macos-26` through `make ci` | a window test that passes locally can still fail on the other macOS version; run CI before assuming a window behavior |
+| CI runs both targets on macOS 15, 26 and 27 through `make ci` | a window test that passes locally can still fail on the other macOS version; run CI before assuming a window behavior |

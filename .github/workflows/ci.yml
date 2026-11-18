@@ -21,11 +21,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, macos-26]
+        os: [macos-15, macos-26, xcode-27]
+        include:
+          # From Xcode 27 on, GitHub names an image after its Xcode: `xcode-27` runs macOS 27 and
+          # carries only Xcode 27, which is also what an app built for macOS 27 uses.
+          - os: xcode-27
+            image-xcode: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # .xcode-version is the one place the Xcode version is written.
       - name: Select Xcode from .xcode-version
+        if: ${{ !matrix.image-xcode }}
         run: |
           xcode_version=$(tr -d '[:space:]' <.xcode-version)
           developer_dir="/Applications/Xcode_$xcode_version.app/Contents/Developer"
@@ -35,11 +41,18 @@ jobs:
           sudo DEVELOPER_DIR="$developer_dir" xcodebuild -runFirstLaunch
           sw_vers
           DEVELOPER_DIR="$developer_dir" xcodebuild -version
+      - name: Use the image's Xcode
+        if: ${{ matrix.image-xcode }}
+        run: |
+          echo "XCODE_VERSION=$(xcodebuild -version | awk 'NR == 1 { print $2 }')" >>"$GITHUB_ENV"
+          sw_vers
+          xcodebuild -version
+          swift --version
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .build
             Examples/SidebarSettingsDemo/.build
-          key: build-macos-26-xcode-${{ matrix.os }}-${{ env.XCODE_VERSION }}-${{ hashFiles('**/Package.swift') }}
-          restore-keys: build-macos-26-xcode-${{ matrix.os }}-${{ env.XCODE_VERSION }}-
+          key: build-${{ matrix.os }}-xcode-${{ env.XCODE_VERSION }}-${{ hashFiles('**/Package.swift') }}
+          restore-keys: build-${{ matrix.os }}-xcode-${{ env.XCODE_VERSION }}-
       - run: make ci

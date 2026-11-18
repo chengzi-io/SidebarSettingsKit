@@ -15,7 +15,8 @@ task needs; the docs below hold the rest.
 | `make demo` | to try the kit by hand in the example app | a minute |
 | `make screenshots` | to capture the screenshot matrix locally (needs Screen Recording permission) | minutes |
 
-CI (`.github/workflows/ci.yml`) runs `make ci` on macos-15 and macos-26;
+CI (`.github/workflows/ci.yml`) runs `make ci` on macos-15 and macos-26 with the Xcode in
+`.xcode-version`, and on xcode-27 (macOS 27) with that image's only Xcode, 27;
 `.github/workflows/screenshots.yml` uploads screenshots per runner. GitHub retired the macos-14
 runner on 2026-11-02, so macOS 14 has no CI: keep `#available` branches for 14 small and obvious.
 
