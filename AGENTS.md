@@ -26,7 +26,7 @@ runner on 2026-11-02, so macOS 14 has no CI: keep `#available` branches for 14 s
 | `Package.swift` | one product, `SidebarSettingsKit`; no dependencies | never add a dependency or a second product |
 | `Sources/SidebarSettingsKit/Public/` | every public symbol | no AppKit type in a public signature |
 | `Sources/SidebarSettingsKit/Internal/` | AppKit window controller, sidebar lists, search field, detail container | `internal`; tests reach it with `@testable import` |
-| `Sources/SidebarSettingsKit/Resources/Localizable.xcstrings` | every user-visible string the kit owns (en, zh-Hans) | no literal user-visible text in Sources |
+| `Sources/SidebarSettingsKit/Resources/<lang>.lproj/Localizable.strings` | every user-visible string the kit owns (en, zh-Hans) | no literal user-visible text in Sources; `.strings`, not `.xcstrings`: SwiftPM's command line copies a string catalog without compiling it, so `swift build`/`swift run` would show English only |
 | `Tests/Fixtures/` | shared fixtures, target `SidebarSettingsFixtures` (in no product) | the demo compiles the same files through a symlink; never name the module in fixture code |
 | `Tests/SidebarSettingsKitTests/` | Swift Testing unit and window tests | |
 | `Examples/SidebarSettingsDemo/` | separate package depending on `../..`; manual QA and screenshots | the root package never references it |
@@ -54,9 +54,9 @@ through `-Xswiftc -warnings-as-errors` in the Makefile, never through `unsafeFla
 - The sidebar never collapses and has no collapse option.
 - The search field is fixed above the list; the header is the list's first item and scrolls with
   it; the footer stays at the bottom (`safeAreaInset`).
-- `selectionShape: .system` uses SwiftUI's `List` (native selection, keyboard, VoiceOver);
-  `.rounded` switches to rows the kit draws itself (`DrawnSidebarList`), which must keep arrow keys
-  and the VoiceOver selected trait.
+- The sidebar is SwiftUI's `List` with `.listStyle(.sidebar)` in every style: native selection,
+  keyboard, type-to-select and VoiceOver. Style tokens change a row's content and height, never
+  the selection. Kit-drawn rows (for a rounded selection) were tried and dropped: they lost those.
 - The toolbar separator follows the detail's scroll position through `DetailScrollState`, because
   AppKit's automatic separator loses track when SwiftUI swaps the page. macOS 14 cannot report
   scroll offsets to SwiftUI, so there `.whenScrolled` shows the line always (documented limit).
