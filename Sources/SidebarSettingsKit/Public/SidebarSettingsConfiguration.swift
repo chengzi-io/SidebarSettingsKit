@@ -124,8 +124,8 @@ public struct SidebarSettingsConfiguration: Sendable {
         case resetOnShow
     }
 
-    /// The words the window shows. Each defaults to the kit's own, localized in English and
-    /// Simplified Chinese; set one to use your own.
+    /// The words the window shows. Each defaults to the kit's own, in English or Simplified
+    /// Chinese, whichever the app runs in, falling back to English; set one to use your own.
     public struct Strings: Sendable {
         /// The back button's label, in the toolbar's overflow menu and for VoiceOver.
         public var back: LocalizedStringResource
@@ -154,7 +154,13 @@ public struct SidebarSettingsConfiguration: Sendable {
         public static var `default`: Self { Self() }
 
         private static func kitString(_ key: String.LocalizationValue) -> LocalizedStringResource {
-            LocalizedStringResource(key, bundle: .atURL(Bundle.module.bundleURL))
+            // In the language the app runs in, as AppKit's own words are. A resource's default
+            // locale is the system's, which would put the kit's Chinese into an app that speaks
+            // only English on a Chinese Mac; the kit bundle's preferred localization follows the
+            // app's.
+            let language = Bundle.module.preferredLocalizations.first ?? "en"
+            return LocalizedStringResource(
+                key, locale: Locale(identifier: language), bundle: .atURL(Bundle.module.bundleURL))
         }
     }
 }

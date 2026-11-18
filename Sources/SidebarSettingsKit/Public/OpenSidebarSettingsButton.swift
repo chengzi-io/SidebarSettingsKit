@@ -42,7 +42,7 @@ extension OpenSidebarSettingsButton where Label == Text {
     ///   - page: the page to open it on; `nil` keeps the page it shows.
     public init(window: SidebarSettingsWindow<Page>, page: Page? = nil) {
         self.init(window: window, page: page) {
-            Text(window.configuration.strings.settingsMenuItem)
+            Text(String(localized: window.configuration.strings.settingsMenuItem))
         }
     }
 }
