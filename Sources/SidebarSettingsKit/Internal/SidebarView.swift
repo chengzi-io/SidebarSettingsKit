@@ -23,14 +23,13 @@ struct SidebarView<Page: SettingsPage, Header: View, Footer: View>: View {
                 .padding([.horizontal, .bottom], 8)
             }
             Group {
-                switch style.selectionShape {
-                case .system:
-                    SystemSidebarList(
+                if shownSections.isEmpty {
+                    // Only a search can empty the list: the window has at least one page.
+                    ContentUnavailableView.search(text: navigator.searchText)
+                        .frame(maxHeight: .infinity)
+                } else {
+                    SidebarList(
                         navigator: navigator, sections: shownSections, style: style, header: header)
-                case .rounded(let radius):
-                    DrawnSidebarList(
-                        navigator: navigator, sections: shownSections, style: style, radius: radius,
-                        header: header)
                 }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -45,8 +44,9 @@ struct SidebarView<Page: SettingsPage, Header: View, Footer: View>: View {
     }
 }
 
-/// The system's sidebar list, with its own selection, keyboard and VoiceOver behavior.
-private struct SystemSidebarList<Page: SettingsPage, Header: View>: View {
+/// The system's sidebar list, with its own selection, keyboard, type-to-select and VoiceOver
+/// behavior. A style changes what a row holds and its height, never the selection.
+private struct SidebarList<Page: SettingsPage, Header: View>: View {
     let navigator: SettingsNavigator<Page>
     let sections: [SettingsPageSection<Page>]
     let style: SidebarSettingsStyle
@@ -73,13 +73,14 @@ private struct SystemSidebarList<Page: SettingsPage, Header: View>: View {
                 }
             }
             .listStyle(.sidebar)
-            .environment(\.defaultMinListRowHeight, style.rowHeight ?? 0)
-            .insets(style.sidebarInsets)
-            // System Settings opens with the list focused; ⌘F reaches the search field.
             .focused($focused)
-            .onAppear {
+            .task {
+                // After the window's first layout: the window gives the first key view, the
+                // search field, the focus when it opens, and a scroll before the rows have
+                // their heights stops short and clips a row below the fold. System Settings
+                // opens with the list focused; ⌘F reaches the search field.
+                await Task.yield()
                 focused = true
-                // The window may open on a page below the fold.
                 proxy.scrollTo(navigator.selection)
             }
             .onChange(of: navigator.selection) { _, page in
@@ -91,7 +92,6 @@ private struct SystemSidebarList<Page: SettingsPage, Header: View>: View {
     private func rows(_ pages: [Page]) -> some View {
         ForEach(pages) { page in
             SidebarRowLabel(page: page, style: style)
-                .frame(minHeight: style.rowHeight)
                 .tag(page)
                 .id(page)
         }
@@ -103,95 +103,6 @@ private struct SystemSidebarList<Page: SettingsPage, Header: View>: View {
             navigator.selection
         } set: {
             if let page = $0 { navigator.open(page) }
-        }
-    }
-}
-
-/// Rows the kit lays out and highlights itself, for a selection shape the system list does
-/// not draw. It keeps the list's arrow keys and tells VoiceOver which row is selected.
-private struct DrawnSidebarList<Page: SettingsPage, Header: View>: View {
-    let navigator: SettingsNavigator<Page>
-    let sections: [SettingsPageSection<Page>]
-    let style: SidebarSettingsStyle
-    let radius: CGFloat
-    let header: Header
-    @FocusState private var focused: Bool
-    @Environment(\.controlActiveState) private var controlActiveState
-
-    /// The space that sets apart a group without a heading, as in System Settings.
-    private static var groupSpacing: CGFloat { 10 }
-
-    var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: style.rowSpacing ?? 0) {
-                    if Header.self != EmptyView.self { header }
-                    ForEach(sections.indices, id: \.self) { index in
-                        let section = sections[index]
-                        if let title = section.title {
-                            Text(title)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 8)
-                                .padding(.top, index == 0 ? 0 : Self.groupSpacing)
-                                .accessibilityAddTraits(.isHeader)
-                        } else if index > 0 {
-                            Color.clear.frame(height: Self.groupSpacing)
-                        }
-                        ForEach(section.pages) { page in
-                            row(page)
-                        }
-                    }
-                }
-            }
-            .insets(style.sidebarInsets)
-            .focusable()
-            .focusEffectDisabled()
-            .focused($focused)
-            .onAppear {
-                focused = true
-                proxy.scrollTo(navigator.selection)
-            }
-            .onMoveCommand(perform: move)
-            .onChange(of: navigator.selection) { _, page in
-                proxy.scrollTo(page)
-            }
-        }
-    }
-
-    private func row(_ page: Page) -> some View {
-        let isSelected = page == navigator.selection
-        let isEmphasized = isSelected && controlActiveState != .inactive && focused
-        return Button {
-            navigator.open(page)
-        } label: {
-            SidebarRowLabel(page: page, style: style)
-                .foregroundStyle(isEmphasized ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
-                .padding(.horizontal, 8)
-                .frame(maxWidth: .infinity, minHeight: style.rowHeight, alignment: .leading)
-                .background {
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: radius, style: .continuous)
-                            .fill(isEmphasized ? AnyShapeStyle(.tint) : AnyShapeStyle(.quaternary))
-                    }
-                }
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .id(page)
-    }
-
-    private func move(_ direction: MoveCommandDirection) {
-        let pages = sections.flatMap(\.pages)
-        guard let index = pages.firstIndex(of: navigator.selection) else {
-            if let first = pages.first { navigator.open(first) }
-            return
-        }
-        switch direction {
-        case .up where index > 0: navigator.open(pages[index - 1])
-        case .down where index < pages.count - 1: navigator.open(pages[index + 1])
-        default: break
         }
     }
 }
@@ -209,15 +120,17 @@ private struct SidebarRowLabel<Page: SettingsPage>: View {
         } icon: {
             SettingsIconView(icon: page.icon, style: style)
         }
-        .font(style.rowFont)
+        .rowFont(style.rowFont)
     }
 }
 
+// A `nil` font leaves the system's alone: `.font(nil)` would replace the sidebar's own, which
+// follows the user's sidebar icon size setting.
 extension View {
     @ViewBuilder
-    fileprivate func insets(_ insets: EdgeInsets?) -> some View {
-        if let insets {
-            contentMargins(.all, insets, for: .scrollContent)
+    fileprivate func rowFont(_ font: Font?) -> some View {
+        if let font {
+            self.font(font)
         } else {
             self
         }

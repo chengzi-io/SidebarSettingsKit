@@ -1,21 +1,22 @@
 import SwiftUI
 
-/// How the sidebar looks: its rows, icons and selection.
+/// How the sidebar's rows look: their font and icons.
+///
+/// Every style keeps the system's sidebar list, so selection, arrow keys, type-to-select and
+/// VoiceOver behave as in any Mac sidebar; no token changes the selection. A row is as tall as
+/// its content plus the list's padding, so a larger icon tile makes a taller row.
 ///
 /// Start from a preset and change what you need:
 ///
 /// ```swift
 /// var style = SidebarSettingsStyle.branded
-/// style.rowHeight = 36
+/// style.iconTile = .init(size: 28, cornerRadius: 7, defaultColor: .indigo)
 /// ```
 ///
 /// No preset changes the sidebar's material, so on macOS 26 it keeps the system's Liquid
 /// Glass. Pages can read the style from the environment, ``SwiftUICore/EnvironmentValues/sidebarSettingsStyle``,
 /// to match it.
 public struct SidebarSettingsStyle: Sendable, Equatable {
-    /// Each row's height; `nil` keeps the system's.
-    public var rowHeight: CGFloat?
-
     /// The rows' font; `nil` keeps the system's, which follows the user's sidebar icon size
     /// setting.
     public var rowFont: Font?
@@ -28,33 +29,15 @@ public struct SidebarSettingsStyle: Sendable, Equatable {
     /// CleanShot X; `nil` draws the bare icon.
     public var iconTile: IconTile?
 
-    /// The selected row's highlight.
-    public var selectionShape: SelectionShape
-
-    /// The space between rows; `nil` keeps the system's. Applies with a
-    /// ``SelectionShape/rounded(radius:)`` selection, where the kit draws the rows.
-    public var rowSpacing: CGFloat?
-
-    /// Space around the rows, inside the sidebar; `nil` keeps the system's.
-    public var sidebarInsets: EdgeInsets?
-
     /// A style from its tokens; every token you leave out matches ``native``.
     public init(
-        rowHeight: CGFloat? = nil,
         rowFont: Font? = nil,
         iconSize: CGFloat? = nil,
-        iconTile: IconTile? = nil,
-        selectionShape: SelectionShape = .system,
-        rowSpacing: CGFloat? = nil,
-        sidebarInsets: EdgeInsets? = nil
+        iconTile: IconTile? = nil
     ) {
-        self.rowHeight = rowHeight
         self.rowFont = rowFont
         self.iconSize = iconSize
         self.iconTile = iconTile
-        self.selectionShape = selectionShape
-        self.rowSpacing = rowSpacing
-        self.sidebarInsets = sidebarInsets
     }
 
     /// A colored rounded square behind an icon.
@@ -74,28 +57,15 @@ public struct SidebarSettingsStyle: Sendable, Equatable {
         }
     }
 
-    /// The selected row's highlight.
-    public enum SelectionShape: Sendable, Equatable {
-        /// The system's sidebar highlight, in a system `List`.
-        case system
-        /// A rounded rectangle in the accent color, drawn by the kit, which then lays the
-        /// rows out itself.
-        case rounded(radius: CGFloat)
-    }
-
     /// The system's sidebar, untouched. The default.
     public static let native = Self()
 
-    /// A livelier sidebar after CleanShot X: icons on colored tiles, taller rows, larger
-    /// text and a rounded selection.
+    /// A livelier sidebar after CleanShot X: icons on colored tiles, which make the rows
+    /// taller, and larger text.
     public static let branded = Self(
-        rowHeight: 32,
         rowFont: .system(size: 14, weight: .medium),
         iconSize: 14,
-        iconTile: IconTile(size: 24, cornerRadius: 6, defaultColor: .gray),
-        selectionShape: .rounded(radius: 8),
-        rowSpacing: 2,
-        sidebarInsets: EdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10)
+        iconTile: IconTile(size: 24, cornerRadius: 6, defaultColor: .gray)
     )
 }
 
