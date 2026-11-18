@@ -271,6 +271,7 @@ Planned work is in [docs/ROADMAP.md](docs/ROADMAP.md).
 | --- | --- |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | how the window is built and why |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | the demo, screenshots, CI, releasing |
+| [docs/TESTING.md](docs/TESTING.md) | the test targets, fixtures, window tests and the false-pass rule |
 | [docs/MANUAL-QA.md](docs/MANUAL-QA.md) | the checks a maintainer makes before a release |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | planned work and known limits |
 | [CHANGELOG.md](CHANGELOG.md) | changes per version |

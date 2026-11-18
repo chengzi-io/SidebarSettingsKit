@@ -148,6 +148,9 @@ nothing in CI does them for you.
 
 ## Docs
 
+How the window is built: [ARCHITECTURE.md](ARCHITECTURE.md). The test targets, fixtures and the
+false-pass rule: [TESTING.md](TESTING.md).
+
 Docs are written in English. The Chinese copies (`README.zh-Hans.md`, `docs/zh/`) are regenerated
 from the English after it changes; never edit them by hand, and do not create one for a doc that
 has none yet.
