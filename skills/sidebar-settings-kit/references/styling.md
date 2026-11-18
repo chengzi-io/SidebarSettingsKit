@@ -8,7 +8,7 @@ no background, form or font to them.
 
 | | `.native` (default) | `.branded` |
 | --- | --- | --- |
-| Look | the system sidebar, untouched | after CleanShot X: icons on colored tiles |
+| Look | the system sidebar, untouched | icons on colored tiles, for an app with a brand |
 | Rows | system height and font; follows the user's sidebar icon size setting | as tall as the tiles need, 14 pt medium text |
 | Icons | bare SF Symbols in the accent color, or their tint | white symbols on 24 pt tiles in the page's tint |
 | Selection | the system highlight | the system highlight |

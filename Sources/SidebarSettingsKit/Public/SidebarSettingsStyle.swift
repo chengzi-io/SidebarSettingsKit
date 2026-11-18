@@ -25,8 +25,8 @@ public struct SidebarSettingsStyle: Sendable, Equatable {
     /// fits in. `nil` keeps the system's symbol size, with images 16 points.
     public var iconSize: CGFloat?
 
-    /// A colored rounded square behind each icon, as in System Settings on macOS 26 or
-    /// CleanShot X; `nil` draws the bare icon.
+    /// A colored rounded square behind each icon, as in System Settings on macOS 26; `nil`
+    /// draws the bare icon.
     public var iconTile: IconTile?
 
     /// A style from its tokens; every token you leave out matches ``native``.
@@ -60,7 +60,7 @@ public struct SidebarSettingsStyle: Sendable, Equatable {
     /// The system's sidebar, untouched. The default.
     public static let native = Self()
 
-    /// A livelier sidebar after CleanShot X: icons on colored tiles, which make the rows
+    /// A livelier sidebar for an app with a brand: icons on colored tiles, which make the rows
     /// taller, and larger text.
     public static let branded = Self(
         rowFont: .system(size: 14, weight: .medium),

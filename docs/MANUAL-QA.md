@@ -42,7 +42,6 @@ macOS 26 is the version where a wrong token or a stray background shows first. C
 - [ ] Rows fit the tiles with the system's padding, text 14 pt medium.
 - [ ] The selection is the system highlight, as in `.native`.
 - [ ] Untitled groups are set apart by space, titled groups show their title above the rows.
-- [ ] Side by side with CleanShot X, the tiles and the row height read the same.
 
 ## Keyboard
 

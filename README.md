@@ -4,7 +4,7 @@ English | [简体中文](README.zh-Hans.md)
 
 A settings window for a macOS SwiftUI app, laid out like System Settings: a sidebar of pages that
 never collapses, a search field above it, the selected page beside it, and back and forward in the
-toolbar. Two looks: the system sidebar, or a branded one after CleanShot X.
+toolbar. Two looks: the system sidebar, or a branded one with icons on colored tiles.
 
 ![Swift 6.2](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)
@@ -160,7 +160,7 @@ let settings = SidebarSettingsWindow(pages: Pane.allCases, style: style) { pane 
 }
 ```
 
-`.native` is the system sidebar, untouched. `.branded` is after CleanShot X: 24 pt colored tiles
+`.native` is the system sidebar, untouched. `.branded` is for an app with a brand: 24 pt colored tiles
 behind the icons, rows as tall as the tiles need, and 14 pt medium text. Both are the system's
 sidebar list, so selection, arrow keys, type-to-select and VoiceOver work as in any Mac sidebar.
 A style is a value, so copying a preset and changing a token leaves the preset alone. No preset
