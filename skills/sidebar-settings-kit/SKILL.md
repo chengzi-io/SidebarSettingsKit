@@ -21,9 +21,9 @@ that `grep` command yourself, once, from the project root. It is the only survey
 | A match on | Means |
 | --- | --- |
 | `@main` | the app's entry: where the window object will usually live |
-| `Settings {` at the start of a line | a `Settings` scene to replace |
+| `Settings {` at the start of a line | a `Settings` scene to replace; beside `MenuBarExtra`, often a placeholder to delete |
 | `MenuBarExtra`, `LSUIElement` | a menu bar app: the window opens from the menu |
-| `NSApplicationDelegateAdaptor` | an app delegate, a good owner for the window |
+| `NSApplicationDelegateAdaptor` | an app delegate: one place the window can live (see Owner below) |
 | `SettingsLink`, `openSettings` | call sites that will not reach the new window |
 | `SidebarSettingsKit` | already integrated: change it, do not add it again |
 | `MACOSX_DEPLOYMENT_TARGET`, `.macOS(` | the deployment target: must be macOS 14 or later |
@@ -126,6 +126,9 @@ Move each tab's view into its page as it is. Delete what only the tabbed window 
 The smallest version, in the `App`:
 
 ```swift
+import SidebarSettingsKit
+import SwiftUI
+
 @main
 struct MyApp: App {
     @State private var model: AppModel
@@ -153,7 +156,9 @@ struct MyApp: App {
   `detail` closure, as above (`.environment(_:)` for `@Observable`, `.environmentObject(_:)` for
   `ObservableObject`). `@AppStorage` inside pages works unchanged.
 - `SettingsLink` and `openSettings` do not open this window. Replace them with
-  `settings.show()` or `settings.show(page: .advanced)`, or `OpenSidebarSettingsButton`.
+  `settings.show()` or `settings.show(page: .advanced)`, or `OpenSidebarSettingsButton`. The
+  window is in no environment either: pass it to the views that open it
+  (`ContentView(settings: settings)`).
 - Menu bar app: put `OpenSidebarSettingsButton(window: settings)` in the `MenuBarExtra`'s menu.
   `show()` activates the app, so the window comes to the front even without a Dock icon. If a
   `Settings` scene was only a placeholder next to `MenuBarExtra`, delete it too.
@@ -183,8 +188,13 @@ use them: [references/configuration.md](references/configuration.md). Styles, ic
 2. Run it: ⌘, (or the menu bar item) opens the window in front; every page shows; searching a
    keyword finds its page; back and forward work; closing and reopening keeps the page; quitting
    and relaunching starts on the first page.
-3. The app menu has exactly one "Settings…" item.
+3. An app with a menu bar of its own has exactly one settings item in the app menu, labeled
+   with the kit's word or `configuration.strings.settingsMenuItem`. A menu bar app (no Dock
+   icon) has no app menu to check; its `MenuBarExtra` menu opens the window.
 4. A localized app declares its languages in the app bundle: `CFBundleLocalizations` in its
    Info.plist, or a `<language>.lproj` folder. The kit's words (Back, Forward, Search,
    Settings…) follow those languages, as AppKit's menus do, so an app with Chinese pages that
-   declares only English shows them in English. Add the missing entry and tell the user.
+   declares only English shows them in English. Add the missing entry and tell the user. An
+   app without a bundle (a SwiftPM executable) or written in one language without localization
+   passes its words through `configuration.strings` instead (step 2). Either way, run it and
+   see the four words in the app's language.

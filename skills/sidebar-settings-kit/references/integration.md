@@ -117,7 +117,8 @@ After:
 
 3. Delete the `Settings` scene, the `TabView`, the `.tabItem`s and the fixed frame.
 4. Add `.commands { SidebarSettingsCommands(window: settings) }` to the main scene.
-5. Replace every `SettingsLink` and `openSettings()` with `settings.show()`.
+5. Replace every `SettingsLink` and `openSettings()` with `settings.show()`, passing `settings`
+   to the views that call it: the window is in no environment.
 6. Add `searchKeywords` from each view's setting labels.
 
 ## Previews

@@ -27,7 +27,7 @@ create a new `SidebarSettingsWindow`, after closing the old one.
 | `search` | `.enabled` | `.disabled` | only a handful of pages |
 | `navigationPersistence` | `.session` | `.resetOnShow` | the window should always open on the first page |
 | `detailScrolling` | `true` | `false` | a page scrolls by itself, such as a `List` (see below) |
-| `strings` | the kit's (English, Simplified Chinese) | `Strings(back:forward:searchPrompt:settingsMenuItem:)` | the app's language is not English or Simplified Chinese, its text is not localized, or its menu says "Preferences…" |
+| `strings` | the kit's (English, Simplified Chinese) | `.init(back:forward:searchPrompt:settingsMenuItem:)` (the type is `SidebarSettingsConfiguration.Strings`) | the app's language is not English or Simplified Chinese, its text is not localized, or its menu says "Preferences…" |
 
 ## Strings
 
