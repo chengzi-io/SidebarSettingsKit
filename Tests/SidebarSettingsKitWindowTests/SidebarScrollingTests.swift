@@ -55,18 +55,19 @@ extension WindowTestSuite {
             let style: SidebarSettingsStyle
             let footer: Bool
             let shownOnOpen: Bool
-            /// The last page's row, and the part of the list the sidebar shows.
+            /// The last page's row, and the part of the list a person sees, in window
+            /// coordinates (y up).
             let lastRow: CGRect
-            let visible: CGRect
+            let shown: CGRect
 
-            /// Whether the last page is fully inside what the sidebar shows.
+            /// Whether the last page is fully inside what the sidebar shows, above the footer.
             var isInSight: Bool {
-                lastRow.minY >= visible.minY - 1 && lastRow.maxY <= visible.maxY + 2
+                lastRow.maxY <= shown.maxY + 1 && lastRow.minY >= shown.minY - 2
             }
 
             var shortfall: String {
                 "the last row runs \(Int(lastRow.minY))…\(Int(lastRow.maxY)) pt while the list "
-                    + "shows \(Int(visible.minY))…\(Int(visible.maxY)) pt"
+                    + "shows \(Int(shown.minY))…\(Int(shown.maxY)) pt (window, y up)"
             }
         }
 
@@ -108,8 +109,8 @@ extension WindowTestSuite {
                     style: style,
                     footer: footer,
                     shownOnOpen: shownOnOpen,
-                    lastRow: table.rect(ofRow: table.numberOfRows - 1),
-                    visible: sidebar.documentVisibleRect)
+                    lastRow: table.convert(table.rect(ofRow: table.numberOfRows - 1), to: nil),
+                    shown: shownPartOfTheList(sidebar, footer: footerAnchor))
             }
             return try require(sighting, "the sidebar after the last page was selected")
         }

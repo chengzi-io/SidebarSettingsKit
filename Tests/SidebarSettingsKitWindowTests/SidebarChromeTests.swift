@@ -17,7 +17,8 @@ extension WindowTestSuite {
             let pageRows: Int
             /// The rows that do not: the group heading, and the header when there is one.
             let headingRows: Int
-            /// The height the list itself has, which a footer takes its own from.
+            /// The height of the list the footer leaves uncovered, which a footer takes its own
+            /// from.
             let listHeight: CGFloat
             let headerShown: Bool
             let footerShown: Bool
@@ -34,7 +35,7 @@ extension WindowTestSuite {
                 chrome = Chrome(
                     pageRows: window.sidebarPageRowCount(),
                     headingRows: window.sidebarHeadingRowCount(),
-                    listHeight: sidebar.contentView.bounds.height,
+                    listHeight: shownPartOfTheList(sidebar, footer: footerAnchor).height,
                     headerShown: headerAnchor.isShown,
                     footerShown: footerAnchor.isShown)
             }

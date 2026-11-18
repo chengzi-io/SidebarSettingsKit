@@ -115,6 +115,18 @@ func frameInWindow(_ view: NSView) -> CGRect {
     view.convert(view.bounds, to: nil)
 }
 
+/// The part of the sidebar's list a person sees, in window coordinates: the list's scroll view
+/// cut at the top of the footer, if `footer` anchors one. On macOS 26 the list runs on under
+/// the footer, as content runs under a toolbar, so the scroll view alone counts rows the
+/// footer covers as shown.
+@MainActor
+func shownPartOfTheList(_ sidebar: NSScrollView, footer: ViewAnchor) -> CGRect {
+    let list = frameInWindow(sidebar.contentView)
+    // The anchor sits at the footer's top edge, and window coordinates put y up.
+    guard let footerTop = footer.frameInWindow?.maxY, footerTop > list.minY else { return list }
+    return CGRect(x: list.minX, y: footerTop, width: list.width, height: max(0, list.maxY - footerTop))
+}
+
 /// The first scroll view below `view`. SwiftUI builds each `ScrollView` and each `List` from
 /// one, `HostingScrollView` and `ListCoreScrollView` respectively.
 @MainActor
