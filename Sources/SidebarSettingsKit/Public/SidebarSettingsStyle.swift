@@ -13,8 +13,8 @@ import SwiftUI
 /// style.iconTile = .init(size: 28, cornerRadius: 7, defaultColor: .indigo)
 /// ```
 ///
-/// No preset changes the sidebar's material, so on macOS 26 it keeps the system's Liquid
-/// Glass. Pages can read the style from the environment, ``SwiftUICore/EnvironmentValues/sidebarSettingsStyle``,
+/// No preset changes the sidebar's material, so on macOS 26 and later it keeps the system's
+/// Liquid Glass. Pages can read the style from the environment, ``SwiftUICore/EnvironmentValues/sidebarSettingsStyle``,
 /// to match it.
 public struct SidebarSettingsStyle: Sendable, Equatable {
     /// The rows' font; `nil` keeps the system's, which follows the user's sidebar icon size
@@ -25,7 +25,7 @@ public struct SidebarSettingsStyle: Sendable, Equatable {
     /// fits in. `nil` keeps the system's symbol size, with images 16 points.
     public var iconSize: CGFloat?
 
-    /// A colored rounded square behind each icon, as in System Settings on macOS 26; `nil`
+    /// A colored rounded square behind each icon, as in System Settings since macOS 26; `nil`
     /// draws the bare icon.
     public var iconTile: IconTile?
 

@@ -42,8 +42,8 @@ struct DetailContainer<Page: SettingsPage, Content: View>: View {
 }
 
 extension View {
-    /// macOS 26 shows the window's background behind a form or list. Earlier releases keep
-    /// their own: without it macOS 15 draws a band under the toolbar.
+    /// macOS 26 and later show the window's background behind a form or list. Earlier releases
+    /// keep their own: without it macOS 15 draws a band under the toolbar.
     @ViewBuilder
     fileprivate func clearScrollBackgroundOnMacOS26() -> some View {
         if #available(macOS 26.0, *) {

@@ -41,7 +41,7 @@ The first release, 0.1.0.
 - The kit's words localized in English and Simplified Chinese, shown in the language the app
   declares and runs in, English otherwise; each replaceable through
   `SidebarSettingsConfiguration.strings`.
-- macOS 26: the sidebar keeps Liquid Glass, its rows fade at the scroll edge, and the detail sits
+- macOS 26 and later: the sidebar keeps Liquid Glass, its rows fade at the scroll edge, and the detail sits
   on the window's own background.
 - Window position saved by AppKit under `autosaveName`; page and search kept for the session.
 - Tests (unit and window targets with shared fixtures), a demo app, the screenshot script, CI on

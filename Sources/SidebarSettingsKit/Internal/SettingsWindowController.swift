@@ -256,7 +256,7 @@ extension SidebarSettingsConfiguration.ToolbarStyle {
 }
 
 extension View {
-    /// Rows fade out under the toolbar on macOS 26.
+    /// Rows fade out under the toolbar on macOS 26 and later.
     @ViewBuilder
     fileprivate func softScrollEdgeOnMacOS26() -> some View {
         if #available(macOS 26.0, *) {

@@ -1,7 +1,7 @@
 # Styling
 
 `SidebarSettingsStyle` changes how the sidebar looks; it never changes the sidebar's material,
-so on macOS 26 the system's Liquid Glass stays. The pages are the app's own views: the kit adds
+so on macOS 26 and later the system's Liquid Glass stays. The pages are the app's own views: the kit adds
 no background, form or font to them.
 
 ## Pick a preset

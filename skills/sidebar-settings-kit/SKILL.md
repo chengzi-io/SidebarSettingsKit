@@ -7,7 +7,7 @@ allowed-tools: Bash(grep -rEnI *)
 # Integrate SidebarSettingsKit
 
 SidebarSettingsKit builds the window: the sidebar, search, history, toolbar, the line under
-the toolbar, the macOS 26 looks. The app keeps everything else: its settings data, how it
+the toolbar, Liquid Glass on macOS 26 and later. The app keeps everything else: its settings data, how it
 stores them, and the views of each page. Integrating it is a small change; most of the work is
 deciding the pages and moving existing settings views into them.
 

@@ -180,13 +180,13 @@ localizing it, so it does not guess from the system's language.
 Page titles, keywords and anything else user-visible come from the app, so the kit never writes
 a literal user-visible string.
 
-## macOS 26 adjustments
+## Adjustments for macOS 26 and later
 
 | Where | What | Why |
 | --- | --- | --- |
 | `SidebarView` root | `scrollEdgeEffectStyle(.soft, for: .all)` | rows fade under the toolbar as in System Settings |
-| `DetailContainer` | `scrollContentBackground(.hidden)` | the form or list sits on the window's background on macOS 26; on macOS 15 the same call leaves a band under the toolbar, so it is 26-only |
-| `SidebarSettingsStyle` | no material anywhere | on 26 the sidebar keeps the system's Liquid Glass; a preset only changes rows and icons |
+| `DetailContainer` | `scrollContentBackground(.hidden)` | the form or list sits on the window's background on macOS 26 and later; on macOS 15 the same call leaves a band under the toolbar, so it applies from 26 on |
+| `SidebarSettingsStyle` | no material anywhere | from 26 on the sidebar keeps the system's Liquid Glass; a preset only changes rows and icons |
 
 ## Tests, fixtures and the demo
 
