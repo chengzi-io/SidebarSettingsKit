@@ -45,5 +45,5 @@ The first release, 0.1.0.
   on the window's own background.
 - Window position saved by AppKit under `autosaveName`; page and search kept for the session.
 - Tests (unit and window targets with shared fixtures), a demo app, the screenshot script, CI on
-  macOS 15, 26 and 27, and an agent skill in `skills/sidebar-settings-kit/`, installed with
+  macos-15 and macos-26, and an agent skill in `skills/sidebar-settings-kit/`, installed with
   `npx skills add chengzi-io/SidebarSettingsKit`.

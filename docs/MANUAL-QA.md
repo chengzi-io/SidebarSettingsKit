@@ -1,7 +1,7 @@
 # Manual QA
 
 The checks a maintainer makes before a release. Run each one on every macOS version you have; CI
-covers macOS 15, 26 and 27 only.
+covers macOS 15 and macOS 26 only.
 
 Start the demo with the flags for the combination you are checking, or set the same thing in its
 control panel and press **Open Settings**:
@@ -22,7 +22,7 @@ cd Examples/SidebarSettingsDemo && swift run SidebarSettingsDemo --style branded
 | [ ] The window opens at 715 × 600 and cannot be resized (default configuration) | yes | yes | yes |
 | [ ] The window opens where it was last positioned, across launches (AppKit's frame autosave) | yes | yes | yes |
 
-macOS 26 and later are the versions where a wrong token or a stray background shows first. Check it with
+macOS 26 is the version where a wrong token or a stray background shows first. Check it with
 `--style native` and `--style branded`, in both appearances.
 
 ## By style
@@ -83,12 +83,11 @@ Launch with `--appearance dark`, both styles:
 
 ## CI screenshots
 
-Before a release, download the artifacts of the latest run of every runner and look at them:
+Before a release, download the artifacts of the latest run of both runners and look at them:
 
 ```
 gh run download --name screenshots-macos-15 --dir shots-15
 gh run download --name screenshots-macos-26 --dir shots-26
-gh run download --name screenshots-xcode-27 --dir shots-27
 ```
 
 The matrix is two styles × two appearances × the scenarios in `scripts/screenshots.sh`, named
@@ -101,7 +100,7 @@ For every shot:
 - [ ] The search field is above the list, not in the toolbar.
 - [ ] No page title is clipped or truncated where it should fit.
 - [ ] The header is above the rows; where there is a footer, it is at the bottom.
-- [ ] macOS 26 and 27 show Liquid Glass in the sidebar; macOS 15 does not.
+- [ ] macOS 26 shows Liquid Glass in the sidebar; macOS 15 does not.
 
 Per scenario, check the one thing the scenario adds (the list is also in
 [DEVELOPMENT.md](DEVELOPMENT.md)):

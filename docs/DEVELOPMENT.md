@@ -108,17 +108,15 @@ the README images come from the CI artifacts only.
 
 ## CI
 
-Two workflows, each running on `macos-15`, `macos-26` and `xcode-27`. From Xcode 27 on, GitHub
-names a macOS image after its Xcode: `xcode-27` runs macOS 27 and carries only Xcode 27, so that
-job uses the image's Xcode instead of `.xcode-version`.
+Two workflows, each running on `macos-15` and `macos-26`:
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
-| `.github/workflows/ci.yml` | pull requests, pushes to `main` | selects the Xcode (above), caches `.build`, runs `make ci` |
+| `.github/workflows/ci.yml` | pull requests, pushes to `main` | selects the Xcode in `.xcode-version`, caches `.build`, runs `make ci` |
 | `.github/workflows/screenshots.yml` | pull requests, manual dispatch | selects the same Xcode, runs `scripts/screenshots.sh screenshots`, uploads the PNGs |
 
-The screenshot artifacts are named `screenshots-<runner>` (`screenshots-macos-15`,
-`screenshots-macos-26`, `screenshots-xcode-27`) and are uploaded even when capture fails, so a partial matrix can be
+The screenshot artifacts are named `screenshots-<os>` (`screenshots-macos-15`,
+`screenshots-macos-26`) and are uploaded even when capture fails, so a partial matrix can be
 inspected:
 
 ```
@@ -134,8 +132,7 @@ branches for macOS 14 small and obvious, and act on the macOS 14 limits in
 `.xcode-version` is the one place the version is written: both workflows read it, and the job
 fails with an error naming the version if the runner does not have it. To move to a new Xcode,
 edit that file, check that both `macos-15` and `macos-26` runners have the app installed, and
-open a pull request so CI proves it. When GitHub adds the next `xcode-<major>` image, add it to
-both workflows' matrices with `image-xcode: true`.
+open a pull request so CI proves it.
 
 ## Releasing
 
