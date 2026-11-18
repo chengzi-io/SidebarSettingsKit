@@ -31,6 +31,8 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     let detailItem: NSSplitViewItem
     let splitViewController: NSSplitViewController
     private let navigation: Navigation
+    /// An adjustable sidebar's ideal width, given to it when the window first shows.
+    private var sidebarIdealOnceShown: CGFloat?
 
     init(
         configuration: SidebarSettingsConfiguration,
@@ -55,9 +57,10 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         case .fixed(let width):
             sidebarItem.minimumThickness = width
             sidebarItem.maximumThickness = width
-        case .adjustable(let min, _, let max):
+        case .adjustable(let min, let ideal, let max):
             sidebarItem.minimumThickness = min
             sidebarItem.maximumThickness = max
+            sidebarIdealOnceShown = ideal
         }
         detailItem = NSSplitViewItem(viewController: detailController)
         splitViewController = NSSplitViewController()
@@ -82,9 +85,6 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             if let min { window.contentMinSize = min }
             if let max { window.contentMaxSize = max }
         }
-        if case .adjustable(_, let ideal, _) = configuration.sidebarWidth {
-            splitViewController.splitView.setPosition(ideal, ofDividerAt: 0)
-        }
         window.center()
         super.init(window: window)
         // On the controller: `init(window:)` clears a name set on the window. A window that
@@ -107,6 +107,21 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
 
         followTitle()
         followSeparator()
+    }
+
+    override func showWindow(_ sender: Any?) {
+        super.showWindow(sender)
+        guard let ideal = sidebarIdealOnceShown else { return }
+        sidebarIdealOnceShown = nil
+        let splitView = splitViewController.splitView
+        splitView.setPosition(ideal, ofDividerAt: 0)
+        splitView.layoutSubtreeIfNeeded()
+        // On macOS 26 that position left the sidebar 8 pt narrower than the ideal, so the
+        // divider moves by what the sidebar came out short.
+        let shortfall = ideal - sidebarItem.viewController.view.frame.width
+        if shortfall != 0 {
+            splitView.setPosition(ideal + shortfall, ofDividerAt: 0)
+        }
     }
 
     @available(*, unavailable)
