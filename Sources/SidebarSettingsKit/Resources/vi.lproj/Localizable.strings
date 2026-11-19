@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "Trở lại";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "Chuyển tiếp";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "Tìm kiếm";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "Cài đặt…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "Không có kết quả";

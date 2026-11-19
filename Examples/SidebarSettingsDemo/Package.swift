@@ -34,8 +34,8 @@ let package = Package(
             ],
             exclude: ["Info.plist"],
             // SwiftPM's bare executable has no app bundle, so its Info.plist is embedded in
-            // __TEXT instead. The demo has to say it speaks English and Simplified Chinese for
-            // the kit's own words to follow the app's language. A root package nobody depends
+            // __TEXT instead. The demo declares every language the kit has, so the kit's own
+            // words follow the app's language in each (`-AppleLanguages "(ja)"`). A root package nobody depends
             // on may use unsafeFlags.
             linkerSettings: [
                 .unsafeFlags([

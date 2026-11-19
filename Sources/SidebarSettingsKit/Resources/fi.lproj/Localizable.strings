@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "Edellinen";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "Seuraava";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "Etsi";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "Asetukset…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "Ei tuloksia";

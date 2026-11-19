@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "Înapoi";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "Înainte";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "Căutare";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "Configurări…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "Niciun rezultat";

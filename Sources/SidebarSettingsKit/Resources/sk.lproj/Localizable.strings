@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "Naspäť";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "Dopredu";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "Vyhľadať";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "Nastavenia…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "Žiadne výsledky";

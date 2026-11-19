@@ -9,3 +9,6 @@
 
 /* The app menu item that opens the settings window. */
 "Settings…" = "设置…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "无结果";

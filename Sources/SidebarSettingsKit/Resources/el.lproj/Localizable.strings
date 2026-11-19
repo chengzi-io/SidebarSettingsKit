@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "Πίσω";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "Εμπρός";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "Αναζήτηση";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "Ρυθμίσεις…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "Κανένα αποτέλεσμα";
