@@ -24,6 +24,11 @@ import SwiftUI
 /// }
 /// ```
 ///
+/// Write each page as a grouped `Form`, as System Settings' pages are: a page scrolls itself,
+/// and the line under the toolbar follows the form's scroll position. A page that is not a
+/// form or a list and can be taller than the window goes in a `ScrollView`; on macOS 14 and 15
+/// the toolbar then keeps a lighter background of its own above it.
+///
 /// The scene's environment does not reach the window's views: pass them your models
 /// through their initializers. `openSettings` and `SettingsLink` do not open this window;
 /// use ``SidebarSettingsCommands``, ``OpenSidebarSettingsButton`` or ``show(page:)``.
@@ -36,11 +41,8 @@ public final class SidebarSettingsWindow<Page: SettingsPage> {
     /// The sidebar's groups, without empty ones.
     public let sections: [SettingsPageSection<Page>]
 
-    /// How the window behaves.
+    /// How the window behaves and how its sidebar draws the pages' icons.
     public let configuration: SidebarSettingsConfiguration
-
-    /// How the sidebar looks.
-    public let style: SidebarSettingsStyle
 
     /// Built on the first ``show(page:)``, then kept, so the window reopens as it was.
     private(set) var controller: SettingsWindowController?
@@ -52,18 +54,16 @@ public final class SidebarSettingsWindow<Page: SettingsPage> {
     /// - Parameters:
     ///   - sections: the sidebar's groups, at least one page in all. Empty groups are left out.
     ///   - initialPage: the page the window opens on; the first page when `nil`.
-    ///   - configuration: how the window behaves.
-    ///   - style: how the sidebar looks.
+    ///   - configuration: how the window behaves and draws the pages' icons.
     ///   - header: a view above the first page, such as an account row; it scrolls with the
     ///     pages.
     ///   - footer: a view under the pages, such as a version line; it stays put while the
     ///     pages scroll.
-    ///   - detail: the view for a page.
+    ///   - detail: the view for a page, which scrolls itself, such as a grouped `Form`.
     public init<Header: View, Footer: View, Detail: View>(
         sections: [SettingsPageSection<Page>],
         initialPage: Page? = nil,
         configuration: SidebarSettingsConfiguration = .init(),
-        style: SidebarSettingsStyle = .native,
         @ViewBuilder header: () -> Header,
         @ViewBuilder footer: () -> Footer,
         @ViewBuilder detail: @escaping (Page) -> Detail
@@ -80,7 +80,6 @@ public final class SidebarSettingsWindow<Page: SettingsPage> {
         self.navigator = navigator
         self.sections = sections
         self.configuration = configuration
-        self.style = style
         let header = header()
         let footer = footer()
         makeController = {
@@ -99,15 +98,12 @@ public final class SidebarSettingsWindow<Page: SettingsPage> {
                     navigator: navigator,
                     sections: sections,
                     configuration: configuration,
-                    style: style,
                     header: header,
                     footer: footer
                 ),
                 detail: DetailContainer(
                     navigator: navigator,
                     scrollState: scrollState,
-                    scrolls: configuration.detailScrolling,
-                    style: style,
                     content: detail
                 )
             )
@@ -156,18 +152,16 @@ extension SidebarSettingsWindow {
     /// - Parameters:
     ///   - sections: the sidebar's groups, at least one page in all. Empty groups are left out.
     ///   - initialPage: the page the window opens on; the first page when `nil`.
-    ///   - configuration: how the window behaves.
-    ///   - style: how the sidebar looks.
-    ///   - detail: the view for a page.
+    ///   - configuration: how the window behaves and draws the pages' icons.
+    ///   - detail: the view for a page, which scrolls itself, such as a grouped `Form`.
     public convenience init<Detail: View>(
         sections: [SettingsPageSection<Page>],
         initialPage: Page? = nil,
         configuration: SidebarSettingsConfiguration = .init(),
-        style: SidebarSettingsStyle = .native,
         @ViewBuilder detail: @escaping (Page) -> Detail
     ) {
         self.init(
-            sections: sections, initialPage: initialPage, configuration: configuration, style: style,
+            sections: sections, initialPage: initialPage, configuration: configuration,
             header: { EmptyView() }, footer: { EmptyView() }, detail: detail)
     }
 
@@ -177,12 +171,11 @@ extension SidebarSettingsWindow {
         sections: [SettingsPageSection<Page>],
         initialPage: Page? = nil,
         configuration: SidebarSettingsConfiguration = .init(),
-        style: SidebarSettingsStyle = .native,
         @ViewBuilder header: () -> Header,
         @ViewBuilder detail: @escaping (Page) -> Detail
     ) {
         self.init(
-            sections: sections, initialPage: initialPage, configuration: configuration, style: style,
+            sections: sections, initialPage: initialPage, configuration: configuration,
             header: header, footer: { EmptyView() }, detail: detail)
     }
 
@@ -191,12 +184,11 @@ extension SidebarSettingsWindow {
         sections: [SettingsPageSection<Page>],
         initialPage: Page? = nil,
         configuration: SidebarSettingsConfiguration = .init(),
-        style: SidebarSettingsStyle = .native,
         @ViewBuilder footer: () -> Footer,
         @ViewBuilder detail: @escaping (Page) -> Detail
     ) {
         self.init(
-            sections: sections, initialPage: initialPage, configuration: configuration, style: style,
+            sections: sections, initialPage: initialPage, configuration: configuration,
             header: { EmptyView() }, footer: footer, detail: detail)
     }
 
@@ -205,19 +197,17 @@ extension SidebarSettingsWindow {
     /// - Parameters:
     ///   - pages: the sidebar's pages, in order; at least one.
     ///   - initialPage: the page the window opens on; the first page when `nil`.
-    ///   - configuration: how the window behaves.
-    ///   - style: how the sidebar looks.
-    ///   - detail: the view for a page.
+    ///   - configuration: how the window behaves and draws the pages' icons.
+    ///   - detail: the view for a page, which scrolls itself, such as a grouped `Form`.
     public convenience init<Detail: View>(
         pages: [Page],
         initialPage: Page? = nil,
         configuration: SidebarSettingsConfiguration = .init(),
-        style: SidebarSettingsStyle = .native,
         @ViewBuilder detail: @escaping (Page) -> Detail
     ) {
         self.init(
             sections: [SettingsPageSection(pages: pages)], initialPage: initialPage,
-            configuration: configuration, style: style, detail: detail)
+            configuration: configuration, detail: detail)
     }
 
     /// A window with one ungrouped list of pages and a header at the top of the list, which
@@ -226,13 +216,12 @@ extension SidebarSettingsWindow {
         pages: [Page],
         initialPage: Page? = nil,
         configuration: SidebarSettingsConfiguration = .init(),
-        style: SidebarSettingsStyle = .native,
         @ViewBuilder header: () -> Header,
         @ViewBuilder detail: @escaping (Page) -> Detail
     ) {
         self.init(
             sections: [SettingsPageSection(pages: pages)], initialPage: initialPage,
-            configuration: configuration, style: style, header: header, detail: detail)
+            configuration: configuration, header: header, detail: detail)
     }
 
     /// A window with one ungrouped list of pages and a footer fixed at the sidebar's bottom.
@@ -240,13 +229,12 @@ extension SidebarSettingsWindow {
         pages: [Page],
         initialPage: Page? = nil,
         configuration: SidebarSettingsConfiguration = .init(),
-        style: SidebarSettingsStyle = .native,
         @ViewBuilder footer: () -> Footer,
         @ViewBuilder detail: @escaping (Page) -> Detail
     ) {
         self.init(
             sections: [SettingsPageSection(pages: pages)], initialPage: initialPage,
-            configuration: configuration, style: style, footer: footer, detail: detail)
+            configuration: configuration, footer: footer, detail: detail)
     }
 
     /// A window with one ungrouped list of pages, a header at the top of the list and a footer
@@ -255,14 +243,13 @@ extension SidebarSettingsWindow {
         pages: [Page],
         initialPage: Page? = nil,
         configuration: SidebarSettingsConfiguration = .init(),
-        style: SidebarSettingsStyle = .native,
         @ViewBuilder header: () -> Header,
         @ViewBuilder footer: () -> Footer,
         @ViewBuilder detail: @escaping (Page) -> Detail
     ) {
         self.init(
             sections: [SettingsPageSection(pages: pages)], initialPage: initialPage,
-            configuration: configuration, style: style, header: header, footer: footer,
+            configuration: configuration, header: header, footer: footer,
             detail: detail)
     }
 }

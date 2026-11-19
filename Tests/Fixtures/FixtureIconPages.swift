@@ -11,7 +11,7 @@ public enum FixtureIconPages {
         iconDescription: .system(name: "gearshape")
     )
 
-    /// A symbol with a tint, which a style with an icon tile turns into the tile's color.
+    /// A symbol with a tint, which tiled icons turn into the tile's color.
     public static let tintedSymbol = FixturePage(
         id: "icon-tinted-symbol",
         title: "Tinted Symbol",

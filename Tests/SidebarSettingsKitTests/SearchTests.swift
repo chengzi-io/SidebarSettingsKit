@@ -53,7 +53,7 @@ struct SearchTests {
 
     @Test func aBlankSearchKeepsEveryPage() {
         let sections = visibleSections(
-            FixtureSections.allTitled, search: .enabled, searchText: " \n\t ")
+            FixtureSections.grouped, search: .enabled, searchText: " \n\t ")
 
         #expect(sections.flatMap(\.pages) == [FixturePages.general, FixturePages.appearance, FixturePages.advanced])
         #expect(FixturePages.general.matches(searchText: "   "))
@@ -61,19 +61,19 @@ struct SearchTests {
 
     @Test func aSearchWithoutAMatchLeavesNoSections() {
         let sections = visibleSections(
-            FixtureSections.allTitled, search: .enabled, searchText: "zzzz")
+            FixtureSections.grouped, search: .enabled, searchText: "zzzz")
 
         #expect(sections.isEmpty)
     }
 
     @Test func clearingTheSearchRestoresEveryPage() {
         let searched = visibleSections(
-            FixtureSections.mixed, search: .enabled, searchText: "appearance")
-        let cleared = visibleSections(FixtureSections.mixed, search: .enabled, searchText: "")
+            FixtureSections.grouped, search: .enabled, searchText: "appearance")
+        let cleared = visibleSections(FixtureSections.grouped, search: .enabled, searchText: "")
 
         #expect(searched.flatMap(\.pages) == [FixturePages.appearance])
-        #expect(cleared.flatMap(\.pages) == FixtureSections.mixed.flatMap(\.pages))
-        #expect(cleared.count == FixtureSections.mixed.count)
+        #expect(cleared.flatMap(\.pages) == FixtureSections.grouped.flatMap(\.pages))
+        #expect(cleared.count == FixtureSections.grouped.count)
     }
 
     @Test func disablingTheSearchShowsEveryPageWhateverTheText() {
@@ -100,20 +100,18 @@ struct SearchTests {
         #expect(visibleSections(sections, search: .enabled, searchText: "garden").isEmpty)
     }
 
-    @Test func aGroupWithoutAMatchDisappearsWithItsTitle() {
+    @Test func aGroupWithoutAMatchDisappears() {
         let sections = visibleSections(
-            FixtureSections.allTitled, search: .enabled, searchText: "appearance")
+            FixtureSections.grouped, search: .enabled, searchText: "appearance")
 
-        #expect(titles(sections) == ["System"])
-        #expect(sections.flatMap(\.pages) == [FixturePages.appearance])
+        #expect(sections.map(\.pages) == [[FixturePages.appearance]])
     }
 
-    @Test func aGroupWithAMatchKeepsItsTitleWhenItsOtherPagesAreHidden() {
+    @Test func aGroupWithAMatchStaysWhenItsOtherPagesAreHidden() {
         let sections = visibleSections(
-            FixtureSections.allTitled, search: .enabled, searchText: "advanced")
+            FixtureSections.grouped, search: .enabled, searchText: "advanced")
 
-        #expect(titles(sections) == ["System"])
-        #expect(sections.flatMap(\.pages) == [FixturePages.advanced])
+        #expect(sections.map(\.pages) == [[FixturePages.advanced]])
     }
 }
 

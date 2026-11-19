@@ -21,16 +21,8 @@ extension WindowTestSuite {
             }
         }
 
-        @Test func titledGroupsShowEveryPage() async throws {
-            try await Self.check(FixtureSections.allTitled)
-        }
-
-        @Test func untitledGroupsShowEveryPage() async throws {
-            try await Self.check(FixtureSections.allUntitled)
-        }
-
-        @Test func mixedGroupsShowEveryPage() async throws {
-            try await Self.check(FixtureSections.mixed)
+        @Test func groupsShowEveryPage() async throws {
+            try await Self.check(FixtureSections.grouped)
         }
 
         @Test func aGroupWithoutPagesIsLeftOut() async throws {
@@ -54,7 +46,7 @@ extension WindowTestSuite {
                     window.window.performKeyEquivalent(
                         with: try commandKey("f", keyCode: 3, in: window.window)))
                 try await WindowTest.wait(for: "⌘F to focus the search field") {
-                    Self.isFocused(field, in: window.window)
+                    isFocused(field, in: window.window)
                 }
             }
         }
@@ -79,14 +71,6 @@ extension WindowTestSuite {
                     window.sidebarPageRowCount() == FixturePages.three.count
                 }
             }
-        }
-
-        /// Whether `field` or its field editor is what the window sends keys to.
-        private static func isFocused(_ field: NSSearchField, in window: NSWindow) -> Bool {
-            guard let responder = window.firstResponder else { return false }
-            if responder === field { return true }
-            guard let editor = responder as? NSTextView else { return false }
-            return editor.delegate as AnyObject? === field
         }
     }
 }

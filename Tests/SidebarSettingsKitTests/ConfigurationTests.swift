@@ -5,24 +5,27 @@ import Testing
 
 @testable import SidebarSettingsKit
 
-/// The configuration a window takes when the app sets nothing: what System Settings does.
+/// The configuration a window takes when the app sets nothing: System Settings' size and
+/// behavior, under the toolbar the system picks.
 @Suite("Configuration defaults")
 struct ConfigurationTests {
-    @Test func aFreshConfigurationMatchesSystemSettings() {
+    @Test func aFreshConfigurationHasTheDocumentedDefaults() {
         let configuration = SidebarSettingsConfiguration()
 
         #expect(configuration.size == CGSize(width: 715, height: 600))
         #expect(configuration.resizing == .fixed)
         #expect(configuration.autosaveName == "SidebarSettingsWindow")
         #expect(configuration.sidebarWidth == .fixed(215))
-        #expect(configuration.toolbarStyle.appKit == .unifiedCompact)
+        #expect(configuration.toolbarStyle.appKit == .automatic)
         #expect(configuration.showsNavigationButtons)
         #expect(configuration.title == .followsPage)
         #expect(configuration.toolbarSeparator.showsOnlyWhenScrolled)
         #expect(configuration.search.isEnabled)
         #expect(configuration.navigationPersistence.isSession)
-        #expect(configuration.detailScrolling)
         #expect(resolvedStrings(configuration.strings) == resolvedStrings(.default))
+        #expect(configuration.icons == .plain)
+        // Tiles without a color of their own are gray, as System Settings' General tile is.
+        #expect(SidebarSettingsConfiguration.Icons.tiled == .tiled(defaultColor: .gray))
     }
 
     @Test func eachToolbarStyleMapsToItsAppKitNamesake() {
@@ -40,13 +43,16 @@ struct ConfigurationTests {
     }
 }
 
-/// The four strings resolved in `locale`, so two `Strings` values compare field by field: the
+/// The strings resolved in `locale`, so two `Strings` values compare field by field: the
 /// type itself is not `Equatable`.
 private func resolvedStrings(
     _ strings: SidebarSettingsConfiguration.Strings,
     in locale: Locale = Locale(identifier: "en")
 ) -> [String] {
-    [strings.back, strings.forward, strings.searchPrompt, strings.settingsMenuItem].map {
+    [
+        strings.back, strings.forward, strings.searchPrompt, strings.settingsMenuItem,
+        strings.noSearchResults,
+    ].map {
         resolved($0, in: locale)
     }
 }

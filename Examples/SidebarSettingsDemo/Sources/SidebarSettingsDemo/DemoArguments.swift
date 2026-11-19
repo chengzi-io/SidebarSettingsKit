@@ -6,8 +6,8 @@ import SidebarSettingsKit
 /// What the demo's command line asks for: how the sidebar looks, in which appearance, and which
 /// scenario to open.
 struct DemoArguments: Sendable, Equatable {
-    /// The sidebar style the settings window draws with.
-    var style = Style.native
+    /// How the sidebar draws the pages' icons.
+    var icons = Icons.plain
 
     /// The appearance the app forces; `nil` keeps the system's.
     var appearance: Appearance?
@@ -18,10 +18,10 @@ struct DemoArguments: Sendable, Equatable {
     /// A file to write the settings window's number to, for `screencapture -l`.
     var windowIDFile: String?
 
-    /// The name of a ``SidebarSettingsStyle`` preset.
-    enum Style: String, Sendable, CaseIterable {
-        case native
-        case branded
+    /// The name of a ``SidebarSettingsConfiguration/Icons`` choice.
+    enum Icons: String, Sendable, CaseIterable {
+        case plain
+        case tiled
     }
 
     /// The name of an `NSAppearance`.
@@ -46,12 +46,12 @@ extension DemoArguments {
         while index < arguments.count {
             let option = arguments[index]
             switch option {
-            case "--style":
+            case "--icons":
                 let raw = try value(of: option, in: arguments, at: &index)
-                guard let style = Style(rawValue: raw) else {
+                guard let icons = Icons(rawValue: raw) else {
                     throw ParseError.unknownValue(option: option, value: raw)
                 }
-                result.style = style
+                result.icons = icons
             case "--appearance":
                 let raw = try value(of: option, in: arguments, at: &index)
                 guard let appearance = Appearance(rawValue: raw) else {
@@ -83,7 +83,7 @@ extension DemoArguments {
 
     /// The command line the demo accepts.
     static let usage = """
-        Usage: SidebarSettingsDemo [--style native|branded] [--appearance light|dark] \
+        Usage: SidebarSettingsDemo [--icons plain|tiled] [--appearance light|dark] \
         [--scenario 1|2|3|4|5|6|6b|7] [--window-id-file PATH]
         """
 
@@ -130,19 +130,17 @@ extension DemoArguments.ParseError: CustomStringConvertible {
     }
 }
 
-extension DemoArguments.Style {
-    /// The kit's style preset this name stands for.
-    var sidebarStyle: SidebarSettingsStyle {
+extension DemoArguments.Icons: DemoChoice {
+    /// The control panel's row of text for this choice.
+    var label: String { rawValue.capitalized }
+
+    /// The kit's choice this name stands for.
+    var value: SidebarSettingsConfiguration.Icons {
         switch self {
-        case .native: .native
-        case .branded: .branded
+        case .plain: .plain
+        case .tiled: .tiled
         }
     }
-}
-
-extension DemoArguments.Style: DemoChoice {
-    /// The control panel's row of text for this style.
-    var label: String { rawValue.capitalized }
 }
 
 extension DemoArguments.Appearance {

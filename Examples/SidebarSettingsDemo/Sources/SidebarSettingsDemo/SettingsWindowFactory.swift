@@ -14,13 +14,8 @@ enum SettingsWindowFactory {
     ) -> SidebarSettingsWindow<FixturePage> {
         let sections = options.grouping.sections(of: options.pages.fixturePages)
         let configuration = options.configuration
-        let style = options.style.sidebarStyle
         let detail = { (page: FixturePage) in
-            DemoDetail(
-                page: page,
-                scrollsItself: !options.detailScrolling,
-                startScrolled: startScrolled
-            )
+            DemoPage(page: page, startScrolled: startScrolled)
         }
         let header = { FixtureHeader() }
         let footer = { DemoFooter(tall: options.tallFooter) }
@@ -29,18 +24,18 @@ enum SettingsWindowFactory {
         switch (options.chrome.showsHeader, options.chrome.showsFooter) {
         case (false, false):
             return SidebarSettingsWindow(
-                sections: sections, configuration: configuration, style: style, detail: detail)
+                sections: sections, configuration: configuration, detail: detail)
         case (true, false):
             return SidebarSettingsWindow(
-                sections: sections, configuration: configuration, style: style, header: header,
+                sections: sections, configuration: configuration, header: header,
                 detail: detail)
         case (false, true):
             return SidebarSettingsWindow(
-                sections: sections, configuration: configuration, style: style, footer: footer,
+                sections: sections, configuration: configuration, footer: footer,
                 detail: detail)
         case (true, true):
             return SidebarSettingsWindow(
-                sections: sections, configuration: configuration, style: style, header: header,
+                sections: sections, configuration: configuration, header: header,
                 footer: footer, detail: detail)
         }
     }
@@ -59,67 +54,57 @@ private struct DemoFooter: View {
     }
 }
 
-/// A page's detail. When the window does not put pages in a scroll view, the page brings its
-/// own and tells the window's separator where it is.
-private struct DemoDetail: View {
+/// A page as most apps write one, and as System Settings' are: a grouped `Form`, which scrolls
+/// itself and gives its switches System Settings' size.
+private struct DemoPage: View {
     let page: FixturePage
-    let scrollsItself: Bool
+    /// Whether the page opens scrolled to its end, so the line under the toolbar shows.
     let startScrolled: Bool
 
-    private static let endAnchor = "end"
+    /// The settings that are on; every second one to begin with.
+    @State private var on = Set(stride(from: 2, through: Self.longRowCount, by: 2))
+
+    private static let longRowCount = 48
+    private static let shortRowCount = 5
+    private static let rowsPerSection = 8
+
+    private var rowCount: Int {
+        switch page.contentKind {
+        case .short: Self.shortRowCount
+        case .long: Self.longRowCount
+        }
+    }
 
     var body: some View {
-        if scrollsItself {
-            ScrollViewReader { proxy in
-                ScrollView { content }
-                    .sidebarSettingsScrollTracking()
-                    .task { await scrollToEnd(proxy) }
+        ScrollViewReader { proxy in
+            Form {
+                ForEach(Array(stride(from: 1, through: rowCount, by: Self.rowsPerSection)), id: \.self) {
+                    first in
+                    Section {
+                        ForEach(first...min(first + Self.rowsPerSection - 1, rowCount), id: \.self) { row in
+                            Toggle("Setting \(row)", isOn: isOn(row))
+                                .id(row)
+                        }
+                    }
+                }
             }
-        } else if startScrolled {
-            // The window owns the scroll view; a reader inside it scrolls that one.
-            ScrollViewReader { proxy in
-                content.task { await scrollToEnd(proxy) }
-            }
-        } else {
-            content
+            .formStyle(.grouped)
+            .task { await scrollToEnd(proxy) }
         }
     }
 
-    private var content: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if page == FixturePages.appearance {
-                LongFormPage()
-            } else {
-                FixtureDetail(page: page)
-            }
-            if startScrolled {
-                Color.clear
-                    .frame(height: 1)
-                    .id(Self.endAnchor)
-            }
+    private func isOn(_ row: Int) -> Binding<Bool> {
+        Binding {
+            on.contains(row)
+        } set: {
+            if $0 { on.insert(row) } else { on.remove(row) }
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
-    /// A page that opens scrolled has to wait for the scroll view to take its size first.
+    /// A page that opens scrolled has to wait for the form to take its size first.
     private func scrollToEnd(_ proxy: ScrollViewProxy) async {
         guard startScrolled else { return }
         try? await Task.sleep(for: .milliseconds(300))
-        proxy.scrollTo(Self.endAnchor, anchor: .bottom)
-    }
-}
-
-/// The demo's long page, written the way most apps write a settings page: a grouped `Form`,
-/// taller than the window and scrolled by the window's scroll view.
-private struct LongFormPage: View {
-    private static let rowCount = 48
-
-    var body: some View {
-        Form {
-            ForEach(1...Self.rowCount, id: \.self) { row in
-                Toggle("Setting \(row)", isOn: .constant(row.isMultiple(of: 2)))
-            }
-        }
-        .formStyle(.grouped)
+        proxy.scrollTo(rowCount, anchor: .bottom)
     }
 }

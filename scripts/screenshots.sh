@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Capture the demo's settings window, one PNG per style, appearance and scene.
+# Capture the demo's settings window, one PNG per kind of icons, appearance and scene.
 #
 # Works on a GitHub-hosted macOS runner (where /bin/bash already has Screen
 # Recording permission) and locally (where the terminal needs that permission
@@ -10,7 +10,7 @@ set -euo pipefail
 readonly DEMO_PACKAGE_DIR="Examples/SidebarSettingsDemo"
 readonly DEMO_BINARY="SidebarSettingsDemo"
 readonly SCENARIOS=(1 2 3 4 5 6 6b 7)
-readonly STYLES=(native branded)
+readonly ICONS=(plain tiled)
 readonly APPEARANCES=(light dark)
 readonly WINDOW_ID_TIMEOUT=60
 
@@ -77,16 +77,16 @@ wait_for_window_id() {
     return 1
 }
 
-# capture STYLE APPEARANCE SCENARIO: 0 when the PNG was written.
+# capture ICONS APPEARANCE SCENARIO: 0 when the PNG was written.
 capture() {
-    local style=$1 appearance=$2 scenario=$3
+    local icons=$1 appearance=$2 scenario=$3
     local window_id_file=$work_dir/window-id
-    local shot=$output_dir/macos-$macos_major-$style-$appearance-scenario-$scenario.png
+    local shot=$output_dir/macos-$macos_major-$icons-$appearance-scenario-$scenario.png
     local window_id
     local language_args=()
 
-    # Scenario 7 shows the kit's own words in Simplified Chinese. The demo declares English and
-    # Simplified Chinese in its embedded Info.plist, so the argument domain's AppleLanguages is
+    # Scenario 7 shows the kit's own words in Simplified Chinese. The demo declares every
+    # language the kit has in its embedded Info.plist, so the argument domain's AppleLanguages is
     # what the app's language follows; it changes this launch only, nothing is written to the
     # persistent defaults.
     if [[ $scenario == 7 ]]; then
@@ -95,7 +95,7 @@ capture() {
 
     rm -f "$window_id_file"
     ./"$DEMO_BINARY" \
-        --style "$style" \
+        --icons "$icons" \
         --appearance "$appearance" \
         --scenario "$scenario" \
         --window-id-file "$window_id_file" \
@@ -104,9 +104,9 @@ capture() {
 
     if ! wait_for_window_id "$window_id_file" "$demo_pid"; then
         if kill -0 "$demo_pid" 2>/dev/null; then
-            echo "FAIL $shot: scenario $scenario ($style, $appearance) wrote no window id within ${WINDOW_ID_TIMEOUT}s" >&2
+            echo "FAIL $shot: scenario $scenario ($icons icons, $appearance) wrote no window id within ${WINDOW_ID_TIMEOUT}s" >&2
         else
-            echo "FAIL $shot: scenario $scenario ($style, $appearance) exited before writing a window id" >&2
+            echo "FAIL $shot: scenario $scenario ($icons icons, $appearance) exited before writing a window id" >&2
         fi
         stop_demo
         return 1
@@ -128,10 +128,10 @@ capture() {
 
 captured=0
 failed=0
-for style in "${STYLES[@]}"; do
+for icons in "${ICONS[@]}"; do
     for appearance in "${APPEARANCES[@]}"; do
         for scenario in "${scenarios[@]}"; do
-            if capture "$style" "$appearance" "$scenario"; then
+            if capture "$icons" "$appearance" "$scenario"; then
                 captured=$((captured + 1))
             else
                 failed=$((failed + 1))

@@ -6,7 +6,7 @@ import SidebarSettingsKit
 /// The control panel's state: the pages, the sidebar's chrome, and every option of
 /// ``SidebarSettingsConfiguration``.
 struct DemoOptions {
-    var style = DemoArguments.Style.native
+    var icons = DemoArguments.Icons.plain
     var pages = PageSet.three
     var grouping = Grouping.ungrouped
     var chrome = Chrome.none
@@ -15,13 +15,12 @@ struct DemoOptions {
     var resizing = Resizing.fixed
     var autosave = true
     var sidebarWidth = SidebarWidth.fixed
-    var toolbarStyle = ToolbarStyle.unifiedCompact
+    var toolbarStyle = ToolbarStyle.automatic
     var showsNavigationButtons = true
     var title = Title.followsPage
     var separator = Separator.whenScrolled
     var search = true
     var navigationPersistence = NavigationPersistence.session
-    var detailScrolling = true
     var customStrings = false
 }
 
@@ -59,33 +58,20 @@ extension DemoOptions {
     /// How the pages are grouped in the sidebar.
     enum Grouping: DemoChoice {
         case ungrouped
-        case allTitled
-        case allUntitled
-        case mixed
+        case grouped
 
         var label: String {
             switch self {
             case .ungrouped: "Ungrouped"
-            case .allTitled: "All titled"
-            case .allUntitled: "All untitled"
-            case .mixed: "Mixed"
+            case .grouped: "Three groups"
             }
         }
 
-        /// The sidebar's groups for `pages`, split into three groups where the choice has
-        /// groups at all.
+        /// The sidebar's groups for `pages`: one, or three set apart by space.
         func sections(of pages: [FixturePage]) -> [SettingsPageSection<FixturePage>] {
-            guard self != .ungrouped else { return [SettingsPageSection(pages: pages)] }
-            let titles: [LocalizedStringResource] = ["Personal", "System", "Advanced"]
-            return Self.chunks(of: pages).enumerated().map { index, group in
-                let title: LocalizedStringResource? =
-                    switch self {
-                    case .allTitled: titles[index % titles.count]
-                    case .mixed where index == 1: "System"
-                    default: nil
-                    }
-                return title.map { SettingsPageSection($0, pages: group) }
-                    ?? SettingsPageSection(pages: group)
+            switch self {
+            case .ungrouped: [SettingsPageSection(pages: pages)]
+            case .grouped: Self.chunks(of: pages).map { SettingsPageSection(pages: $0) }
             }
         }
 
@@ -267,14 +253,16 @@ extension DemoOptions {
         }
     }
 
-    /// The kit's words, or the demo's own.
+    /// The kit's words, or the demo's own in their place, as an app that wants other words, or
+    /// is not localized, passes its own.
     var strings: SidebarSettingsConfiguration.Strings {
         guard customStrings else { return .default }
         return SidebarSettingsConfiguration.Strings(
             back: "Previous",
             forward: "Next",
             searchPrompt: "Find a page",
-            settingsMenuItem: "Preferences…"
+            settingsMenuItem: "Preferences…",
+            noSearchResults: "Nothing found"
         )
     }
 
@@ -291,8 +279,8 @@ extension DemoOptions {
         configuration.toolbarSeparator = separator.value
         configuration.search = search ? .enabled : .disabled
         configuration.navigationPersistence = navigationPersistence.value
-        configuration.detailScrolling = detailScrolling
         configuration.strings = strings
+        configuration.icons = icons.value
         return configuration
     }
 }

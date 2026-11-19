@@ -11,7 +11,7 @@ enum Scenario: String, Sendable, CaseIterable {
     case two = "2"
     /// The 40+ page set, opened on its last page with the sidebar scrolled to it.
     case three = "3"
-    /// Titled and untitled groups mixed in one sidebar.
+    /// The pages in three groups, set apart by space.
     case four = "4"
     /// An account header and the tall login area as the footer.
     case five = "5"
@@ -47,7 +47,7 @@ extension Scenario {
             options.pages = .many
             page = options.pages.fixturePages.last
         case .four:
-            options.grouping = .mixed
+            options.grouping = .grouped
         case .five:
             options.chrome = .both
             options.tallFooter = true

@@ -7,15 +7,25 @@ import Testing
 @testable import SidebarSettingsKit
 
 extension WindowTestSuite {
-    /// A page that is a grouped `Form`: the kit wraps it in its own scroll view, and the toolbar
-    /// separator must follow that view rather than the page's own.
+    /// A page that is a grouped `Form`, as System Settings' pages are: it scrolls itself, and the
+    /// window adds no scroll view around it. On macOS 14 and 15 the toolbar takes its background
+    /// from the scroll view right under it; around a scroll view of the kit's, it drew a lighter
+    /// bar with an edge, though nothing was scrolled.
     @Suite(.serialized) @MainActor
     struct GroupedFormTests {
-        @Test func separatorFollowsAGroupedFormInTheKitsScrollView() async throws {
-            let configuration = SidebarSettingsConfiguration.windowTest
-            #expect(configuration.detailScrolling)
+        @Test func theFormsScrollViewIsTheOnlyOneInTheDetail() async throws {
             try await withWindow(
-                pages: FixturePages.three, configuration: configuration,
+                pages: FixturePages.three, configuration: .windowTest,
+                detail: { _ in GroupedFormPage() }
+            ) { window in
+                let scrollViews = allViews(in: window.detailView).compactMap { $0 as? NSScrollView }
+                #expect(scrollViews.count == 1, "scroll views in the detail: \(scrollViews)")
+            }
+        }
+
+        @Test func separatorFollowsAGroupedForm() async throws {
+            try await withWindow(
+                pages: FixturePages.three, configuration: .windowTest,
                 detail: { _ in GroupedFormPage() }
             ) { window in
                 let detail = try window.detailScrollView()

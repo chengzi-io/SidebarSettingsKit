@@ -63,7 +63,9 @@ public struct ShortContentView: View {
 }
 
 /// The detail of a ``FixturePage``: its title over the long or short control list, chosen by
-/// the page's ``FixturePage/ContentKind``.
+/// the page's ``FixturePage/ContentKind``, in a scroll view of its own, as every page brings:
+/// the window adds none. Rows of a fixed height rather than a grouped `Form`, whose rows differ
+/// between macOS releases, keep the geometry the tests measure the same everywhere.
 public struct FixtureDetail: View {
     /// The page to draw.
     public let page: FixturePage
@@ -74,15 +76,17 @@ public struct FixtureDetail: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(page.title)
-                .font(.title2)
-                .padding(20)
-            switch page.contentKind {
-            case .short: ShortContentView()
-            case .long: LongContentView()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(page.title)
+                    .font(.title2)
+                    .padding(20)
+                switch page.contentKind {
+                case .short: ShortContentView()
+                case .long: LongContentView()
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 }

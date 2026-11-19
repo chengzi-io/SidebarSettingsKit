@@ -1,62 +1,60 @@
 import SwiftUI
 
-/// A page's icon as the style draws it: bare, or on a colored tile.
+/// A page's icon as the sidebar draws it: alone, or on a colored tile. A bare icon takes its
+/// tint from the row (`listItemTint`), so it turns white with the title when the row is selected.
 struct SettingsIconView: View {
     let icon: SettingsIcon
-    let style: SidebarSettingsStyle
+    let icons: SidebarSettingsConfiguration.Icons
 
-    /// The box an image or a custom icon fits in when the style sets no size.
-    private static let defaultImageSize: CGFloat = 16
+    @Environment(\.sidebarRowSize) private var rowSize
 
     var body: some View {
         switch icon.content {
         case .custom(let view):
-            let side = style.iconTile?.size ?? style.iconSize ?? Self.defaultImageSize
-            view.frame(width: side, height: side)
+            view.frame(width: slot, height: slot)
         case .image(let image):
-            if let tile = style.iconTile {
-                image.resizable().scaledToFit()
-                    .foregroundStyle(.white)
-                    .frame(width: style.iconSize ?? tile.size * 0.6, height: style.iconSize ?? tile.size * 0.6)
-                    .frame(width: tile.size, height: tile.size)
-                    .background(tileShape(tile).fill((icon.tint ?? tile.defaultColor).gradient))
+            if case .tiled(let defaultColor) = icons {
+                onTile(image.resizable().scaledToFit().frame(width: glyph, height: glyph), defaultColor)
             } else {
-                let side = style.iconSize ?? Self.defaultImageSize
                 image.resizable().scaledToFit()
-                    .tinted(icon.tint)
-                    .frame(width: side, height: side)
+                    .frame(width: slot, height: slot)
             }
         case .system(let name, let renderingMode, let variant, let weight):
             let symbol = Image(systemName: name)
                 .symbolVariant(variant)
                 .symbolRenderingMode(renderingMode)
                 .fontWeight(weight)
-            if let tile = style.iconTile {
-                symbol
-                    .font(.system(size: style.iconSize ?? tile.size * 0.6))
-                    .foregroundStyle(.white)
-                    .frame(width: tile.size, height: tile.size)
-                    .background(tileShape(tile).fill((icon.tint ?? tile.defaultColor).gradient))
-            } else if let size = style.iconSize {
-                symbol.font(.system(size: size)).tinted(icon.tint)
+            if case .tiled(let defaultColor) = icons {
+                onTile(symbol.font(.system(size: glyph)), defaultColor)
             } else {
-                symbol.tinted(icon.tint)
+                symbol
             }
         }
     }
 
-    private func tileShape(_ tile: SidebarSettingsStyle.IconTile) -> RoundedRectangle {
-        RoundedRectangle(cornerRadius: tile.cornerRadius, style: .continuous)
-    }
-}
-
-extension View {
-    @ViewBuilder
-    fileprivate func tinted(_ tint: Color?) -> some View {
-        if let tint {
-            foregroundStyle(tint)
-        } else {
-            self
+    /// The side of the sidebar's icon slot, which the user's Sidebar icon size setting picks.
+    /// Measured on the system's sidebar list; System Settings' tiles fill the same slot.
+    private var slot: CGFloat {
+        switch rowSize {
+        case .small: 16
+        case .medium: 20
+        case .large: 24
+        @unknown default: 20
         }
+    }
+
+    /// The symbol or image on a tile: 60 percent of the tile's side, as in System Settings.
+    private var glyph: CGFloat { slot * 0.6 }
+
+    /// `glyph` in white on a tile that fills the slot, its corners a quarter of its side, as in
+    /// System Settings, in the icon's tint or else `defaultColor`.
+    private func onTile(_ glyph: some View, _ defaultColor: Color) -> some View {
+        glyph
+            .foregroundStyle(.white)
+            .frame(width: slot, height: slot)
+            .background(
+                RoundedRectangle(cornerRadius: slot / 4, style: .continuous)
+                    .fill((icon.tint ?? defaultColor).gradient)
+            )
     }
 }

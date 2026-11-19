@@ -16,7 +16,7 @@ struct ControlPanelView: View {
         VStack(spacing: 0) {
             Form {
                 Section("Sidebar") {
-                    option("Style", $options.style)
+                    option("Icons", $options.icons)
                     option("Pages", $options.pages)
                     option("Grouping", $options.grouping)
                 }
@@ -37,9 +37,8 @@ struct ControlPanelView: View {
                 Section("Behavior") {
                     option("Toolbar separator", $options.separator)
                     Toggle("Search field", isOn: $options.search)
-                    Toggle("Kit scrolls the detail", isOn: $options.detailScrolling)
                     option("Reopening shows", $options.navigationPersistence)
-                    Toggle("Custom strings", isOn: $options.customStrings)
+                    Toggle("Own words for the kit's text (configuration.strings)", isOn: $options.customStrings)
                 }
             }
             .formStyle(.grouped)

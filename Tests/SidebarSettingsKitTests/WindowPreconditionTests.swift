@@ -20,7 +20,7 @@ struct WindowPreconditionTests {
         await #expect(processExitsWith: .failure) {
             await MainActor.run {
                 _ = SidebarSettingsWindow<FixturePage>(
-                    sections: [SettingsPageSection("Empty", pages: [])],
+                    sections: [SettingsPageSection(pages: [])],
                     detail: { _ in EmptyView() })
             }
         }

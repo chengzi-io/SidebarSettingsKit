@@ -43,6 +43,27 @@ extension WindowTestSuite {
             }
         }
 
+        /// Apple's guidelines dim a settings window's minimize and zoom buttons; it cannot go
+        /// full screen either. A resizable window still resizes from its edges.
+        @Test(arguments: [false, true])
+        func theWindowCannotBeMinimizedZoomedOrMadeFullScreen(resizable: Bool) async throws {
+            var configuration = SidebarSettingsConfiguration.windowTest
+            if resizable { configuration.resizing = .resizable() }
+            try await withWindow(configuration: configuration) { window in
+                let nsWindow = window.window
+                #expect(nsWindow.standardWindowButton(.miniaturizeButton)?.isEnabled == false)
+                #expect(nsWindow.standardWindowButton(.zoomButton)?.isEnabled == false)
+                // A test process cannot enter full screen whatever the window allows, so the
+                // flag AppKit reads is what can be checked.
+                #expect(nsWindow.collectionBehavior.contains(.fullScreenNone))
+
+                let frame = nsWindow.frame
+                nsWindow.zoom(nil)
+                await WindowTest.settle()
+                #expect(nsWindow.frame == frame)
+            }
+        }
+
         @Test func fixedSidebarWidth() async throws {
             var configuration = SidebarSettingsConfiguration.windowTest
             configuration.sidebarWidth = .fixed(260)

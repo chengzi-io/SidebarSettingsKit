@@ -46,10 +46,10 @@ enum WindowTest {
 
     /// Polls `condition` until it holds, and throws after `timeout` naming what it waited for.
     ///
-    /// Every wait awaits instead of running the run loop. The kit updates the window's title
-    /// and the toolbar separator from `Task { @MainActor in … }`, and a synchronous body that
-    /// blocks the main thread in `RunLoop.main.run(until:)` starves that task and the main
-    /// queue both (checked on macOS 15.7: neither ran), so a test would read stale state.
+    /// Every wait awaits instead of running the run loop. The kit updates the toolbar
+    /// separator from `Task { @MainActor in … }`, and a synchronous body that blocks the main
+    /// thread in `RunLoop.main.run(until:)` starves that task and the main queue both (checked
+    /// on macOS 15.7: neither ran), so a test would read stale state.
     static func wait(
         for condition: String,
         timeout: Duration = timeout,
@@ -205,6 +205,59 @@ func typeKeys(_ text: String, in window: NSWindow) throws {
     }
 }
 
+/// A key that types no text.
+enum Key {
+    case up, down, tab, delete
+
+    fileprivate var characters: String {
+        switch self {
+        case .up: String(utf16CodeUnits: [unichar(NSUpArrowFunctionKey)], count: 1)
+        case .down: String(utf16CodeUnits: [unichar(NSDownArrowFunctionKey)], count: 1)
+        case .tab: "\t"
+        case .delete: "\u{7f}"
+        }
+    }
+
+    fileprivate var keyCode: UInt16 {
+        switch self {
+        case .up: 126
+        case .down: 125
+        case .tab: 48
+        case .delete: 51
+        }
+    }
+
+    /// The flags AppKit puts on an arrow key's events.
+    fileprivate var modifierFlags: NSEvent.ModifierFlags {
+        switch self {
+        case .up, .down: [.numericPad, .function]
+        case .tab, .delete: []
+        }
+    }
+}
+
+/// Presses `key` in `window`'s first responder.
+@MainActor
+func press(_ key: Key, in window: NSWindow) throws {
+    let event = try require(
+        NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: key.modifierFlags,
+            timestamp: ProcessInfo.processInfo.systemUptime,
+            windowNumber: window.windowNumber, context: nil, characters: key.characters,
+            charactersIgnoringModifiers: key.characters, isARepeat: false, keyCode: key.keyCode),
+        "an NSEvent for \(key)")
+    window.sendEvent(event)
+}
+
+/// Whether `field` has the keyboard focus: the window's field editor is editing it.
+@MainActor
+func isFocused(_ field: NSSearchField, in window: NSWindow) -> Bool {
+    guard let responder = window.firstResponder else { return false }
+    if responder === field { return true }
+    guard let editor = responder as? NSTextView else { return false }
+    return editor.delegate as AnyObject? === field
+}
+
 /// The defaults keys `UserDefaults.standard` holds, for the tests that assert the kit stores
 /// nothing.
 func defaultsKeys() -> Set<String> {
@@ -269,6 +322,18 @@ extension SidebarSettingsConfiguration {
         configuration.autosaveName = nil
         return configuration
     }
+
+    /// This configuration drawing `icons`.
+    func drawing(_ icons: Icons) -> Self {
+        var configuration = self
+        configuration.icons = icons
+        return configuration
+    }
+}
+
+extension SidebarSettingsConfiguration.Icons {
+    /// Both ways the sidebar draws icons, for the tests that must hold for each.
+    static let bothKinds: [Self] = [.plain, .tiled]
 }
 
 /// A shown settings window and the parts of it the tests read.
@@ -304,7 +369,7 @@ struct WindowUnderTest {
         window.toolbar?.items.first { $0.itemIdentifier == identifier }
     }
 
-    /// The scroll view the kit put the page in, when `detailScrolling` is on, or the page's own.
+    /// The page's own scroll view: the window adds none.
     func detailScrollView() throws -> NSScrollView {
         try require(firstScrollView(in: detailView), "a scroll view in the detail column")
     }
@@ -353,12 +418,11 @@ func withWindow(
     pages: [FixturePage] = FixturePages.three,
     initialPage: FixturePage? = nil,
     configuration: SidebarSettingsConfiguration = .windowTest,
-    style: SidebarSettingsStyle = .native,
     page: FixturePage? = nil,
     _ body: (WindowUnderTest) async throws -> Void
 ) async throws {
     let settings = SidebarSettingsWindow(
-        pages: pages, initialPage: initialPage, configuration: configuration, style: style
+        pages: pages, initialPage: initialPage, configuration: configuration
     ) { page in
         FixtureDetail(page: page)
     }
@@ -372,13 +436,12 @@ func withWindow<Detail: View>(
     pages: [FixturePage] = FixturePages.three,
     initialPage: FixturePage? = nil,
     configuration: SidebarSettingsConfiguration = .windowTest,
-    style: SidebarSettingsStyle = .native,
     page: FixturePage? = nil,
     @ViewBuilder detail: @escaping (FixturePage) -> Detail,
     _ body: (WindowUnderTest) async throws -> Void
 ) async throws {
     let settings = SidebarSettingsWindow(
-        pages: pages, initialPage: initialPage, configuration: configuration, style: style,
+        pages: pages, initialPage: initialPage, configuration: configuration,
         detail: detail)
     try await withWindow(settings, page: page, body)
 }
@@ -389,12 +452,11 @@ func withWindow(
     sections: [SettingsPageSection<FixturePage>],
     initialPage: FixturePage? = nil,
     configuration: SidebarSettingsConfiguration = .windowTest,
-    style: SidebarSettingsStyle = .native,
     page: FixturePage? = nil,
     _ body: (WindowUnderTest) async throws -> Void
 ) async throws {
     let settings = SidebarSettingsWindow(
-        sections: sections, initialPage: initialPage, configuration: configuration, style: style
+        sections: sections, initialPage: initialPage, configuration: configuration
     ) { page in
         FixtureDetail(page: page)
     }

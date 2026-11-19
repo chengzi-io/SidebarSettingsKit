@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// How the settings window behaves. Every option defaults to what System Settings does;
 /// change only the ones you need.
@@ -24,8 +25,8 @@ public struct SidebarSettingsConfiguration: Sendable {
     /// collapses.
     public var sidebarWidth = SidebarWidth.fixed(215)
 
-    /// The toolbar's look. Default ``ToolbarStyle/unifiedCompact``.
-    public var toolbarStyle = ToolbarStyle.unifiedCompact
+    /// The toolbar's look. Default ``ToolbarStyle/automatic``.
+    public var toolbarStyle = ToolbarStyle.automatic
 
     /// Whether the toolbar shows back and forward buttons. Default `true`.
     public var showsNavigationButtons = true
@@ -33,7 +34,8 @@ public struct SidebarSettingsConfiguration: Sendable {
     /// The window's title. Default ``TitleMode/followsPage``.
     public var title = TitleMode.followsPage
 
-    /// When the line under the toolbar shows. Default ``SeparatorMode/whenScrolled``.
+    /// When the line under the toolbar shows. Default ``SeparatorMode/whenScrolled``, which
+    /// follows the page's own form, list or scroll view.
     public var toolbarSeparator = SeparatorMode.whenScrolled
 
     /// Whether the sidebar has a search field. Default ``SearchMode/enabled``. To change
@@ -43,16 +45,11 @@ public struct SidebarSettingsConfiguration: Sendable {
     /// What the window shows when it opens again. Default ``NavigationPersistence/session``.
     public var navigationPersistence = NavigationPersistence.session
 
-    /// Whether the window puts each page in a scroll view. Default `true`.
-    ///
-    /// Set it to `false` when a page scrolls by itself, such as a `Form` or a `List`, and
-    /// apply ``SwiftUICore/View/sidebarSettingsScrollTracking()`` to that page's scrolling
-    /// view so the line under the toolbar still follows it.
-    public var detailScrolling = true
-
-    /// The words the window shows. Default ``Strings/default``, in English and Simplified
-    /// Chinese.
+    /// The words the window shows. Default ``Strings/default``, in every language macOS has.
     public var strings = Strings.default
+
+    /// How the sidebar draws the pages' icons. Default ``Icons/plain``.
+    public var icons = Icons.plain
 
     /// The defaults, which match System Settings.
     public init() {}
@@ -80,7 +77,7 @@ public struct SidebarSettingsConfiguration: Sendable {
         case unifiedCompact
         /// One taller row with the title and buttons.
         case unified
-        /// The system's choice for the window.
+        /// The system's choice for the window: on macOS 15, the same as ``unified``.
         case automatic
     }
 
@@ -124,8 +121,24 @@ public struct SidebarSettingsConfiguration: Sendable {
         case resetOnShow
     }
 
-    /// The words the window shows. Each defaults to the kit's own, in English or Simplified
-    /// Chinese, whichever the app runs in, falling back to English; set one to use your own.
+    /// How the sidebar draws the pages' icons. Either way an icon fills the sidebar's icon slot,
+    /// 16, 20 or 24 points as the user's Sidebar icon size setting picks, and every row keeps
+    /// the system's text and height.
+    public enum Icons: Sendable, Equatable {
+        /// The icon alone, as the system's sidebars draw it: in its ``SettingsIcon`` tint or the
+        /// sidebar's color, and white with the title on the selected row.
+        case plain
+        /// Each icon in white on a colored rounded square, as System Settings draws them. The
+        /// square takes the icon's tint; an icon without one gets `defaultColor`.
+        case tiled(defaultColor: Color)
+
+        /// Tiles in gray for icons without a tint, as System Settings' General tile is.
+        public static var tiled: Self { .tiled(defaultColor: .gray) }
+    }
+
+    /// The words the window shows. Each defaults to the kit's own, macOS's wording in the
+    /// language the app runs in, or English when the app declares no language; set one to use
+    /// your own.
     public struct Strings: Sendable {
         /// The back button's label, in the toolbar's overflow menu and for VoiceOver.
         public var back: LocalizedStringResource
@@ -136,18 +149,22 @@ public struct SidebarSettingsConfiguration: Sendable {
         /// The menu item that opens the window, used by ``SidebarSettingsCommands`` and
         /// ``OpenSidebarSettingsButton``.
         public var settingsMenuItem: LocalizedStringResource
+        /// What the sidebar shows in place of the pages when a search finds none.
+        public var noSearchResults: LocalizedStringResource
 
         /// The kit's words, with yours where given.
         public init(
             back: LocalizedStringResource? = nil,
             forward: LocalizedStringResource? = nil,
             searchPrompt: LocalizedStringResource? = nil,
-            settingsMenuItem: LocalizedStringResource? = nil
+            settingsMenuItem: LocalizedStringResource? = nil,
+            noSearchResults: LocalizedStringResource? = nil
         ) {
             self.back = back ?? Self.kitString("Back")
             self.forward = forward ?? Self.kitString("Forward")
             self.searchPrompt = searchPrompt ?? Self.kitString("Search")
             self.settingsMenuItem = settingsMenuItem ?? Self.kitString("Settings…")
+            self.noSearchResults = noSearchResults ?? Self.kitString("No Results")
         }
 
         /// The kit's words.

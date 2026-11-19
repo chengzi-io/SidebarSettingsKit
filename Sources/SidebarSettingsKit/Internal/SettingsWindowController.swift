@@ -18,12 +18,24 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         let canGoForward: () -> Bool
         let goBack: () -> Void
         let goForward: () -> Void
-        /// Reads observable state, so the title follows it.
         let pageTitle: () -> String
+
+        /// The page's title and the buttons' state. Read in a view's body, it makes SwiftUI
+        /// update the view when they change.
+        var state: State {
+            State(title: pageTitle(), canGoBack: canGoBack(), canGoForward: canGoForward())
+        }
+
+        struct State: Equatable {
+            let title: String
+            let canGoBack: Bool
+            let canGoForward: Bool
+        }
     }
 
     static let backItem = NSToolbarItem.Identifier("SidebarSettingsKit.back")
     static let forwardItem = NSToolbarItem.Identifier("SidebarSettingsKit.forward")
+    static let leadingSpaceItem = NSToolbarItem.Identifier("SidebarSettingsKit.leadingSpace")
 
     let configuration: SidebarSettingsConfiguration
     let scrollState: DetailScrollState
@@ -45,8 +57,27 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         self.navigation = navigation
         self.scrollState = scrollState
 
+        // Apple's guidelines dim a settings window's minimize and zoom buttons: ⌘, brings it
+        // back, and it is sized for its pages. A resizable window still resizes from its edges.
+        var styleMask: NSWindow.StyleMask = [.titled, .closable, .fullSizeContentView]
+        if case .resizable = configuration.resizing { styleMask.insert(.resizable) }
+        let window = SettingsWindow(
+            contentRect: .zero,
+            styleMask: styleMask,
+            backing: .buffered,
+            defer: true
+        )
+
         let sidebarController = NSHostingController(rootView: sidebar.softScrollEdgeOnMacOS26())
-        let detailController = NSHostingController(rootView: detail)
+        // The title and the buttons change in the SwiftUI update that draws the new page. Set
+        // after it, from an observation, the old title stayed over the new page for a frame.
+        let detailController = NSHostingController(
+            rootView: detail.modifier(
+                FollowsNavigation(navigation: navigation) { [weak window] in
+                    Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
+                }
+            )
+        )
         // The split view and the window size the columns; the content's ideal size must not.
         sidebarController.sizingOptions = []
         detailController.sizingOptions = []
@@ -67,16 +98,14 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         splitViewController.addSplitViewItem(sidebarItem)
         splitViewController.addSplitViewItem(detailItem)
 
-        var styleMask: NSWindow.StyleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
-        if case .resizable = configuration.resizing { styleMask.insert(.resizable) }
-        let window = SettingsWindow(
-            contentRect: .zero,
-            styleMask: styleMask,
-            backing: .buffered,
-            defer: true
-        )
         // The controller owns the window; AppKit must not release it again on close.
         window.isReleasedWhenClosed = false
+        // AppKit gives a resizable window full screen and an enabled zoom button.
+        window.collectionBehavior.insert(.fullScreenNone)
+        window.standardWindowButton(.zoomButton)?.isEnabled = false
+        // The split view leaves the list's next key view a view that takes no focus, so Tab
+        // from the list went nowhere; System Settings' Tab goes back to the search field.
+        window.autorecalculatesKeyViewLoop = true
         // Set after init: `NSWindow(contentViewController:)` leaves the title "Untitled"
         // until something changes it.
         window.contentViewController = splitViewController
@@ -101,11 +130,14 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         // first title came out unlocalized.
         let toolbar = NSToolbar(identifier: "SidebarSettingsKit")
         toolbar.delegate = self
+        // In an app, the taller toolbar shows "Back" and "Forward" under the arrows; System
+        // Settings shows none. A test process gets icons only either way.
+        toolbar.displayMode = .iconOnly
         window.toolbar = toolbar
         window.toolbarStyle = configuration.toolbarStyle.appKit
         if configuration.title == .hidden { window.titleVisibility = .hidden }
 
-        followTitle()
+        Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
         followSeparator()
     }
 
@@ -129,20 +161,19 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// The window's title, and the back and forward buttons' state, follow the page.
-    private func followTitle() {
-        let title = withObservationTracking {
+    /// Shows the page's title, or the fixed one, and the back and forward buttons' state.
+    private static func showNavigation(
+        in window: NSWindow?,
+        configuration: SidebarSettingsConfiguration,
+        navigation: Navigation
+    ) {
+        guard let window else { return }
+        window.title =
             switch configuration.title {
             case .followsPage, .hidden: navigation.pageTitle()
             case .fixed(let resource): String(localized: resource)
             }
-        } onChange: { [weak self] in
-            // Weak here, not only in the task: the navigator keeps this closure, and the
-            // window's views keep the navigator.
-            Task { @MainActor [weak self] in self?.followTitle() }
-        }
-        window?.title = title
-        window?.toolbar?.validateVisibleItems()
+        window.toolbar?.validateVisibleItems()
     }
 
     /// AppKit's automatic separator loses track once SwiftUI swaps the detail's content and
@@ -171,9 +202,15 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     }
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        configuration.showsNavigationButtons
-            ? [.sidebarTrackingSeparator, Self.backItem, Self.forwardItem]
-            : [.sidebarTrackingSeparator]
+        if configuration.showsNavigationButtons {
+            return [.sidebarTrackingSeparator, Self.backItem, Self.forwardItem]
+        }
+        // Alone, the title sat 11 pt from the sidebar, left of the page's grouped form (20 pt
+        // in). An empty navigational item comes before the title, as the buttons do, and the
+        // gap AppKit leaves after it lines the title up with the page. macOS 26 puts toolbar
+        // items on glass, where an empty item is unchecked, so its toolbar stays AppKit's.
+        if #available(macOS 26, *) { return [.sidebarTrackingSeparator] }
+        return [.sidebarTrackingSeparator, Self.leadingSpaceItem]
     }
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -185,14 +222,24 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         itemForItemIdentifier identifier: NSToolbarItem.Identifier,
         willBeInsertedIntoToolbar flag: Bool
     ) -> NSToolbarItem? {
+        if identifier == Self.leadingSpaceItem {
+            let item = NSToolbarItem(itemIdentifier: identifier)
+            let space = NSView()
+            // The gap AppKit leaves between items is the space.
+            space.widthAnchor.constraint(equalToConstant: 0).isActive = true
+            item.view = space
+            item.isNavigational = true
+            return item
+        }
         let isBack = identifier == Self.backItem
         guard isBack || identifier == Self.forwardItem else { return nil }
         let label = String(localized: isBack ? configuration.strings.back : configuration.strings.forward)
         let item = NSToolbarItem(itemIdentifier: identifier)
         item.label = label
         item.toolTip = label
+        // Backward and forward, not left and right: in Arabic and Hebrew back points right.
         item.image = NSImage(
-            systemSymbolName: isBack ? "chevron.left" : "chevron.right",
+            systemSymbolName: isBack ? "chevron.backward" : "chevron.forward",
             accessibilityDescription: label
         )
         item.isBordered = true
@@ -219,11 +266,25 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     }
 }
 
+/// Calls `show` in the SwiftUI update that draws a new page or changes the history.
+private struct FollowsNavigation: ViewModifier {
+    let navigation: SettingsWindowController.Navigation
+    let show: @MainActor () -> Void
+
+    func body(content: Content) -> some View {
+        content.onChange(of: navigation.state) { show() }
+    }
+}
+
 /// Takes the window's keyboard shortcuts before the main menu, so they work in an app
 /// without a File or Go menu, such as a menu bar app.
 final class SettingsWindow: NSWindow {
     var onBack: (() -> Void)?
     var onForward: (() -> Void)?
+
+    /// The zoom button is dimmed; a double-click on the title bar or a menu item that calls
+    /// this directly must not zoom the window either.
+    override func zoom(_ sender: Any?) {}
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         guard event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command else {

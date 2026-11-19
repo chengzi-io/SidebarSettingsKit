@@ -21,7 +21,7 @@ final class Demo {
     init(arguments: DemoArguments) {
         self.arguments = arguments
         var options = DemoOptions()
-        options.style = arguments.style
+        options.icons = arguments.icons
         self.options = options
         settingsWindow = SettingsWindowFactory.make(options: options)
     }

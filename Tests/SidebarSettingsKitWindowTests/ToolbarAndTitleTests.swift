@@ -60,6 +60,29 @@ extension WindowTestSuite {
             }
         }
 
+        /// With the buttons off, AppKit alone set the title 11 pt from the sidebar, left of the
+        /// page's grouped form (20 pt in); the title must line up with the page instead.
+        @Test(
+            .disabled(
+                if: ProcessInfo.processInfo.isOperatingSystemAtLeast(
+                    OperatingSystemVersion(majorVersion: 26, minorVersion: 0, patchVersion: 0)),
+                "macOS 26's toolbar is left as AppKit lays it out"))
+        func theTitleLinesUpWithThePageWithoutTheButtons() async throws {
+            var configuration = SidebarSettingsConfiguration.windowTest
+            configuration.showsNavigationButtons = false
+            try await withWindow(configuration: configuration) { window in
+                let frameView = try require(
+                    window.window.contentView?.superview, "the window's frame view")
+                let title = try require(
+                    allViews(in: frameView).compactMap { $0 as? NSTextField }
+                        .first { !$0.isEditable && $0.stringValue == window.window.title },
+                    "the toolbar's title")
+                // The title's text starts 2 pt inside its box.
+                let gap = frameInWindow(title).minX - frameInWindow(window.sidebarView).maxX
+                #expect((17...21).contains(gap), "the title starts \(gap) pt from the sidebar")
+            }
+        }
+
         @Test func navigationButtonsStartDisabledAndEnableAfterNavigation() async throws {
             try await withWindow { window in
                 let back = try require(
@@ -116,6 +139,26 @@ extension WindowTestSuite {
             }
         }
 
+        /// The title and the back button change in the update that draws the new page: set after
+        /// it, the old title stayed over the new page for a frame.
+        @Test func titleAndButtonsChangeInTheUpdateThatShowsThePage() async throws {
+            try await withWindow(pages: FixturePages.three, initialPage: FixturePages.general) {
+                window in
+                let back = try require(
+                    window.toolbarItem(SettingsWindowController.backItem), "the back button")
+                window.window.toolbar?.validateVisibleItems()
+                #expect(back.isEnabled == false)
+
+                window.settings.navigator.open(FixturePages.appearance)
+                // SwiftUI updates the page from the run loop. Running it from this task lets
+                // that update happen and no task or main-queue block run, so anything set later
+                // than the update is not set yet.
+                runTheRunLoop(for: 0.2)
+                #expect(window.window.title == String(localized: FixturePages.appearance.title))
+                #expect(back.isEnabled)
+            }
+        }
+
         @Test func fixedTitleStaysThroughPageChanges() async throws {
             var configuration = SidebarSettingsConfiguration.windowTest
             configuration.title = .fixed("Settings")
@@ -144,4 +187,11 @@ extension WindowTestSuite {
             }
         }
     }
+}
+
+/// Runs the main run loop from the calling task: SwiftUI's updates happen, and no other task or
+/// main-queue block runs until it returns.
+@MainActor
+private func runTheRunLoop(for seconds: TimeInterval) {
+    RunLoop.main.run(until: .now.addingTimeInterval(seconds))
 }

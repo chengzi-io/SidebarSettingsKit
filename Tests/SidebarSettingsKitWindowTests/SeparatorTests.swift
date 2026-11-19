@@ -94,35 +94,6 @@ extension WindowTestSuite {
             }
         }
 
-        @Test func separatorFollowsThePagesOwnScrollView() async throws {
-            var configuration = SidebarSettingsConfiguration.windowTest
-            configuration.detailScrolling = false
-            try await withWindow(
-                initialPage: FixturePages.appearance, configuration: configuration,
-                detail: { page in OwnScrollingDetail(page: page) }
-            ) { window in
-                // Without `detailScrolling` the page's scroll view is the only one in the column.
-                let detail = try window.detailScrollView()
-                try requireScrollable(detail, atLeast: LongContentView.minimumHeight)
-
-                if #available(macOS 15.0, *) {
-                    try await WindowTest.wait(for: "the line to be hidden at the top") {
-                        window.separator == .none
-                    }
-                    scroll(detail, toOffsetFromTop: 250)
-                    try await WindowTest.wait(for: "the line to show past the top") {
-                        window.separator == .line
-                    }
-                    scroll(detail, toOffsetFromTop: 0)
-                    try await WindowTest.wait(for: "the line to hide again at the top") {
-                        window.separator == .none
-                    }
-                } else {
-                    #expect(window.separator == .line)
-                }
-            }
-        }
-
         @Test func newPageStartsAtTheTop() async throws {
             try await withWindow(initialPage: FixturePages.appearance) { window in
                 let long = try window.detailScrollView()
@@ -149,20 +120,5 @@ extension WindowTestSuite {
                 }
             }
         }
-    }
-}
-
-/// A page that scrolls itself, as a `Form` or `List` does, and tells the window about it.
-private struct OwnScrollingDetail: View {
-    let page: FixturePage
-
-    var body: some View {
-        ScrollView {
-            switch page.contentKind {
-            case .short: ShortContentView()
-            case .long: LongContentView()
-            }
-        }
-        .sidebarSettingsScrollTracking()
     }
 }

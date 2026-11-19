@@ -17,13 +17,13 @@ extension WindowTestSuite {
         /// Opens the forty-page sidebar with a header and a tall footer, checks that it really is
         /// taller than the space it has, and hands it to `body`.
         private static func withTallSidebar(
-            style: SidebarSettingsStyle,
+            icons: SidebarSettingsConfiguration.Icons,
             _ body: (WindowUnderTest, NSScrollView, ViewAnchor, ViewAnchor) async throws -> Void
         ) async throws {
             let header = ViewAnchor()
             let footer = ViewAnchor()
             let settings = SidebarSettingsWindow(
-                pages: FixturePages.many, configuration: .windowTest, style: style,
+                pages: FixturePages.many, configuration: .windowTest.drawing(icons),
                 header: { probed(header, FixtureHeader()) },
                 footer: { probed(footer, TallFooter()) },
                 detail: { page in FixtureDetail(page: page) }
@@ -52,7 +52,7 @@ extension WindowTestSuite {
 
         /// What the sidebar shows once the last page is selected.
         private struct LastPageSighting {
-            let style: SidebarSettingsStyle
+            let icons: SidebarSettingsConfiguration.Icons
             let footer: Bool
             let shownOnOpen: Bool
             /// The last page's row, and the part of the list a person sees, in window
@@ -74,7 +74,7 @@ extension WindowTestSuite {
         /// Opens the forty-page sidebar on the last page, by `navigator.open` or by
         /// `show(page:)`, and measures whether that page came into sight.
         private static func lastPageSighting(
-            style: SidebarSettingsStyle,
+            icons: SidebarSettingsConfiguration.Icons,
             footer: Bool,
             shownOnOpen: Bool
         ) async throws -> LastPageSighting {
@@ -83,12 +83,12 @@ extension WindowTestSuite {
             let settings =
                 footer
                 ? SidebarSettingsWindow(
-                    pages: FixturePages.many, configuration: .windowTest, style: style,
+                    pages: FixturePages.many, configuration: .windowTest.drawing(icons),
                     header: { probed(headerAnchor, FixtureHeader()) },
                     footer: { probed(footerAnchor, TallFooter()) },
                     detail: { page in FixtureDetail(page: page) })
                 : SidebarSettingsWindow(
-                    pages: FixturePages.many, configuration: .windowTest, style: style,
+                    pages: FixturePages.many, configuration: .windowTest.drawing(icons),
                     header: { probed(headerAnchor, FixtureHeader()) },
                     detail: { page in FixtureDetail(page: page) })
 
@@ -106,7 +106,7 @@ extension WindowTestSuite {
                 _ = try await WindowTest.settled { scrollOffsetFromTop(sidebar) }
                 let table = try require(window.sidebarTable(), "the sidebar's table")
                 sighting = LastPageSighting(
-                    style: style,
+                    icons: icons,
                     footer: footer,
                     shownOnOpen: shownOnOpen,
                     lastRow: table.convert(table.rect(ofRow: table.numberOfRows - 1), to: nil),
@@ -116,8 +116,8 @@ extension WindowTestSuite {
         }
 
         @Test func aFullSidebarScrolls() async throws {
-            for style in [SidebarSettingsStyle.native, .branded] {
-                try await Self.withTallSidebar(style: style) { window, sidebar, _, _ in
+            for icons in SidebarSettingsConfiguration.Icons.bothKinds {
+                try await Self.withTallSidebar(icons: icons) { window, sidebar, _, _ in
                     let rows = try require(window.sidebarTable(), "the sidebar's table")
                         .numberOfRows
                     #expect(rows >= FixturePages.many.count)
@@ -130,8 +130,8 @@ extension WindowTestSuite {
         }
 
         @Test func footerStaysAtTheSidebarsBottomWhileTheListScrolls() async throws {
-            for style in [SidebarSettingsStyle.native, .branded] {
-                try await Self.withTallSidebar(style: style) { window, sidebar, _, footer in
+            for icons in SidebarSettingsConfiguration.Icons.bothKinds {
+                try await Self.withTallSidebar(icons: icons) { window, sidebar, _, footer in
                     let sidebarBottom = frameInWindow(window.sidebarView).minY
                     let before = try require(footer.frameInWindow, "the footer in the window")
                     // The footer's own bottom edge is the sidebar's.
@@ -146,8 +146,8 @@ extension WindowTestSuite {
         }
 
         @Test func headerScrollsUpWithTheList() async throws {
-            for style in [SidebarSettingsStyle.native, .branded] {
-                try await Self.withTallSidebar(style: style) { window, sidebar, header, _ in
+            for icons in SidebarSettingsConfiguration.Icons.bothKinds {
+                try await Self.withTallSidebar(icons: icons) { window, sidebar, header, _ in
                     // The list may open scrolled to the selected page, which hides the header.
                     scroll(sidebar, toOffsetFromTop: 0)
                     try await WindowTest.wait(for: "the header to come into view") { header.isShown }
@@ -165,15 +165,15 @@ extension WindowTestSuite {
         }
 
         @Test func theSidebarBringsTheLastPageIntoSight() async throws {
-            for style in [SidebarSettingsStyle.native, .branded] {
+            for icons in SidebarSettingsConfiguration.Icons.bothKinds {
                 for footer in [false, true] {
                     for shownOnOpen in [false, true] {
                         let sighting = try await Self.lastPageSighting(
-                            style: style, footer: footer, shownOnOpen: shownOnOpen)
+                            icons: icons, footer: footer, shownOnOpen: shownOnOpen)
                         #expect(
                             sighting.isInSight,
                             """
-                            the last page is not in sight for \(style == .native ? "native" : "branded"), \
+                            the last page is not in sight for \(icons) icons, \
                             footer: \(footer), shown on open: \(shownOnOpen): \(sighting.shortfall)
                             """)
                     }
