@@ -26,6 +26,7 @@ struct DetailContainer<Page: SettingsPage, Content: View>: View {
     var body: some View {
         let page = navigator.selection
         content(page)
+            .modifier(ProbeDetailEdge())
             .modifier(ScrollTracking())
             .id(page)
             .clearScrollBackgroundOnMacOS26()
@@ -60,10 +61,28 @@ extension View {
     /// keep their own: without it macOS 15 draws a band under the toolbar.
     @ViewBuilder
     fileprivate func clearScrollBackgroundOnMacOS26() -> some View {
-        if #available(macOS 26.0, *) {
+        if #available(macOS 26.0, *), !SettingsWindowController.probe.contains("noClearBg") {
             scrollContentBackground(.hidden)
         } else {
             self
+        }
+    }
+}
+
+/// Probe branch only: the page's scroll edge effect style.
+private struct ProbeDetailEdge: ViewModifier {
+    func body(content: Content) -> some View {
+        let probe = SettingsWindowController.probe
+        if #available(macOS 26.0, *) {
+            if probe.contains("detailSoft") {
+                content.scrollEdgeEffectStyle(.soft, for: .all)
+            } else if probe.contains("detailHard") {
+                content.scrollEdgeEffectStyle(.hard, for: .all)
+            } else {
+                content
+            }
+        } else {
+            content
         }
     }
 }
