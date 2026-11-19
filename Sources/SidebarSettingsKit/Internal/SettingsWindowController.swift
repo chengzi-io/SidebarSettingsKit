@@ -13,6 +13,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     NSToolbarItemValidation
 {
     /// Probe branch only: comma-separated switches from SSK_PROBE.
+    static let probeGroupItem = NSToolbarItem.Identifier("SidebarSettingsKit.probeGroup")
     static let probe = Set(
         (ProcessInfo.processInfo.environment["SSK_PROBE"] ?? "").split(separator: ",").map(String.init))
 
@@ -102,6 +103,16 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         }
         detailItem = NSSplitViewItem(viewController: detailController)
         if probe.contains("adjust"), #available(macOS 26, *) { detailItem.automaticallyAdjustsSafeAreaInsets = true }
+        if probe.contains("itemShadow") { detailItem.titlebarSeparatorStyle = .shadow }
+        if probe.contains("accHard"), #available(macOS 26.1, *) {
+            let accessory = NSSplitViewItemAccessoryViewController()
+            let view = NSView()
+            view.translatesAutoresizingMaskIntoConstraints = false
+            view.heightAnchor.constraint(equalToConstant: 1).isActive = true
+            accessory.view = view
+            accessory.preferredScrollEdgeEffectStyle = .hard
+            detailItem.addTopAlignedAccessoryViewController(accessory)
+        }
         splitViewController = NSSplitViewController()
         splitViewController.addSplitViewItem(sidebarItem)
         splitViewController.addSplitViewItem(detailItem)
@@ -145,6 +156,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         window.toolbarStyle = configuration.toolbarStyle.appKit
         if probe.contains("compact") { window.toolbarStyle = .unifiedCompact }
         if probe.contains("unified") { window.toolbarStyle = .unified }
+        if probe.contains("winLine") { window.titlebarSeparatorStyle = .line }
         if configuration.title == .hidden { window.titleVisibility = .hidden }
 
         Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
@@ -214,6 +226,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         if configuration.showsNavigationButtons {
+            if Self.probe.contains("group") { return [.sidebarTrackingSeparator, Self.probeGroupItem] }
             return [.sidebarTrackingSeparator, Self.backItem, Self.forwardItem]
         }
         // Alone, the title sat 11 pt from the sidebar, left of the page's grouped form (20 pt
@@ -233,6 +246,17 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         itemForItemIdentifier identifier: NSToolbarItem.Identifier,
         willBeInsertedIntoToolbar flag: Bool
     ) -> NSToolbarItem? {
+        if identifier == Self.probeGroupItem {
+            let group = NSToolbarItemGroup(
+                itemIdentifier: identifier,
+                images: [
+                    NSImage(systemSymbolName: "chevron.backward", accessibilityDescription: "Back")!,
+                    NSImage(systemSymbolName: "chevron.forward", accessibilityDescription: "Forward")!,
+                ],
+                selectionMode: .momentary, labels: ["Back", "Forward"], target: nil, action: nil)
+            group.isNavigational = true
+            return group
+        }
         if identifier == .sidebarTrackingSeparator, Self.probe.contains("trackingItem") {
             return NSTrackingSeparatorToolbarItem(
                 identifier: identifier, splitView: splitViewController.splitView, dividerIndex: 0)

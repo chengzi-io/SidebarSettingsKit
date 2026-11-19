@@ -2,7 +2,7 @@
 # Probe branch only: capture the settings window and dump its layout for each probe variant.
 set -euo pipefail
 
-readonly VARIANTS=(base sep,detailSoft sep,detailHard sep,noClearBg sep,detailSoft,noClearBg)
+readonly VARIANTS=(base sep sep,winLine sep,itemShadow sep,accHard sep,group)
 readonly SCENARIOS=(1 2)
 
 output_dir=${1:?usage: probe.sh OUTPUT_DIR}
@@ -52,7 +52,7 @@ open "x-apple.systempreferences:com.apple.Appearance-Settings.extension"
 sleep 6
 if read -r id x y w h < <("$tools/find-window" "System Settings"); then
     screencapture -o -l "$id" "$output_dir/system-settings.png" && echo "ok   system-settings"
-    "$tools/scroll" $((x + w * 3 / 4)) $((y + h / 2)) || echo "scroll failed"
+    "$tools/scroll" $((x + 300)) $((y + h * 2 / 3)) || echo "scroll failed"
     sleep 1
     screencapture -o -l "$id" "$output_dir/system-settings-scrolled.png" && echo "ok   system-settings-scrolled"
 else
