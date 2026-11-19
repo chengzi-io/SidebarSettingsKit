@@ -12,6 +12,10 @@ import SwiftUI
 final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     NSToolbarItemValidation
 {
+    /// Probe branch only: comma-separated switches from SSK_PROBE.
+    static let probe = Set(
+        (ProcessInfo.processInfo.environment["SSK_PROBE"] ?? "").split(separator: ",").map(String.init))
+
     /// What the window needs from the navigator, so the controller stays free of `Page`.
     struct Navigation {
         let canGoBack: () -> Bool
@@ -68,7 +72,10 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             defer: true
         )
 
-        let sidebarController = NSHostingController(rootView: sidebar.softScrollEdgeOnMacOS26())
+        let probe = Self.probe
+        let sidebarController = NSHostingController(
+            rootView: probe.contains("noSoft") ? AnyView(sidebar) : AnyView(sidebar.softScrollEdgeOnMacOS26()))
+        if probe.contains("sidebarSafeNone") { sidebarController.safeAreaRegions = [] }
         // The title and the buttons change in the SwiftUI update that draws the new page. Set
         // after it, from an observation, the old title stayed over the new page for a frame.
         let detailController = NSHostingController(
@@ -94,6 +101,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             sidebarIdealOnceShown = ideal
         }
         detailItem = NSSplitViewItem(viewController: detailController)
+        if probe.contains("adjust"), #available(macOS 26, *) { detailItem.automaticallyAdjustsSafeAreaInsets = true }
         splitViewController = NSSplitViewController()
         splitViewController.addSplitViewItem(sidebarItem)
         splitViewController.addSplitViewItem(detailItem)
@@ -135,6 +143,8 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         toolbar.displayMode = .iconOnly
         window.toolbar = toolbar
         window.toolbarStyle = configuration.toolbarStyle.appKit
+        if probe.contains("compact") { window.toolbarStyle = .unifiedCompact }
+        if probe.contains("unified") { window.toolbarStyle = .unified }
         if configuration.title == .hidden { window.titleVisibility = .hidden }
 
         Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
@@ -179,6 +189,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     /// AppKit's automatic separator loses track once SwiftUI swaps the detail's content and
     /// then keeps the line, so the detail's scroll state drives it instead.
     private func followSeparator() {
+        if Self.probe.contains("sep") { return }
         let style: NSTitlebarSeparatorStyle
         switch configuration.toolbarSeparator {
         case .always:
@@ -222,6 +233,10 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         itemForItemIdentifier identifier: NSToolbarItem.Identifier,
         willBeInsertedIntoToolbar flag: Bool
     ) -> NSToolbarItem? {
+        if identifier == .sidebarTrackingSeparator, Self.probe.contains("trackingItem") {
+            return NSTrackingSeparatorToolbarItem(
+                identifier: identifier, splitView: splitViewController.splitView, dividerIndex: 0)
+        }
         if identifier == Self.leadingSpaceItem {
             let item = NSToolbarItem(itemIdentifier: identifier)
             let space = NSView()

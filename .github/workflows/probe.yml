@@ -1,0 +1,39 @@
+name: Probe
+
+on:
+  push:
+    branches: [test/window-layout-probe]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe window layout (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-26, xcode-27]
+        include:
+          - os: xcode-27
+            image-xcode: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Select Xcode from .xcode-version
+        if: ${{ !matrix.image-xcode }}
+        run: |
+          xcode_version=$(tr -d '[:space:]' <.xcode-version)
+          developer_dir="/Applications/Xcode_$xcode_version.app/Contents/Developer"
+          echo "DEVELOPER_DIR=$developer_dir" >>"$GITHUB_ENV"
+          sudo DEVELOPER_DIR="$developer_dir" xcodebuild -runFirstLaunch
+      - run: sw_vers && xcodebuild -version && swift --version
+      - run: scripts/probe.sh probe
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: probe-${{ matrix.os }}
+          path: probe/
+          if-no-files-found: error
