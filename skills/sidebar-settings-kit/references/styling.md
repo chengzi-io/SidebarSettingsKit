@@ -1,43 +1,32 @@
 # Styling
 
-`SidebarSettingsStyle` changes how the sidebar looks; it never changes the sidebar's material,
-so on macOS 26 and later the system's Liquid Glass stays. The pages are the app's own views: the kit adds
-no background, form or font to them.
+The sidebar is always the system's sidebar list, with its selection, keyboard, type-to-select and
+VoiceOver; on macOS 26 and later it keeps the system's Liquid Glass. What the kit lets you choose
+is how it draws the pages' icons. The pages are the app's own views: the kit adds no background,
+form or font to them.
 
-## Pick a preset
+## Pick the icons
 
-| | `.native` (default) | `.branded` |
+`configuration.icons`:
+
+| | `.plain` (default) | `.tiled` |
 | --- | --- | --- |
-| Look | the system sidebar, untouched | icons on colored tiles, for an app with a brand |
-| Rows | system height and font; follows the user's sidebar icon size setting | as tall as the tiles need, 14 pt medium text |
-| Icons | bare SF Symbols in the accent color, or their tint | white symbols on 24 pt tiles in the page's tint |
-| Selection | the system highlight | the system highlight |
+| Look | the system sidebar, untouched | icons in white on colored rounded squares, as in System Settings |
+| Color | the icon's `tint`, or the sidebar's; white on the selected row | the tile is the icon's `tint`, or gray; `.tiled(defaultColor: .indigo)` picks another for icons without a tint |
+| Rows | system height and font | the same |
 | Suits | tools, utilities, developer apps | consumer apps with a brand |
 
-On macOS 14 and 15 `.native` stays the plain system sidebar; it is not dressed up. Choose
-`.branded` for a more designed look on every version.
-
-## Adjust a preset
-
-The style is a value: copy a preset and change tokens. The preset itself does not change.
-
 ```swift
-var style = SidebarSettingsStyle.branded
-style.iconTile = .init(size: 28, cornerRadius: 7, defaultColor: .indigo)
-let settings = SidebarSettingsWindow(pages: SettingsPane.allCases, style: style) { pane in
+var configuration = SidebarSettingsConfiguration()
+configuration.icons = .tiled
+let settings = SidebarSettingsWindow(pages: SettingsPane.allCases, configuration: configuration) { pane in
     SettingsPaneView(pane: pane)
 }
 ```
 
-| Token | `.native` | `.branded` | Effect |
-| --- | --- | --- | --- |
-| `rowFont` | `nil` (system) | `.system(size: 14, weight: .medium)` | the row's title font |
-| `iconSize` | `nil` (system) | 14 | the symbol's point size; the box for images and custom icons (16 when `nil`) |
-| `iconTile` | `nil` | size 24, radius 6, gray | a rounded square behind each icon |
-
-Every style is the system's sidebar list: selection, arrow keys, type-to-select and VoiceOver
-come from it, and no token changes the selection's shape or color. A row is as tall as its
-content plus the list's padding: for taller rows, use a larger tile.
+Every icon, plain or on a tile, fills the sidebar's icon slot: 16, 20 or 24 pt, as the user's
+Sidebar icon size setting picks. So the rows keep the system's height and follow that setting,
+and the kit has no icon size, font or row height option.
 
 ## Icons
 
@@ -47,19 +36,17 @@ content plus the list's padding: for taller rows, use a larger tile.
 .system("cloud", renderingMode: .hierarchical, variant: .fill, weight: .semibold)
 .image(Image("AppLogo"))                               // an asset, scaled to fit
 .image(Image("Mono"), tint: .green)                    // a template image tinted; on a tile: green tile
-.custom(MyBadgeView())                                 // any view, drawn as is, no tile
+.custom(MyBadgeView())                                 // any view, drawn as is, never on a tile
 ```
 
-Every row's icon gets the same size from the style; an icon has no size of its own. With
-`.branded`, give each page a distinct `tint`, as System Settings colors its tiles; pages without
-one use the tile's `defaultColor`.
+An icon has no size of its own. With `.tiled`, give each page a distinct `tint`, as System
+Settings colors its tiles; pages without one get gray or the `defaultColor`.
 
 ## Header and footer
 
 ```swift
 SidebarSettingsWindow(
     pages: SettingsPane.allCases,
-    style: .branded,
     header: { AccountRow(account: model.account) },
     footer: { Text("Version \(appVersion)").font(.caption).foregroundStyle(.secondary).padding(10) }
 ) { pane in
@@ -71,19 +58,6 @@ The header is the list's first item and scrolls with the pages, as the account r
 System Settings. The footer stays at the bottom while the pages scroll above it; keep it short,
 it takes space from the list.
 
-## Match the pages to the sidebar
-
-Pages can read the style to share its tokens:
-
-```swift
-struct SettingsPaneView: View {
-    @Environment(\.sidebarSettingsStyle) private var style
-    var body: some View {
-        Form { /* ... */ }
-            .formStyle(.grouped)
-            .font(style.rowFont)
-    }
-}
-```
+## The pages
 
 For System Settings' look, make each page a `Form` with `.formStyle(.grouped)`.

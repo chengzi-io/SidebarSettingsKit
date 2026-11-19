@@ -4,7 +4,8 @@ English | [简体中文](README.zh-Hans.md)
 
 A settings window for a macOS SwiftUI app, laid out like System Settings: a sidebar of pages that
 never collapses, a search field above it, the selected page beside it, and back and forward in the
-toolbar. Two looks: the system sidebar, or a branded one with icons on colored tiles.
+toolbar. The icons are drawn as the system sidebar draws them, or on colored tiles as in System
+Settings.
 
 ![Swift 6.2+](https://img.shields.io/badge/Swift-6.2%2B-F05138?logo=swift&logoColor=white)
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)
@@ -13,12 +14,12 @@ toolbar. Two looks: the system sidebar, or a branded one with icons on colored t
 [![CI](https://github.com/chengzi-io/SidebarSettingsKit/actions/workflows/ci.yml/badge.svg)](https://github.com/chengzi-io/SidebarSettingsKit/actions/workflows/ci.yml)
 
 <p align="center">
-  <img src="docs/assets/screenshots/macos-26-native-light-scenario-5.png" width="49%" alt="The settings window with the system sidebar, macOS 26, light appearance">
-  <img src="docs/assets/screenshots/macos-26-branded-light-scenario-5.png" width="49%" alt="The settings window with the branded sidebar, macOS 26, light appearance">
+  <img src="docs/assets/screenshots/macos-26-plain-light-scenario-5.png" width="49%" alt="The settings window with plain icons, macOS 26, light appearance">
+  <img src="docs/assets/screenshots/macos-26-tiled-light-scenario-5.png" width="49%" alt="The settings window with icons on tiles, macOS 26, light appearance">
 </p>
 <p align="center">
-  <img src="docs/assets/screenshots/macos-26-native-dark-scenario-1.png" width="49%" alt="The settings window with the system sidebar, macOS 26, dark appearance">
-  <img src="docs/assets/screenshots/macos-26-branded-dark-scenario-1.png" width="49%" alt="The settings window with the branded sidebar, macOS 26, dark appearance">
+  <img src="docs/assets/screenshots/macos-26-plain-dark-scenario-1.png" width="49%" alt="The settings window with plain icons, macOS 26, dark appearance">
+  <img src="docs/assets/screenshots/macos-26-tiled-dark-scenario-1.png" width="49%" alt="The settings window with icons on tiles, macOS 26, dark appearance">
 </p>
 
 ## Add it with an AI agent
@@ -30,7 +31,7 @@ npx skills add chengzi-io/SidebarSettingsKit
 The [skills CLI](https://github.com/vercel-labs/skills) installs the repo's agent skill into the
 project for Claude Code, Codex, Cursor and the other agents it knows; `-g` installs it for every
 project. Then ask the agent to give the app sidebar settings: the skill reads the project, picks
-pages and a style, adds the dependency, moves an existing `Settings` scene over and checks the
+pages and their icons, adds the dependency, moves an existing `Settings` scene over and checks the
 result. An agent without the CLI can follow
 [`skills/sidebar-settings-kit/SKILL.md`](skills/sidebar-settings-kit/SKILL.md) directly.
 
@@ -40,7 +41,7 @@ result. An agent without the CLI can follow
 | --- | --- | --- | --- |
 | A settings window whose toolbar you control | keeps the preferences toolbar; no back or forward, no items of yours | a normal window, whose ⌘, item you add by hand; not the app's settings window | an `NSWindow` with a toolbar the kit fills |
 | A sidebar that stays put | has no sidebar | collapses when its divider is dragged in, and nothing brings it back | a fixed-width sidebar that cannot collapse |
-| A search field above the pages | has none | `.searchable` puts the field in the toolbar | fixed above the list; ⌘F focuses it, Esc clears it |
+| A search field above the pages | has none | `.searchable` puts the field in the toolbar | fixed above the list; ⌘F focuses it, ↓ moves to the pages found, Esc clears it |
 
 ## Features
 
@@ -50,14 +51,14 @@ result. An agent without the CLI can follow
 | Search field above the pages, matching titles and keywords | on |
 | Back and forward, with a browser-like history | on: ⌘[ and ⌘] |
 | Sidebar header (scrolls with the pages) and footer (stays) | none |
-| Two looks: `.native`, `.branded` | `.native` |
+| Icons plain or on colored tiles | plain |
 | Sidebar width | 215 pt, fixed |
 | Window | 715 × 600, fixed size, position saved |
 | Title | follows the selected page |
 | Line under the toolbar | shows while the page is scrolled |
 | Page, history and search when the window reopens | kept while the app runs |
 | Pages scroll inside the window | on |
-| The kit's own words | English and Simplified Chinese, in the app's language |
+| The kit's own words | every language macOS has, in the app's language |
 
 ## Quick start
 
@@ -133,6 +134,11 @@ struct MyApp: App {
 Delete the app's `Settings` scene: `SidebarSettingsCommands` replaces its "Settings…" item and
 ⌘, and keeping both gives two items.
 
+Write each page as a grouped `Form` (`.formStyle(.grouped)`), as System Settings' pages are. A
+page scrolls itself; the window adds no scroll view, and the line under the toolbar follows the
+form. A page that is neither a form nor a list and can grow taller than the window goes in a
+`ScrollView`.
+
 The scene's environment does not reach this window, so pass pages their models in the `detail`
 closure. `SettingsLink` and `openSettings` do not open it either; use `settings.show()` or
 `SidebarSettingsCommands`.
@@ -143,7 +149,7 @@ closure. `SettingsLink` and `openSettings` do not open it either; use `settings.
 let settings = SidebarSettingsWindow(
     sections: [
         SettingsPageSection(pages: [Pane.general]),
-        SettingsPageSection("Advanced", pages: [Pane.advanced]),
+        SettingsPageSection(pages: [Pane.advanced]),
     ],
     header: { AccountRow() },
     footer: { Text("Version 1.0").font(.caption).foregroundStyle(.secondary).padding(8) }
@@ -155,17 +161,16 @@ let settings = SidebarSettingsWindow(
 }
 ```
 
-A group with a title shows it above its rows, as Finder's sidebar does; a group without one is set
-apart by space alone, as System Settings does. An empty group is left out. The header is the
-list's first item and scrolls with the pages; the footer stays at the bottom.
+Groups are set apart by space, as System Settings' are; an empty group is left out. The header
+is the list's first item and scrolls with the pages; the footer stays at the bottom.
 
-## Styles
+## Icons
 
 ```swift
-var style = SidebarSettingsStyle.branded
-style.iconTile = .init(size: 28, cornerRadius: 7, defaultColor: .indigo)
+var configuration = SidebarSettingsConfiguration()
+configuration.icons = .tiled
 
-let settings = SidebarSettingsWindow(pages: Pane.allCases, style: style) { pane in
+let settings = SidebarSettingsWindow(pages: Pane.allCases, configuration: configuration) { pane in
     switch pane {
     case .general: GeneralSettings()
     case .advanced: AdvancedSettings()
@@ -173,14 +178,16 @@ let settings = SidebarSettingsWindow(pages: Pane.allCases, style: style) { pane 
 }
 ```
 
-`.native` is the system sidebar, untouched. `.branded` is for an app with a brand: 24 pt colored tiles
-behind the icons, rows as tall as the tiles need, and 14 pt medium text. Both are the system's
-sidebar list, so selection, arrow keys, type-to-select and VoiceOver work as in any Mac sidebar.
-A style is a value, so copying a preset and changing a token leaves the preset alone. No preset
-changes the sidebar's material, so on macOS 26 and later it keeps Liquid Glass.
+`.plain`, the default, draws each icon as the system sidebar does, in its tint, and white with
+the title on the selected row. `.tiled` draws it in white on a colored rounded square, as System
+Settings does. The square takes the page's tint (`.system("paintpalette", tint: .blue)`); a page
+without one gets gray, or the color in `.tiled(defaultColor: .indigo)`. An icon that is your own
+view (`.custom`) is drawn as it is either way.
 
-Give each page a tint for its tile (`.system("paintpalette", tint: .blue)`); without one the tile
-uses its `defaultColor`.
+Every icon fills the sidebar's icon slot, so like System Settings' it follows the Sidebar icon
+size setting (16, 20 or 24 pt), and the rows keep the system's height and text. Either way the
+sidebar is the system's sidebar list: selection, arrow keys, type-to-select and VoiceOver work as
+in any Mac sidebar, and on macOS 26 and later it keeps Liquid Glass.
 
 ## Configuration
 
@@ -203,37 +210,66 @@ let settings = SidebarSettingsWindow(pages: Pane.allCases, configuration: config
 | `resizing` | `.fixed` | `.resizable(min:max:)`, either limit `nil` |
 | `autosaveName` | `"SidebarSettingsWindow"` | any name; `nil` saves no position |
 | `sidebarWidth` | `.fixed(215)` | `.adjustable(min:ideal:max:)` |
-| `toolbarStyle` | `.unifiedCompact` | `.unified`, `.automatic` |
+| `toolbarStyle` | `.automatic` | `.unifiedCompact`, `.unified` |
 | `showsNavigationButtons` | `true` | `false`, which also drops ⌘[ and ⌘] |
 | `title` | `.followsPage` | `.fixed(_:)`, `.hidden` |
 | `toolbarSeparator` | `.whenScrolled` | `.always`, `.never` |
 | `search` | `.enabled` | `.disabled` |
 | `navigationPersistence` | `.session` | `.resetOnShow` |
-| `detailScrolling` | `true` | `false`, for pages that scroll themselves |
-| `strings` | `Strings.default` | `Strings(back:forward:searchPrompt:settingsMenuItem:)` |
+| `strings` | `Strings.default` | `Strings(back:forward:searchPrompt:settingsMenuItem:noSearchResults:)` |
+| `icons` | `.plain` | `.tiled`, `.tiled(defaultColor:)` |
 
-The configuration is fixed when the window object is created.
+The configuration is fixed when the window object is created. Whatever it says, the minimize and
+zoom buttons are dimmed and the window cannot go full screen, as Apple's guidelines ask of a
+settings window; a resizable window resizes from its edges.
+
+## Light and dark
+
+The window follows the app's appearance, as the app's other windows do: the Mac's setting, unless
+the app picks one. An app with its own Light, Dark and System choice applies it to the whole app
+through AppKit:
+
+```swift
+NSApp.appearance = switch choice {
+case .system: nil
+case .light: NSAppearance(named: .aqua)
+case .dark: NSAppearance(named: .darkAqua)
+}
+```
+
+SwiftUI's `.preferredColorScheme` does not reach the settings window, even from inside a page.
 
 ## Languages
 
-The kit owns four words: Back, Forward, Search and Settings…. It ships them in English and
-Simplified Chinese and shows them in the language the app runs in, as AppKit does its menus:
+The kit owns five pieces of text: Back, Forward, Search, Settings… and No Results, which the
+sidebar shows when a search finds no page. It ships them in every language macOS has, in the
+words macOS uses for the same controls, and shows them in the language the app runs in, as
+AppKit does its menus:
 
 | The app | The kit's words |
 | --- | --- |
-| declares Simplified Chinese (`CFBundleLocalizations` or a `zh-Hans.lproj` in the app bundle) and runs in it | Chinese |
-| runs in English, or in a language the kit does not ship | English |
+| declares languages (`CFBundleLocalizations` or `<language>.lproj` folders in the app bundle) and runs in one | that language |
 | declares no language (a bare `swift run` executable, or an app bundle without the entry) | English, whatever the Mac's language |
 
-An app in another language, or whose text is written in one language without localization,
-passes its own words:
+An app whose text is written in one language without localization runs in English as far as the
+kit can tell, so it passes its own words; so does an app that wants other words, such as
+Preferences… for Settings…:
 
 ```swift
-configuration.strings = .init(back: "戻る", forward: "進む", searchPrompt: "検索", settingsMenuItem: "設定…")
+configuration.strings = .init(
+    back: "戻る", forward: "進む", searchPrompt: "検索", settingsMenuItem: "設定…",
+    noSearchResults: "結果なし")
 ```
 
-A word given as a key the app's string catalog translates follows the app's language like the
-rest of its text.
+A word given as a key follows the app's language like the rest of its text, from the string
+catalog that holds the key. A key without a bundle is looked up in the app's main bundle, where an
+app target's catalog goes. A Swift package module keeps its resources in a bundle of its own, so
+a key from a module's catalog names it, or the key is not found and its default value shows:
+
+```swift
+configuration.strings = .init(
+    back: LocalizedStringResource("Back", bundle: .atURL(Bundle.module.bundleURL)))
+```
 
 The window reads the language once, when it is built. Changing the app's language in System
 Settings relaunches the app, so everything follows. An app that switches language without a
@@ -287,7 +323,9 @@ struct MenuBarSettingsApp: App {
 
 - On macOS 14 the line under the toolbar always shows: SwiftUI there cannot report the page's
   scroll position.
-- `configuration.detailScrolling` applies to every page of a window, not one page.
+- On macOS 14 and 15 the toolbar takes its background from the scroll view under it. Above a form
+  or a list it matches the page; above a plain `ScrollView` it keeps a lighter background of its
+  own.
 - A window's pages and configuration are fixed at creation; to change them, close it and create
   another one.
 

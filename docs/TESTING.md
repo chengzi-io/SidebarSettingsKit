@@ -7,7 +7,7 @@ ones. `make test` runs both.
 
 | Target | Path | Windows | What belongs there |
 | --- | --- | --- | --- |
-| `SidebarSettingsKitTests` | `Tests/SidebarSettingsKitTests/` | none | navigation history, search matching, sidebar groups, configuration defaults, style presets, kit strings, the window's preconditions (each in a child process) |
+| `SidebarSettingsKitTests` | `Tests/SidebarSettingsKitTests/` | none | navigation history, search matching, sidebar groups, configuration defaults, kit strings, the window's preconditions (each in a child process) |
 | `SidebarSettingsKitWindowTests` | `Tests/SidebarSettingsKitWindowTests/` | real, one at a time | frame and resizing, toolbar and title, the line under the toolbar, header and footer, sidebar rows and scrolling, keyboard, lifecycle, autosave, memory |
 
 If a behavior can be checked on values, it goes in the logic target: no window, no wait, no flake.
@@ -32,9 +32,9 @@ fixture code never names its module: no `import SidebarSettingsFixtures`, no qua
 | --- | --- |
 | `FixturePage.swift` | `FixturePage` (a struct page, equal by `id`), `FixtureIconDescription`, `FixtureTint`, `FixtureRenderingMode`, `FixtureSymbolWeight` |
 | `FixturePages.swift` | `empty`, `one`, `three` (`general`, `appearance` long, `advanced`), `many` (40 pages), `longText` with `longEnglishTitle`, `chineseTitle`, `mixedTitle`, `longKeyword`, `widthInsensitiveKeywords` |
-| `FixtureSections.swift` | `ungrouped`, `allTitled`, `allUntitled`, `mixed`, `withEmptySection` |
+| `FixtureSections.swift` | `ungrouped`, `grouped`, `withEmptySection` |
 | `FixtureIconPages.swift` | one page per `SettingsIcon` form, and `all` |
-| `DetailViews.swift` | `LongContentView` (`minimumHeight` 1800), `ShortContentView` (`maximumHeight` 300), `FixtureDetail(page:)` |
+| `DetailViews.swift` | `LongContentView` (`minimumHeight` 1800), `ShortContentView` (`maximumHeight` 300), `FixtureDetail(page:)`, which puts one of them in its own `ScrollView`, as every page scrolls itself |
 | `ChromeViews.swift` | `FixtureHeader` (`height` 56), `FixtureFooter` (`height` 28), `TallFooter` (`height` 80) |
 
 Add a page set or a view to a fixture file, not to a test, when a second suite will want it too.
@@ -52,8 +52,9 @@ The root is serial because the tests share one app process: first responder, `NS
 nested suite, not a second root.
 
 `withWindow` has four forms: `pages:`, `pages:` with a `detail:` view of the test's own, `sections:`,
-and an existing `SidebarSettingsWindow`. Each takes `page:` to open on and `configuration:` and
-`style:`. Use the existing-settings form when the window needs a header or a footer.
+and an existing `SidebarSettingsWindow`. Each takes `page:` to open on, and the first three take
+`configuration:`; `.windowTest.drawing(.tiled)` is the test configuration with tiled icons. Use
+the existing-settings form when the window needs a header or a footer.
 
 `WindowUnderTest` exposes `settings`, `controller`, `window`, and `sidebarView`, `detailView`,
 `separator`, `toolbarItem(_:)`, `detailScrollView()`, `sidebarScrollView()`, `sidebarTable()`,

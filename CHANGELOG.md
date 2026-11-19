@@ -19,28 +19,34 @@ The first release, 0.1.0.
 - `SettingsPage`: a page is a `Hashable` type with a `title`, an `icon`, optional
   `searchKeywords` and an overridable `matches(searchText:)`. An enum for a fixed set of pages, a
   struct for pages known at run time.
-- `SettingsPageSection`: groups of pages, titled as in Finder's sidebar or set apart by space as
-  in System Settings; empty groups are dropped.
+- `SettingsPageSection`: groups of pages set apart by space, as in System Settings; empty groups
+  are dropped.
 - `SettingsNavigator`: the selected page, a browser-like history (`open(_:)`, `goBack()`,
   `goForward()`, `reset()`) and the search text. Kept while the app runs, never written to disk.
-- `SidebarSettingsStyle` with the presets `.native` and `.branded`, and the tokens `rowFont`,
-  `iconSize` and `iconTile`. Both presets keep the system's sidebar list.
 - `SettingsIcon`: `.system(_:)`, `.image(_:)` and `.custom(_:)`, with tint, rendering mode, symbol
-  variant and weight where they apply; `SidebarSettingsStyle.IconTile` draws a colored square
-  behind an icon.
+  variant and weight where they apply. Every icon fills the sidebar's icon slot, so it follows the
+  user's Sidebar icon size setting and the rows keep the system's height.
 - `SidebarSettingsConfiguration` with `size`, `resizing`, `autosaveName`, `sidebarWidth`,
   `toolbarStyle`, `showsNavigationButtons`, `title`, `toolbarSeparator`, `search`,
-  `navigationPersistence`, `detailScrolling` and `strings`.
+  `navigationPersistence`, `strings` and `icons`: `.plain`, as the system sidebar draws them, or
+  `.tiled`, in white on a square of the page's tint, as System Settings draws them (gray, or
+  `.tiled(defaultColor:)`, without a tint). The minimize and zoom buttons are dimmed and the window
+  cannot go full screen, as Apple's guidelines ask of a settings window.
+- The window follows the app's light or dark appearance (`NSApp.appearance`), which follows the
+  Mac unless the app sets one.
 - `SidebarSettingsCommands`: the app menu's "Settings…" item and ⌘,, in place of the `Settings`
   scene's; `OpenSidebarSettingsButton` opens the window from anywhere, optionally on a page.
-- `sidebarSettingsScrollTracking()`: keeps the line under the toolbar following a page that
-  scrolls itself.
+- Pages scroll themselves, as System Settings' grouped forms do; the line under the toolbar
+  follows the page's form, list or scroll view.
 - Keyboard: arrow keys move the selection, ⌘[ and ⌘] go back and forward, ⌘F focuses the search
-  field, Esc clears it, ⌘W closes the window, ⌘, opens it. Typing a page's title selects its row.
-  VoiceOver reads each row's title and selected state, and the back and forward labels.
-- The kit's words localized in English and Simplified Chinese, shown in the language the app
+  field, ↓ in it moves to the pages found, Tab goes back to it, Esc clears it, ⌘W closes the
+  window, ⌘, opens it. Typing a page's title selects its row. VoiceOver reads each row's title and
+  selected state, and the back and forward labels.
+- The kit's words (Back, Forward, Search, Settings…, and No Results for a search that finds no
+  page) in every language macOS has, in macOS's own wording, shown in the language the app
   declares and runs in, English otherwise; each replaceable through
-  `SidebarSettingsConfiguration.strings`.
+  `SidebarSettingsConfiguration.strings`. The back and forward arrows point the reading
+  direction's way in Arabic and Hebrew.
 - macOS 26 and later: the sidebar keeps Liquid Glass, its rows fade at the scroll edge, and the detail sits
   on the window's own background.
 - Window position saved by AppKit under `autosaveName`; page and search kept for the session.

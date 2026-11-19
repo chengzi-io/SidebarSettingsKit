@@ -26,7 +26,7 @@ runner on 2026-11-02, so macOS 14 has no CI: keep `#available` branches for 14 s
 | `Package.swift` | one product, `SidebarSettingsKit`; no dependencies | never add a dependency or a second product |
 | `Sources/SidebarSettingsKit/Public/` | every public symbol | no AppKit type in a public signature |
 | `Sources/SidebarSettingsKit/Internal/` | AppKit window controller, sidebar lists, search field, detail container | `internal`; tests reach it with `@testable import` |
-| `Sources/SidebarSettingsKit/Resources/<lang>.lproj/Localizable.strings` | every user-visible string the kit owns (en, zh-Hans) | no literal user-visible text in Sources; `.strings`, not `.xcstrings`: SwiftPM's command line copies a string catalog without compiling it, so `swift build`/`swift run` would show English only |
+| `Sources/SidebarSettingsKit/Resources/<lang>.lproj/Localizable.strings` | every user-visible string the kit owns, in every macOS language | no literal user-visible text in Sources; words are macOS's own, never translated by hand (`docs/ARCHITECTURE.md`, Localization); `.strings`, not `.xcstrings`: SwiftPM's command line copies a string catalog without compiling it, so `swift build`/`swift run` would show English only |
 | `Tests/Fixtures/` | shared fixtures, target `SidebarSettingsFixtures` (in no product) | the demo compiles the same files through a symlink; never name the module in fixture code |
 | `Tests/SidebarSettingsKitTests/` | Swift Testing unit and window tests | |
 | `Examples/SidebarSettingsDemo/` | separate package depending on `../..`; manual QA and screenshots | the root package never references it |
@@ -51,15 +51,29 @@ through `-Xswiftc -warnings-as-errors` in the Makefile, never through `unsafeFla
 
 ## Decisions that are easy to undo by accident
 
-- The sidebar never collapses and has no collapse option.
+- The sidebar never collapses and has no collapse option. Groups have no titles: a titled
+  `Section` in a sidebar list folds with SwiftUI's own animation, and keeping it open needs
+  `.collapsible(false)`, which SwiftUI marks for deprecation.
+- A bare icon takes its tint through `listItemTint`, never `foregroundStyle`: the list turns it
+  white on the selected row, and a blue icon on the blue selection vanished.
+- The window's title and the back and forward buttons are set from the SwiftUI update that draws
+  the page (`FollowsNavigation`); set later, from an observation, the old title stayed for a frame.
 - The search field is fixed above the list; the header is the list's first item and scrolls with
   it; the footer stays at the bottom (`safeAreaInset`).
-- The sidebar is SwiftUI's `List` with `.listStyle(.sidebar)` in every style: native selection,
-  keyboard, type-to-select and VoiceOver. Style tokens change a row's content and height, never
-  the selection. Kit-drawn rows (for a rounded selection) were tried and dropped: they lost those.
+- The list takes the focus on open from `SidebarView`'s task, not the list's: the list comes back
+  after a search that found nothing, and its own task took the focus from the field mid-word.
+- The sidebar is SwiftUI's `List` with `.listStyle(.sidebar)`, plain or tiled: native selection,
+  keyboard, type-to-select and VoiceOver. `configuration.icons` changes a row's icon, never the
+  selection. Kit-drawn rows (for a rounded selection) were tried and dropped: they lost those.
 - The toolbar separator follows the detail's scroll position through `DetailScrollState`, because
   AppKit's automatic separator loses track when SwiftUI swaps the page. macOS 14 cannot report
   scroll offsets to SwiftUI, so there `.whenScrolled` shows the line always (documented limit).
+- The window adds no scroll view around a page; each page scrolls itself. On macOS 14 and 15 the
+  toolbar takes its background from the scroll view under it: a form or list matches the page,
+  a plain `ScrollView` gives a lighter bar whose edge shows without scrolling.
+- Icons and tiles fill the sidebar's icon slot (16, 20 or 24 pt, from `sidebarRowSize`), so rows
+  keep the system's height and follow the user's Sidebar icon size setting. Hence no size, font
+  or row height option: a tile larger than the slot made a taller row and crowded the title.
 - Custom search matching is `SettingsPage.matches(searchText:)`, not a configuration closure:
   the configuration is not generic over the page type.
 - Navigation lives in `SettingsNavigator`, owned by `SidebarSettingsWindow`: it survives closing

@@ -13,7 +13,7 @@ deciding the pages and moving existing settings views into them.
 
 ## 1. Read the project
 
-!`grep -rEnI --include='*.swift' --include='*.pbxproj' --include='*.plist' --include='*.xcconfig' --exclude-dir=.build --exclude-dir=DerivedData --exclude-dir=.git --exclude-dir=.swiftpm --exclude-dir=Pods --exclude-dir=node_modules --exclude-dir=.agents --exclude-dir=.claude -e @main -e "^[[:space:]]*Settings[[:space:]]*[{(]" -e MenuBarExtra -e LSUIElement -e NSApplicationDelegateAdaptor -e SettingsLink -e openSettings -e SidebarSettingsKit -e MACOSX_DEPLOYMENT_TARGET -e "[.]macOS[(]" -e swift-tools-version .`
+!`grep -rEnI --include='*.swift' --include='*.pbxproj' --include='*.plist' --include='*.xcconfig' --exclude-dir=.build --exclude-dir=DerivedData --exclude-dir=.git --exclude-dir=.swiftpm --exclude-dir=Pods --exclude-dir=node_modules --exclude-dir=.agents --exclude-dir=.claude -e @main -e "^[[:space:]]*Settings[[:space:]]*[{(]" -e MenuBarExtra -e LSUIElement -e NSApplicationDelegateAdaptor -e SettingsLink -e openSettings -e SidebarSettingsKit -e MACOSX_DEPLOYMENT_TARGET -e "[.]macOS[(]" -e swift-tools-version -e preferredColorScheme .`
 
 If the line above was not replaced by search results (an agent other than Claude Code), run
 that `grep` command yourself, once, from the project root. It is the only survey command needed.
@@ -28,6 +28,7 @@ that `grep` command yourself, once, from the project root. It is the only survey
 | `SidebarSettingsKit` | already integrated: change it, do not add it again |
 | `MACOSX_DEPLOYMENT_TARGET`, `.macOS(` | the deployment target: must be macOS 14 or later |
 | `swift-tools-version` | a SwiftPM manifest |
+| `preferredColorScheme` | the app may offer its own light or dark choice, which will not reach the settings window (see Appearance below) |
 
 Then open what the matches point at: the entry, the `Settings` scene's content, and every view
 it shows. If the project has its own AGENTS.md, CLAUDE.md or contributing rules, they decide
@@ -40,22 +41,27 @@ or the project builds with an Xcode older than 26 (the kit's manifest needs Swif
 
 Infer what you can; ask the user only what the code cannot tell you, in one message.
 
-- **Style.** A tool, utility or developer app gets `.native`, the system sidebar untouched. A
-  consumer app that sells itself (brand colors, onboarding, upgrades) gets `.branded`: icons on
-  colored tiles, taller rows, larger text. Unsure: ask, describing each in one line.
+- **Icons.** A tool, utility or developer app keeps the default, `configuration.icons = .plain`,
+  the system sidebar untouched. A consumer app that sells itself (brand colors, onboarding,
+  upgrades) gets `.tiled`: icons on colored tiles, as System Settings draws them. Unsure: ask,
+  describing each in one line.
 - **Pages.** One page per existing tab or settings section, in the same order. Each page needs a
-  title, an SF Symbol (with a tint for `.branded`, which colors its tile), and search keywords:
+  title, an SF Symbol (with a tint for `.tiled`, which colors its tile), and search keywords:
   the labels of the settings on it, so a search for "launch at login" finds "General".
-- **Groups.** Many pages read better in groups: titled (`SettingsPageSection("Account", pages:)`)
-  or set apart by space only (`SettingsPageSection(pages:)`, as System Settings does).
+- **Groups.** Many pages read better in groups, set apart by space as in System Settings:
+  `SettingsPageSection(pages:)`. Groups have no titles.
 - **Owner.** An object created once for the app's life: the `App`'s initializer, the app
   delegate, or the app's own root object. Never a `View` body or a computed property: they run
   many times, and each run would build a new window with a new history.
 - **Header and footer.** Only for UI the app already has that belongs beside the pages: an
   account row on top, a version line or upgrade button at the bottom.
-- **Language.** The kit's four words (Back, Forward, Search, Settings…) ship in English and
-  Simplified Chinese. An app in any other language, or whose text is written in one language
-  without localization, passes its words through `configuration.strings`
+- **Appearance.** The window follows the app's appearance, which follows the Mac. If the app
+  offers its own light or dark choice through `.preferredColorScheme`, that choice will not
+  reach the settings window: apply it to the whole app through `NSApp.appearance` instead
+  ([references/configuration.md](references/configuration.md)), and tell the user.
+- **Language.** The kit's words (Back, Forward, Search, Settings…, No Results) ship in every
+  language macOS has and follow the languages the app declares. An app whose text is written
+  in one language without localization passes its words through `configuration.strings`
   ([references/configuration.md](references/configuration.md)). Judge the language from the
   app's text and string catalogs, not from the Mac's language.
 
@@ -118,8 +124,10 @@ Pages known only at run time (plug-ins, pages behind a permission) can be a stru
 `Sendable`).
 
 Move each tab's view into its page as it is. Delete what only the tabbed window needed: the
-`TabView`, `.tabItem`, and fixed `.frame(width:height:)` sizes. A grouped `Form`
-(`.formStyle(.grouped)`) gives pages System Settings' look; the kit scrolls every page itself.
+`TabView`, `.tabItem`, and fixed `.frame(width:height:)` sizes. Make each page a grouped `Form`
+(`.formStyle(.grouped)`), as System Settings' pages are: the window adds no scroll view, so a
+page scrolls itself, and the line under the toolbar follows the form. A page that is neither a
+form nor a list goes in a `ScrollView` if it can grow taller than the window.
 
 ## 5. Create the window once and open it
 
@@ -170,15 +178,16 @@ Owners other than the `App`, deep links and migrating a `TabView` step by step:
 
 Every option defaults to System Settings' behavior. Change one only for a reason the user gave
 or the app clearly has, such as long pages that need a resizable window. All options and when to
-use them: [references/configuration.md](references/configuration.md). Styles, icons and tiles:
-[references/styling.md](references/styling.md).
+use them: [references/configuration.md](references/configuration.md). Icons, tiles, header and
+footer: [references/styling.md](references/styling.md).
 
 ## Do not
 
 - Do not store the selected page: no `@AppStorage`, `UserDefaults` or `SceneStorage` key for it,
   and no field for it in the app's settings model. The kit keeps the page and history while the
   app runs and starts on the first page at launch, like System Settings; that is deliberate.
-- Do not wrap a page in another `ScrollView`, `NavigationStack` or `NavigationSplitView`.
+- Do not put a `Form` or `List` page in a `ScrollView`, and do not wrap a page in a
+  `NavigationStack` or `NavigationSplitView`.
 - Do not size the window from a page; set `configuration.size`.
 - Do not reach into the window with AppKit; if something cannot be configured, tell the user.
 
@@ -193,8 +202,8 @@ use them: [references/configuration.md](references/configuration.md). Styles, ic
    icon) has no app menu to check; its `MenuBarExtra` menu opens the window.
 4. A localized app declares its languages in the app bundle: `CFBundleLocalizations` in its
    Info.plist, or a `<language>.lproj` folder. The kit's words (Back, Forward, Search,
-   Settings…) follow those languages, as AppKit's menus do, so an app with Chinese pages that
+   Settings…, No Results) follow those languages, as AppKit's menus do, so an app with Chinese pages that
    declares only English shows them in English. Add the missing entry and tell the user. An
    app without a bundle (a SwiftPM executable) or written in one language without localization
    passes its words through `configuration.strings` instead (step 2). Either way, run it and
-   see the four words in the app's language.
+   see the kit's words in the app's language.

@@ -40,11 +40,15 @@ make demo                 # or: cd Examples/SidebarSettingsDemo && swift run Sid
 ```
 
 The main window is the demo's control panel: a grouped form with a picker or toggle for the
-sidebar style, the page set, the grouping, the header and footer, and every option of
+sidebar's icons, the page set, the grouping, the header and footer, and every option of
 `SidebarSettingsConfiguration`. **Open Settings** (also Return) applies them. The window keeps the
 configuration it was built with, so applying a change closes it and builds the next one. The app
 menu's **Settings…** item (⌘,) opens the window on screen. With no `--scenario`, the demo shows
 the control panel alone.
+
+The demo declares every language the kit has in its embedded Info.plist, so
+`-AppleLanguages "(ja)"` after the flags below shows the kit's words in Japanese; the demo's own
+text stays English.
 
 The demo compiles the shared fixtures (`Tests/Fixtures/`) a second time as target `DemoFixtures`
 through the symlink `Sources/DemoFixtures`, so its pages are the ones the tests use.
@@ -53,7 +57,7 @@ through the symlink `Sources/DemoFixtures`, so its pages are the ones the tests 
 
 | Flag | Values | What it does |
 | --- | --- | --- |
-| `--style` | `native`, `branded` | the `SidebarSettingsStyle` preset; `native` when absent |
+| `--icons` | `plain`, `tiled` | `configuration.icons`; `plain` when absent |
 | `--appearance` | `light`, `dark` | forces `NSApp.appearance`; the system's when absent |
 | `--scenario` | `1` `2` `3` `4` `5` `6` `6b` `7` | opens a settings window set up for one check; none when absent |
 | `--window-id-file` | a path | writes the settings window's number there once it is on screen, for `screencapture -l` |
@@ -61,16 +65,17 @@ through the symlink `Sources/DemoFixtures`, so its pages are the ones the tests 
 An unknown flag, or a flag without its value, prints the usage to stderr and exits with 2. A
 single-dash argument is passed through with its value, as a launch-only default: the demo steps
 over `-AppleLanguages "(zh-Hans)"` and the system reads it, without writing anything to the app's
-persistent defaults.
+persistent defaults. `-NSTableViewDefaultSizeMode 1` (small), `2` (medium) or `3` (large) stands
+in the same way for the Sidebar icon size setting.
 
 ### Scenarios
 
 | Scenario | What it shows |
 | --- | --- |
 | `1` | Three pages, the window on the short page, at the default 715 × 600 |
-| `2` | A long page that scrolls itself (`detailScrolling` off), opened at its end, so the line under the toolbar shows |
+| `2` | A long grouped form opened at its end, so the line under the toolbar shows |
 | `3` | The 40+ page set, opened on its last page with the sidebar scrolled to it |
-| `4` | Titled and untitled groups mixed in one sidebar |
+| `4` | The pages in three groups, set apart by space |
 | `5` | An account header and the tall login area as the footer |
 | `6` | A search that finds pages |
 | `6b` | A search that finds nothing |
@@ -85,13 +90,13 @@ as well, which needs no Screen Recording permission.
 ## Local screenshots
 
 ```
-make screenshots                        # all scenarios, both styles, both appearances
+make screenshots                        # all scenarios, both kinds of icons, both appearances
 scripts/screenshots.sh OUT_DIR [scenario ...]
 ```
 
-One PNG per style, appearance and scenario, named
-`macos-<major>-<style>-<appearance>-scenario-<n>.png` in the output directory, for example
-`macos-26-branded-light-scenario-5.png`. The script builds the demo in release, runs it once per
+One PNG per kind of icons, appearance and scenario, named
+`macos-<major>-<icons>-<appearance>-scenario-<n>.png` in the output directory, for example
+`macos-26-tiled-light-scenario-5.png`. The script builds the demo in release, runs it once per
 combination, waits for the window number, and copies the window with `screencapture -o -l`.
 Scenario 7 is launched with `-AppleLanguages "(zh-Hans)"`, so its screenshot shows the Chinese
 words.
