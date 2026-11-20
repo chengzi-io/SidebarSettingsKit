@@ -142,6 +142,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         window.toolbar = toolbar
         window.toolbarStyle = configuration.toolbarStyle.appKit
         if configuration.title == .hidden { window.titleVisibility = .hidden }
+        if ProcessInfo.processInfo.environment["SSK_PROBE_HIDE_TITLE"] != nil { window.titleVisibility = .hidden }
 
         Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
         if let mode = ProcessInfo.processInfo.environment["SSK_PROBE_THEME_EFFECT"] {
