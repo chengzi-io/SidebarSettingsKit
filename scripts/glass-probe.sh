@@ -51,7 +51,7 @@ for variant in shown scroll hidden shown-soft scroll-soft; do
     title=${variant%-soft}
     soft=(); [[ $variant == *-soft ]] && soft=(REPLICA_SOFT=1)
     env REPLICA_TITLE="$title" ${soft[@]+"${soft[@]}"} SSK_PROBE_TREE="$out/tree-replica-$variant.txt" \
-        SSK_REPLICA_DUMP=/dev/null /tmp/Replica >/dev/null 2>&1 &
+        SSK_REPLICA_DUMP="$out/replica-dump-$variant.txt" /tmp/Replica >/dev/null 2>&1 &
     replica=$!
     for _ in $(seq 1 40); do /tmp/find-window Replica >/tmp/replica-window 2>/dev/null && break; sleep 0.5; done
     sleep 2
