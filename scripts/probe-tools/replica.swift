@@ -7,6 +7,12 @@ struct Replica: App {
     @State private var selection: String? = "General"
     private let pages = ["General", "Appearance", "Advanced"]
 
+    init() {
+        if ProcessInfo.processInfo.environment["SSK_REPLICA_AQUA"] != nil {
+            NSApplication.shared.appearance = NSAppearance(named: .aqua)
+        }
+    }
+
     var body: some Scene {
         Window("General", id: "replica") {
             NavigationSplitView {
