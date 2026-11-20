@@ -23,8 +23,8 @@ extension View {
     /// keep the form's own: hidden there, it left a band under the toolbar on macOS 15.
     @ViewBuilder
     fileprivate func clearScrollBackgroundOnMacOS26() -> some View {
-        if ProcessInfo.processInfo.environment["SSK_PROBE_KEEP_FORM_BG"] != nil {
-            self
+        if #available(macOS 26.0, *), ProcessInfo.processInfo.environment["SSK_PROBE_SOFT_DETAIL"] != nil {
+            scrollContentBackground(.hidden).scrollEdgeEffectStyle(.soft, for: .top)
         } else if #available(macOS 26.0, *) {
             scrollContentBackground(.hidden)
         } else {
