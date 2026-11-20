@@ -38,6 +38,10 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     // Probe only: the title as a toolbar item, the window's own title hidden.
     static let probeTitleItem = NSToolbarItem.Identifier("SidebarSettingsKit.probeTitle")
     static let probeTitleAsItem = ProcessInfo.processInfo.environment["SSK_PROBE_TITLE"] == "item"
+    // Probe only: SSK_PROBE_EDGE = none | accessory | late | empty | auto.
+    static let probeEdge = ProcessInfo.processInfo.environment["SSK_PROBE_EDGE"] ?? "none"
+    static var probePageTitle = ""
+    static var probeScrolled = false
 
     let sidebarItem: NSSplitViewItem
     let detailItem: NSSplitViewItem
@@ -97,6 +101,12 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         }
         detailItem = NSSplitViewItem(viewController: detailController)
         separator.item = detailItem
+        if Self.probeEdge == "accessory", #available(macOS 26.1, *) {
+            let accessory = NSSplitViewItemAccessoryViewController()
+            accessory.view = NSView(frame: .zero)
+            accessory.preferredScrollEdgeEffectStyle = .soft
+            detailItem.addTopAlignedAccessoryViewController(accessory)
+        }
         splitViewController = NSSplitViewController()
         splitViewController.addSplitViewItem(sidebarItem)
         splitViewController.addSplitViewItem(detailItem)
@@ -139,12 +149,23 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         window.toolbar = toolbar
         window.toolbarStyle = configuration.toolbarStyle.appKit
         if configuration.title == .hidden { window.titleVisibility = .hidden }
+        if Self.probeEdge == "late" { window.titleVisibility = .hidden }
 
         Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
         // Probe only: once the window shows, record its title field, then move the title to the item.
         Task { @MainActor [weak window] in
             try? await Task.sleep(for: .milliseconds(1000))
             guard let window else { return }
+            if Self.probeEdge == "late" { window.titleVisibility = .visible }
+            if let path = ProcessInfo.processInfo.environment["SSK_PROBE_DUMP"],
+                let item = (window.contentViewController as? NSSplitViewController)?.splitViewItems.last
+            {
+                var line = "edge \(Self.probeEdge) separator \(item.titlebarSeparatorStyle.rawValue)"
+                if #available(macOS 26.0, *) {
+                    line += " accessories \(item.topAlignedAccessoryViewControllers.map { "\($0.view.frame)" })"
+                }
+                probeAppend(line, to: path)
+            }
             probeDumpTitleField(in: window)
             guard Self.probeTitleAsItem, let label = Self.probeTitleLabel(in: window) else { return }
             if let field = probeTitleField(in: window) {
@@ -194,6 +215,10 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             case .followsPage, .hidden: navigation.pageTitle()
             case .fixed(let resource): String(localized: resource)
             }
+        if probeEdge == "empty" {
+            probePageTitle = window.title
+            window.title = probeScrolled ? probePageTitle : ""
+        }
         probeTitleLabel(in: window)?.stringValue = window.title
         window.toolbar?.validateVisibleItems()
     }
@@ -294,6 +319,11 @@ private final class ToolbarSeparator {
     }
 
     func follow(isScrolled: Bool) {
+        if SettingsWindowController.probeEdge == "empty" {
+            SettingsWindowController.probeScrolled = isScrolled
+            item?.viewController.view.window?.title = isScrolled ? SettingsWindowController.probePageTitle : ""
+        }
+        if SettingsWindowController.probeEdge == "auto", #available(macOS 26.0, *) { return }
         item?.titlebarSeparatorStyle = isScrolled ? .shadow : .none
     }
 }
