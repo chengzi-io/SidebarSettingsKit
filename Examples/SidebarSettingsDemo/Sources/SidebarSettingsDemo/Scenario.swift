@@ -105,14 +105,14 @@ extension Scenario {
 
 /// Probe branch only: the window's layout, for comparing macOS releases.
 @MainActor
-private func probeDump(of window: NSWindow) -> String {
+func probeDump(of window: NSWindow) -> String {
     let env = ProcessInfo.processInfo.environment
     var lines = [
         "os: \(ProcessInfo.processInfo.operatingSystemVersionString)",
         "probe: \(env["SSK_PROBE"] ?? "")",
         "window.frame: \(window.frame) contentLayoutRect: \(window.contentLayoutRect)",
         "toolbarStyle: \(window.toolbarStyle.rawValue) titlebarSeparatorStyle: \(window.titlebarSeparatorStyle.rawValue) titleVisibility: \(window.titleVisibility.rawValue)",
-        "toolbar items: \((window.toolbar?.items ?? []).map { "\($0.itemIdentifier.rawValue)<\(type(of: $0))>" })",
+        "toolbar items: \((window.toolbar?.items ?? []).map { "\($0.itemIdentifier.rawValue)<\(type(of: $0))> bordered=\($0.isBordered) nav=\($0.isNavigational) view=\($0.view.map { String(describing: type(of: $0)) } ?? "-")" })",
     ]
     if let split = window.contentViewController as? NSSplitViewController {
         for (index, item) in split.splitViewItems.enumerated() {
@@ -123,7 +123,7 @@ private func probeDump(of window: NSWindow) -> String {
         }
     }
     func walk(_ view: NSView, depth: Int) {
-        guard depth < 18, lines.count < 4000 else { return }
+        guard depth < 24, lines.count < 20000 else { return }
         var line = String(repeating: "  ", count: depth) + "\(type(of: view)) \(view.convert(view.bounds, to: nil))"
         if view.isHidden { line += " hidden" }
         if view.safeAreaInsets.top != 0 || view.safeAreaInsets.left != 0 { line += " safeArea=\(view.safeAreaInsets)" }
@@ -134,6 +134,17 @@ private func probeDump(of window: NSWindow) -> String {
             line += " material=\(effect.material.rawValue) blending=\(effect.blendingMode.rawValue) state=\(effect.state.rawValue)"
         }
         if let layer = view.layer, layer.cornerRadius > 0 { line += " corner=\(layer.cornerRadius)" }
+        if let layer = view.layer, layer.borderWidth > 0 { line += " border=\(layer.borderWidth)" }
+        if let color = view.layer?.backgroundColor, color.alpha > 0 { line += " bg=\(color.components ?? [])" }
+        if view.bounds.height > 0, view.bounds.height <= 1.5 { line += " THIN" }
+        if let field = view as? NSTextField {
+            line += " field bezeled=\(field.isBezeled) bezelStyle=\(field.bezelStyle.rawValue) bordered=\(field.isBordered) drawsBg=\(field.drawsBackground) size=\(field.controlSize.rawValue)"
+        }
+        if let button = view as? NSButton {
+            line += " button bezelStyle=\(button.bezelStyle.rawValue) bordered=\(button.isBordered) size=\(button.controlSize.rawValue)"
+        }
+        if let control = view as? NSSegmentedControl { line += " segmentStyle=\(control.segmentStyle.rawValue)" }
+        if let box = view as? NSBox { line += " boxType=\(box.boxType.rawValue)" }
         lines.append(line)
         for subview in view.subviews { walk(subview, depth: depth + 1) }
     }

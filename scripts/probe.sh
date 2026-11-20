@@ -2,7 +2,7 @@
 # Probe branch only: capture the settings window and dump its layout for each probe variant.
 set -euo pipefail
 
-readonly VARIANTS=(base sep sep,winLine sep,itemShadow sep,accHard sep,group)
+readonly VARIANTS=(base sep,searchLarge sep,searchRounded)
 readonly SCENARIOS=(1 2)
 
 output_dir=${1:?usage: probe.sh OUTPUT_DIR}
@@ -44,6 +44,28 @@ for variant in "${VARIANTS[@]}"; do
         wait "$pid" 2>/dev/null || true
     done
 done
+# The same layout in plain SwiftUI: as it opens, scrolled to its end, and with the sidebar toggle.
+for mode in top end top,toggle; do
+    name="replica-${mode//,/+}"
+    rm -f "$work_dir/id"
+    SSK_PROBE_REPLICA="$mode" SSK_PROBE_DUMP="$output_dir/$name.txt" SSK_PROBE_ID_FILE="$work_dir/id" \
+        ./SidebarSettingsDemo --appearance light &
+    pid=$!
+    for _ in $(seq 1 300); do
+        [[ -s $work_dir/id ]] && break
+        kill -0 "$pid" 2>/dev/null || break
+        sleep 0.2
+    done
+    if [[ -s $work_dir/id ]] && screencapture -o -l "$(<"$work_dir/id")" "$output_dir/$name.png"; then
+        echo "ok   $name"
+    else
+        echo "FAIL $name" >&2
+        failed=$((failed + 1))
+    fi
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+done
+
 # Apple's own System Settings, as the reference: as it opens, then scrolled.
 tools=$(mktemp -d)
 swiftc -O "$repo_root/scripts/probe-tools/find-window.swift" -o "$tools/find-window"
