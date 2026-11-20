@@ -73,7 +73,7 @@ in the same way for the Sidebar icon size setting.
 | Scenario | What it shows |
 | --- | --- |
 | `1` | Three pages, the window on the short page, at the default 715 × 600 |
-| `2` | A long grouped form opened at its end, so the line under the toolbar shows |
+| `2` | A long grouped form opened at its end, to check the line under the toolbar |
 | `3` | The 40+ page set, opened on its last page with the sidebar scrolled to it |
 | `4` | The pages in three groups, set apart by space |
 | `5` | An account header and the tall login area as the footer |

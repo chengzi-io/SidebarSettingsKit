@@ -12,12 +12,14 @@ extension WindowTestSuite {
     @Suite(.serialized) @MainActor
     struct ToolbarAndTitleTests {
         /// The AppKit style each configuration style must reach, written out here so a change in
-        /// the kit's mapping shows up as a test failure.
+        /// the kit's mapping shows up as a test failure. macOS 26 gets no compact toolbar.
         private static func appKitStyle(
             _ style: SidebarSettingsConfiguration.ToolbarStyle
         ) -> NSWindow.ToolbarStyle {
             switch style {
-            case .unifiedCompact: .unifiedCompact
+            case .unifiedCompact:
+                ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 26
+                    ? .automatic : .unifiedCompact
             case .unified: .unified
             case .automatic: .automatic
             }
@@ -31,6 +33,22 @@ extension WindowTestSuite {
             configuration.toolbarStyle = style
             try await withWindow(configuration: configuration) { window in
                 #expect(window.window.toolbarStyle == Self.appKitStyle(style))
+            }
+        }
+
+        /// The sidebar runs up under the toolbar, as System Settings' does, whatever the style.
+        /// On macOS 26 a compact toolbar started it below the title bar, with the window buttons
+        /// on a bare strip. Its gap to the window's top must match its gap to the bottom: none
+        /// on macOS 14, 15 and 27, the floating sidebar's inset on macOS 26.
+        @Test(arguments: SidebarSettingsConfiguration.ToolbarStyle.allCases)
+        func sidebarRunsUnderTheToolbar(style: SidebarSettingsConfiguration.ToolbarStyle) async throws {
+            var configuration = SidebarSettingsConfiguration.windowTest
+            configuration.toolbarStyle = style
+            try await withWindow(configuration: configuration) { window in
+                let content = try require(window.window.contentView, "the window's content view")
+                let sidebar = frameInWindow(window.sidebarView)
+                let gapToTop = content.frame.maxY - sidebar.maxY
+                #expect(gapToTop == sidebar.minY, "sidebar \(sidebar) in \(content.frame)")
             }
         }
 

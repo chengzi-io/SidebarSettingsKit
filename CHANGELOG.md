@@ -27,17 +27,18 @@ The first release, 0.1.0.
   variant and weight where they apply. Every icon fills the sidebar's icon slot, so it follows the
   user's Sidebar icon size setting and the rows keep the system's height.
 - `SidebarSettingsConfiguration` with `size`, `resizing`, `autosaveName`, `sidebarWidth`,
-  `toolbarStyle`, `showsNavigationButtons`, `title`, `toolbarSeparator`, `search`,
-  `navigationPersistence`, `strings` and `icons`: `.plain`, as the system sidebar draws them, or
-  `.tiled`, in white on a square of the page's tint, as System Settings draws them (gray, or
-  `.tiled(defaultColor:)`, without a tint). The minimize and zoom buttons are dimmed and the window
-  cannot go full screen, as Apple's guidelines ask of a settings window.
+  `toolbarStyle`, `showsNavigationButtons`, `title`, `search`, `navigationPersistence`, `strings`
+  and `icons`: `.plain`, as the system sidebar draws them, or `.tiled`, in white on a square of
+  the page's tint, as System Settings draws them (gray, or `.tiled(defaultColor:)`, without a
+  tint). `toolbarStyle` defaults to `.automatic`; `.unifiedCompact` uses it on macOS 26, where a
+  compact toolbar starts the sidebar below the title bar. The minimize and zoom buttons are
+  dimmed and the window cannot go full screen, as Apple's guidelines ask of a settings window.
 - The window follows the app's light or dark appearance (`NSApp.appearance`), which follows the
   Mac unless the app sets one.
 - `SidebarSettingsCommands`: the app menu's "Settings…" item and ⌘,, in place of the `Settings`
   scene's; `OpenSidebarSettingsButton` opens the window from anywhere, optionally on a page.
-- Pages scroll themselves, as System Settings' grouped forms do; the line under the toolbar
-  follows the page's form, list or scroll view.
+- Pages scroll themselves, as System Settings' grouped forms do. The line under the toolbar shows
+  on macOS 14, 15 and 27, and not on macOS 26, where the system ignores the separator style.
 - Keyboard: arrow keys move the selection, ⌘[ and ⌘] go back and forward, ⌘F focuses the search
   field, ↓ in it moves to the pages found, Tab goes back to it, Esc clears it, ⌘W closes the
   window, ⌘, opens it. Typing a page's title selects its row. VoiceOver reads each row's title and

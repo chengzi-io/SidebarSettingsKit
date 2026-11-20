@@ -35,7 +35,6 @@ struct ControlPanelView: View {
                     option("Title", $options.title)
                 }
                 Section("Behavior") {
-                    option("Toolbar separator", $options.separator)
                     Toggle("Search field", isOn: $options.search)
                     option("Reopening shows", $options.navigationPersistence)
                     Toggle("Own words for the kit's text (configuration.strings)", isOn: $options.customStrings)

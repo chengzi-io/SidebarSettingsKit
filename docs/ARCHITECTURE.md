@@ -34,17 +34,16 @@ SidebarSettingsWindow<Page>                            public, @MainActor class,
 ├── sections: [SettingsPageSection<Page>]              the sidebar's groups
 ├── configuration                                      value type
 └── controller: SettingsWindowController?              built by the first show()
-    ├── window: SettingsWindow                         NSWindow subclass: ⌘[ ⌘] ⌘W
-    │   ├── toolbar: NSToolbar                         delegate = the controller
-    │   │   └── items: .sidebarTrackingSeparator, back, forward
-    │   └── contentViewController: NSSplitViewController
-    │       ├── sidebarItem: NSSplitViewItem(sidebarWithViewController:)
-    │       │   └── NSHostingController<SidebarView>
-    │       │       → NSSearchField (fixed) + system sidebar List + header + footer
-    │       └── detailItem: NSSplitViewItem(viewController:)
-    │           └── NSHostingController<DetailContainer>
-    │               → the selected page, which scrolls itself
-    └── scrollState: DetailScrollState                 written by the page, read for the separator
+    └── window: SettingsWindow                         NSWindow subclass: ⌘[ ⌘] ⌘W
+        ├── toolbar: NSToolbar                         delegate = the controller
+        │   └── items: .sidebarTrackingSeparator, back, forward
+        └── contentViewController: NSSplitViewController
+            ├── sidebarItem: NSSplitViewItem(sidebarWithViewController:)
+            │   └── NSHostingController<SidebarView>
+            │       → NSSearchField (fixed) + system sidebar List + header + footer
+            └── detailItem: NSSplitViewItem(viewController:)
+                └── NSHostingController<DetailContainer>
+                    → the selected page, which scrolls itself
 ```
 
 ## Ownership and lifetimes
@@ -55,7 +54,6 @@ SidebarSettingsWindow<Page>                            public, @MainActor class,
 | `SettingsNavigator` | the window object | the app: it survives closing the window, so the window reopens on its page |
 | `SettingsWindowController` | the window object | from the first `show(page:)` until the window object dies |
 | `SettingsWindow` | the controller | with the controller: `isReleasedWhenClosed = false`, so AppKit does not free it on close |
-| `DetailScrollState` | the controller | with the controller, shared with the detail's SwiftUI views |
 
 `SidebarSettingsWindow.init` captures `makeController`, but builds nothing: the first
 `show(page:)` calls it, stores the controller, activates the app and shows the window. `close()`
@@ -120,27 +118,31 @@ rows have their heights, it stops short and clips a row below the fold.
 
 ## The line under the toolbar
 
-AppKit's automatic separator (`titlebarSeparatorStyle = .automatic`) loses track once SwiftUI
-swaps the detail's content: it keeps the line after the new page is shown from the top. So the
-detail's scroll position drives it:
+The kit sets `titlebarSeparatorStyle = .line` on the detail item once, when the controller builds
+it. Left `.automatic`, AppKit lost track of the line once SwiftUI swapped the detail's content: it
+kept the line after the new page was shown from its top.
 
-1. `DetailContainer` applies `ScrollTracking` around the page; `onScrollGeometryChange` there
-   reaches the form, list or scroll view inside it. It adds no scroll view of its own: on macOS
-   14 and 15 the toolbar takes its background from the scroll view right under it. A grouped form
-   or a list gives it one that matches the page and changes it once the page scrolls; a plain
-   SwiftUI `ScrollView` gives none, so the toolbar falls back to its own lighter material, whose
-   edge shows like a line without any scrolling. The kit's own `ScrollView` around every page did
-   exactly that, so pages now scroll themselves, as System Settings' do.
-2. `ScrollTracking` reads `DetailScrollState` from the environment and, on macOS 15 and later,
-   writes `isScrolled` from `onScrollGeometryChange`. It also resets it on appear: a new page
-   starts at the top and its scroll view reports nothing until it moves. `DetailContainer` puts
-   `.id(page)` on the content, so switching pages builds the new page from the top.
-3. `SettingsWindowController.followSeparator()` reads `scrollState.isScrolled` inside
-   `withObservationTracking` and re-enters itself on change, then sets
-   `detailItem.titlebarSeparatorStyle` to `.line` or `.none`.
+What each version shows:
 
-macOS 14 cannot report a scroll position to SwiftUI, so on 14 `.whenScrolled` shows the line
-always. `.always` and `.never` behave the same on every version.
+| macOS | The line |
+| --- | --- |
+| 14, 15 | always, at the top of a page too, as System Settings has it |
+| 26 | none: the system ignores the setting and draws its own edge, without a line |
+| 27 | always: the system's hard scroll edge |
+
+macOS 27 uses its hard scroll edge because the window title floats in the title bar. macOS 26
+draws no line at all while System Settings on 26 draws a 1 pt one: AppKit reaches it through a
+private view, with no public API, and even a plain SwiftUI `NavigationSplitView` on 26 shows it
+only sometimes. The kit keeps the system's own behavior rather than drawing a line of its own,
+so this difference stays.
+
+A page scrolls itself; the window adds no scroll view around it. On macOS 14 and 15 the toolbar
+takes its background from the scroll view right under it: a grouped form or a list gives it one
+that matches the page, while a plain SwiftUI `ScrollView` gives none, so the toolbar falls back
+to its own lighter material, whose edge shows like a line without any scrolling. The kit's own
+`ScrollView` around every page did exactly that, so pages now scroll themselves, as System
+Settings' do. `DetailContainer` puts `.id(page)` on the content, so switching pages builds the
+new page from its top, and hides the scroll content background on macOS 26 and later.
 
 ## Title and toolbar items
 
@@ -155,6 +157,10 @@ menu and VoiceOver.
 The toolbar shows icons only: in an app, the taller toolbar that `.automatic` picks on macOS 15
 shows "Back" and "Forward" under the arrows, which System Settings does not. A test process gets
 icons only whatever the setting, so this is a manual check.
+
+The controller maps a `.unifiedCompact` toolbar style to `.automatic` on macOS 26 only: there a
+compact toolbar starts the sidebar below the title bar, which leaves the window buttons on a bare
+strip. macOS 14, 15 and 27 get the compact toolbar, and the default is `.automatic` everywhere.
 
 `window.title` is set after `contentViewController`, because `NSWindow(contentViewController:)`
 leaves the title "Untitled" until something changes it.

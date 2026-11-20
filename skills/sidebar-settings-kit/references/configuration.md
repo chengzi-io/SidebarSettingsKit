@@ -23,11 +23,13 @@ create a new `SidebarSettingsWindow`, after closing the old one.
 | `toolbarStyle` | `.automatic` | `.unifiedCompact`, `.unified` | the app wants a shorter toolbar (`.unifiedCompact`), or the taller one on every version (`.unified`) |
 | `showsNavigationButtons` | `true` | `false` | very few pages, where history adds nothing; ⌘[ and ⌘] go with the buttons |
 | `title` | `.followsPage` | `.fixed("Settings")`, `.hidden` | the app's style keeps one title, or none |
-| `toolbarSeparator` | `.whenScrolled` | `.always`, `.never` | rarely; on macOS 14 `.whenScrolled` shows the line always |
 | `search` | `.enabled` | `.disabled` | only a handful of pages |
 | `navigationPersistence` | `.session` | `.resetOnShow` | the window should always open on the first page |
 | `strings` | the kit's, in every macOS language | `.init(back:forward:searchPrompt:settingsMenuItem:noSearchResults:)` (the type is `SidebarSettingsConfiguration.Strings`) | the app's text is not localized, or its menu says "Preferences…" |
 | `icons` | `.plain` | `.tiled`, `.tiled(defaultColor:)` | the app has a brand look; see [styling.md](styling.md) |
+
+`toolbarStyle: .unifiedCompact` runs as `.automatic` on macOS 26, where a compact toolbar starts
+the sidebar below the title bar; macOS 14, 15 and 27 get the compact toolbar.
 
 ## Appearance
 
@@ -96,10 +98,10 @@ func matches(searchText: String) -> Bool {
 
 ## Pages scroll themselves
 
-The kit adds no scroll view around a page: a grouped `Form` or a `List` scrolls by itself, and
-the line under the toolbar follows it. A page of other views that can be taller than the window
-goes in a `ScrollView`; on macOS 14 and 15 the toolbar then keeps a lighter background of its own
-above it, so prefer a grouped `Form` for settings.
+The kit adds no scroll view around a page: a grouped `Form` or a `List` scrolls by itself, and the
+line under the toolbar shows on macOS 14, 15 and 27, at the top of a page too. A page of other
+views that can be taller than the window goes in a `ScrollView`; on macOS 14 and 15 the toolbar
+then keeps a lighter background of its own, so prefer a grouped `Form` for settings.
 
 ```swift
 // A settings page, as in System Settings.

@@ -1,5 +1,4 @@
 import AppKit
-import Observation
 import SwiftUI
 
 /// The AppKit window behind ``SidebarSettingsWindow``: a split view whose sidebar cannot
@@ -38,7 +37,6 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     static let leadingSpaceItem = NSToolbarItem.Identifier("SidebarSettingsKit.leadingSpace")
 
     let configuration: SidebarSettingsConfiguration
-    let scrollState: DetailScrollState
     let sidebarItem: NSSplitViewItem
     let detailItem: NSSplitViewItem
     let splitViewController: NSSplitViewController
@@ -49,13 +47,11 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     init(
         configuration: SidebarSettingsConfiguration,
         navigation: Navigation,
-        scrollState: DetailScrollState,
         sidebar: some View,
         detail: some View
     ) {
         self.configuration = configuration
         self.navigation = navigation
-        self.scrollState = scrollState
 
         // Apple's guidelines dim a settings window's minimize and zoom buttons: ⌘, brings it
         // back, and it is sized for its pages. A resizable window still resizes from its edges.
@@ -94,6 +90,10 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             sidebarIdealOnceShown = ideal
         }
         detailItem = NSSplitViewItem(viewController: detailController)
+        // A line under the toolbar on macOS 14 and 15, as System Settings has. Left to AppKit,
+        // it lost track of the scroll position once SwiftUI swapped the page. macOS 26 and
+        // later ignore it and draw their own edge.
+        detailItem.titlebarSeparatorStyle = .line
         splitViewController = NSSplitViewController()
         splitViewController.addSplitViewItem(sidebarItem)
         splitViewController.addSplitViewItem(detailItem)
@@ -138,7 +138,6 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         if configuration.title == .hidden { window.titleVisibility = .hidden }
 
         Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
-        followSeparator()
     }
 
     override func showWindow(_ sender: Any?) {
@@ -174,31 +173,6 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             case .fixed(let resource): String(localized: resource)
             }
         window.toolbar?.validateVisibleItems()
-    }
-
-    /// AppKit's automatic separator loses track once SwiftUI swaps the detail's content and
-    /// then keeps the line, so the detail's scroll state drives it instead.
-    private func followSeparator() {
-        let style: NSTitlebarSeparatorStyle
-        switch configuration.toolbarSeparator {
-        case .always:
-            style = .line
-        case .never:
-            style = .none
-        case .whenScrolled:
-            if #available(macOS 15.0, *) {
-                let isScrolled = withObservationTracking {
-                    scrollState.isScrolled
-                } onChange: { [weak self] in
-                    Task { @MainActor [weak self] in self?.followSeparator() }
-                }
-                style = isScrolled ? .line : .none
-            } else {
-                // SwiftUI reports no scroll offset before macOS 15.
-                style = .line
-            }
-        }
-        detailItem.titlebarSeparatorStyle = style
     }
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -309,7 +283,16 @@ final class SettingsWindow: NSWindow {
 extension SidebarSettingsConfiguration.ToolbarStyle {
     var appKit: NSWindow.ToolbarStyle {
         switch self {
-        case .unifiedCompact: .unifiedCompact
+        case .unifiedCompact:
+            // On macOS 26 a compact toolbar starts the sidebar below the title bar and leaves
+            // the window buttons on a bare strip; macOS 27 runs it to the top again.
+            if #available(macOS 27, *) {
+                .unifiedCompact
+            } else if #available(macOS 26, *) {
+                .automatic
+            } else {
+                .unifiedCompact
+            }
         case .unified: .unified
         case .automatic: .automatic
         }

@@ -46,10 +46,10 @@ enum WindowTest {
 
     /// Polls `condition` until it holds, and throws after `timeout` naming what it waited for.
     ///
-    /// Every wait awaits instead of running the run loop. The kit updates the toolbar
-    /// separator from `Task { @MainActor in … }`, and a synchronous body that blocks the main
-    /// thread in `RunLoop.main.run(until:)` starves that task and the main queue both (checked
-    /// on macOS 15.7: neither ran), so a test would read stale state.
+    /// Every wait awaits instead of running the run loop. The kit focuses the list from a
+    /// SwiftUI task, and a synchronous body that blocks the main thread in
+    /// `RunLoop.main.run(until:)` starves tasks and the main queue both (checked on macOS 15.7:
+    /// neither ran), so a test would read stale state.
     static func wait(
         for condition: String,
         timeout: Duration = timeout,
@@ -138,8 +138,7 @@ func firstScrollView(in view: NSView) -> NSScrollView? {
 ///
 /// SwiftUI insets a page's content by the space the toolbar takes (38 pt in a
 /// `fullSizeContentView` window), so the clip view's own origin is negative at the top; adding
-/// the inset back makes the value comparable with 0, which is what the kit's scroll tracking
-/// compares against.
+/// the inset back makes the value comparable with 0.
 @MainActor
 func scrollOffsetFromTop(_ scrollView: NSScrollView) -> CGFloat {
     scrollView.contentView.bounds.origin.y + scrollView.contentInsets.top
@@ -153,8 +152,8 @@ func maximumScrollOffset(_ scrollView: NSScrollView) -> CGFloat {
 
 /// Scrolls `scrollView` to `offset` points below the top of its content.
 ///
-/// `reflectScrolledClipView` is what publishes the move: without it SwiftUI's
-/// `.onScrollGeometryChange` never sees the new offset, and the toolbar separator stays put.
+/// `reflectScrolledClipView` brings the scroll view up to date with its moved clip view, as a
+/// person's scroll does.
 @MainActor
 func scroll(_ scrollView: NSScrollView, toOffsetFromTop offset: CGFloat) {
     scrollView.contentView.scroll(to: NSPoint(x: 0, y: offset - scrollView.contentInsets.top))
@@ -178,30 +177,33 @@ func requireScrollable(_ scrollView: NSScrollView, atLeast minimumContentHeight:
     }
 }
 
+/// A key press for `window`. It carries the current time: the list's type-to-select joins key
+/// presses by their timestamps.
+@MainActor
+private func keyDown(
+    _ characters: String, keyCode: UInt16, modifierFlags: NSEvent.ModifierFlags = [],
+    in window: NSWindow
+) throws -> NSEvent {
+    try require(
+        NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: modifierFlags,
+            timestamp: ProcessInfo.processInfo.systemUptime,
+            windowNumber: window.windowNumber, context: nil, characters: characters,
+            charactersIgnoringModifiers: characters, isARepeat: false, keyCode: keyCode),
+        "an NSEvent for \(characters.debugDescription)")
+}
+
 /// A ⌘ key press for `window`, in the form `SettingsWindow` reads them.
 @MainActor
 func commandKey(_ characters: String, keyCode: UInt16, in window: NSWindow) throws -> NSEvent {
-    try require(
-        NSEvent.keyEvent(
-            with: .keyDown, location: .zero, modifierFlags: .command, timestamp: 0,
-            windowNumber: window.windowNumber, context: nil, characters: characters,
-            charactersIgnoringModifiers: characters, isARepeat: false, keyCode: keyCode),
-        "an NSEvent for ⌘\(characters)")
+    try keyDown(characters, keyCode: keyCode, modifierFlags: .command, in: window)
 }
 
-/// Types `text` into `window`'s first responder, one key press per character. The events
-/// carry the current time: the list's type-to-select joins key presses by their timestamps.
+/// Types `text` into `window`'s first responder, one key press per character.
 @MainActor
 func typeKeys(_ text: String, in window: NSWindow) throws {
     for character in text.map(String.init) {
-        let press = try require(
-            NSEvent.keyEvent(
-                with: .keyDown, location: .zero, modifierFlags: [],
-                timestamp: ProcessInfo.processInfo.systemUptime,
-                windowNumber: window.windowNumber, context: nil, characters: character,
-                charactersIgnoringModifiers: character, isARepeat: false, keyCode: 0),
-            "an NSEvent for \(character)")
-        window.sendEvent(press)
+        window.sendEvent(try keyDown(character, keyCode: 0, in: window))
     }
 }
 
@@ -239,14 +241,8 @@ enum Key {
 /// Presses `key` in `window`'s first responder.
 @MainActor
 func press(_ key: Key, in window: NSWindow) throws {
-    let event = try require(
-        NSEvent.keyEvent(
-            with: .keyDown, location: .zero, modifierFlags: key.modifierFlags,
-            timestamp: ProcessInfo.processInfo.systemUptime,
-            windowNumber: window.windowNumber, context: nil, characters: key.characters,
-            charactersIgnoringModifiers: key.characters, isARepeat: false, keyCode: key.keyCode),
-        "an NSEvent for \(key)")
-    window.sendEvent(event)
+    window.sendEvent(
+        try keyDown(key.characters, keyCode: key.keyCode, modifierFlags: key.modifierFlags, in: window))
 }
 
 /// Whether `field` has the keyboard focus: the window's field editor is editing it.
@@ -349,7 +345,7 @@ struct WindowUnderTest {
     /// The window's right column, which shows the page.
     var detailView: NSView { controller.detailItem.viewController.view }
 
-    /// The line under the toolbar, driven by the detail's scroll state.
+    /// The line under the toolbar.
     var separator: NSTitlebarSeparatorStyle { controller.detailItem.titlebarSeparatorStyle }
 
     /// Waits until `settings`' window is on screen with its columns laid out.
