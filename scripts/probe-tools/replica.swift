@@ -1,4 +1,5 @@
 // Probe branch only: a plain SwiftUI window shaped like System Settings, to compare with the kit's.
+import AppKit
 import SwiftUI
 
 @main
@@ -30,6 +31,10 @@ struct Replica: App {
             }
             .toolbar(removing: .sidebarToggle)
             .frame(width: 715, height: 600)
+            .onAppear {
+                NSApp.setActivationPolicy(.regular)
+                NSApp.activate(ignoringOtherApps: true)
+            }
         }
         .windowResizability(.contentSize)
     }
