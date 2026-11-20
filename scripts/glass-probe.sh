@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# macOS 26 and 27, Reduce Transparency off: which change gives the kit's page a soft scroll edge
-# under the toolbar with the title shown, as System Settings has: a zero-height accessory asking for
-# a soft edge, the title shown late, an empty title at the top, or no separator style on 26 and later.
+# macOS 26 and 27, Reduce Transparency off: whether a plain SwiftUI NavigationSplitView with its
+# title shown keeps a soft scroll edge under the toolbar, and its views beside the kit's.
 set -uo pipefail
 out=$PWD/glass; mkdir -p "$out"
 swiftc -O scripts/probe-tools/pointer.swift -o /tmp/pointer
@@ -33,25 +32,27 @@ launch() {
 }
 finish() { pkill -f SidebarSettingsDemo; sleep 0.8; }
 
-for edge in none accessory late empty auto; do
-    # Scrolled by the demo, to the end of the page.
-    launch "edge-$edge-2" 2 SSK_PROBE_EDGE=$edge
-    screencapture -o -l "$(</tmp/wid)" "$out/edge-$edge-2.png"
+swiftc -O scripts/probe-tools/find-window.swift -o /tmp/find-window
+swiftc -O -parse-as-library -swift-version 6 scripts/probe-tools/replica.swift -o /tmp/Replica
+otool -l /tmp/Replica | grep -A4 LC_BUILD_VERSION | grep -E 'minos|sdk' | xargs | tee "$out/replica-build-version.txt"
+
+# A plain SwiftUI NavigationSplitView, its title shown always, scrolled by the wheel.
+SSK_PROBE_TREE="$out/tree-replica.txt" SSK_REPLICA_DUMP="$out/replica-dump.txt" /tmp/Replica >/dev/null 2>&1 &
+replica=$!
+sleep 3
+read -r id x y w h < <(/tmp/find-window Replica)
+screencapture -o -l "$id" "$out/replica-top.png"
+/tmp/pointer $((x + w * 2 / 3)) $((y + h / 2)) 6; away; sleep 1.5
+screencapture -o -l "$id" "$out/replica-wheel.png"
+sleep 4
+kill "$replica"
+echo "ok replica"
+
+# The kit's window scrolled, with and without the accessory, and its views.
+for edge in none accessory; do
+    launch "tree-$edge" 2 SSK_PROBE_EDGE=$edge SSK_PROBE_TREE="$out/tree-kit-$edge.txt"
+    screencapture -o -l "$(</tmp/wid)" "$out/kit-$edge-2.png"
+    sleep 1
     finish
-    # Scrolled by the wheel, from the top of the page.
-    launch "edge-$edge-6" 6 SSK_PROBE_EDGE=$edge
-    id=$(</tmp/wid)
-    read -r x y w h < <(/tmp/window-frame "$id")
-    screencapture -o -l "$id" "$out/edge-$edge-6-top.png"
-    /tmp/pointer $((x + w * 2 / 3)) $((y + h / 2)) 6; away; sleep 1.5
-    screencapture -o -l "$id" "$out/edge-$edge-6-wheel.png"
-    finish
-    echo "ok edge $edge"
+    echo "ok kit $edge"
 done
-# The accessory must not move a short page down.
-launch edge-accessory-5 5 SSK_PROBE_EDGE=accessory
-screencapture -o -l "$(</tmp/wid)" "$out/edge-accessory-5.png"
-finish
-launch edge-none-5 5 SSK_PROBE_EDGE=none
-screencapture -o -l "$(</tmp/wid)" "$out/edge-none-5.png"
-finish
