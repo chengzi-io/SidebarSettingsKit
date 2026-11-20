@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   probe:
-    name: Probe Tab (${{ matrix.os }})
+    name: Probe real Tab (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
