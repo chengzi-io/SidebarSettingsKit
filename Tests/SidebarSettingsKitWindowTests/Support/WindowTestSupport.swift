@@ -184,13 +184,13 @@ private func keyDown(
     _ characters: String, keyCode: UInt16, modifierFlags: NSEvent.ModifierFlags = [],
     in window: NSWindow
 ) throws -> NSEvent {
-    try require(
-        NSEvent.keyEvent(
-            with: .keyDown, location: .zero, modifierFlags: modifierFlags,
-            timestamp: ProcessInfo.processInfo.systemUptime,
-            windowNumber: window.windowNumber, context: nil, characters: characters,
-            charactersIgnoringModifiers: characters, isARepeat: false, keyCode: keyCode),
-        "an NSEvent for \(characters.debugDescription)")
+    let cgEvent = try require(
+        CGEvent(keyboardEventSource: nil, virtualKey: CGKeyCode(keyCode), keyDown: true),
+        "a CGEvent for \(characters.debugDescription)")
+    cgEvent.flags = CGEventFlags(rawValue: UInt64(modifierFlags.rawValue))
+    let utf16 = Array(characters.utf16)
+    cgEvent.keyboardSetUnicodeString(stringLength: utf16.count, unicodeString: utf16)
+    return try require(NSEvent(cgEvent: cgEvent), "an NSEvent for \(characters.debugDescription)")
 }
 
 /// A ⌘ key press for `window`, in the form `SettingsWindow` reads them.

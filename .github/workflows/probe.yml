@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   probe:
-    name: Probe real Tab (${{ matrix.os }})
+    name: Probe CGEvent keys (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -29,4 +29,4 @@ jobs:
           developer_dir="/Applications/Xcode_$xcode_version.app/Contents/Developer"
           echo "DEVELOPER_DIR=$developer_dir" >>"$GITHUB_ENV"
           sudo DEVELOPER_DIR="$developer_dir" xcodebuild -runFirstLaunch
-      - run: scripts/tab-probe.sh
+      - run: make test
