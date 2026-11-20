@@ -25,10 +25,10 @@ runner on 2026-11-02, so macOS 14 has no CI: keep `#available` branches for 14 s
 | --- | --- | --- |
 | `Package.swift` | one product, `SidebarSettingsKit`; no dependencies | never add a dependency or a second product |
 | `Sources/SidebarSettingsKit/Public/` | every public symbol | no AppKit type in a public signature |
-| `Sources/SidebarSettingsKit/Internal/` | AppKit window controller, sidebar lists, search field, detail container | `internal`; tests reach it with `@testable import` |
+| `Sources/SidebarSettingsKit/Internal/` | AppKit window controller, sidebar, search field, detail container | `internal`; tests reach it with `@testable import` |
 | `Sources/SidebarSettingsKit/Resources/<lang>.lproj/Localizable.strings` | every user-visible string the kit owns, in every macOS language | no literal user-visible text in Sources; words are macOS's own, never translated by hand (`docs/ARCHITECTURE.md`, Localization); `.strings`, not `.xcstrings`: SwiftPM's command line copies a string catalog without compiling it, so `swift build`/`swift run` would show English only |
 | `Tests/Fixtures/` | shared fixtures, target `SidebarSettingsFixtures` (in no product) | the demo compiles the same files through a symlink; never name the module in fixture code |
-| `Tests/SidebarSettingsKitTests/` | Swift Testing unit and window tests | |
+| `Tests/SidebarSettingsKitTests/`, `Tests/SidebarSettingsKitWindowTests/` | Swift Testing logic tests (no window) and window tests (real windows, one at a time) | |
 | `Examples/SidebarSettingsDemo/` | separate package depending on `../..`; manual QA and screenshots | the root package never references it |
 | `skills/sidebar-settings-kit/` | agent skill that integrates the kit into any app | |
 | `scripts/screenshots.sh` | screenshot loop used by `make screenshots` and the workflow | |
@@ -66,10 +66,9 @@ through `-Xswiftc -warnings-as-errors` in the Makefile, never through `unsafeFla
   keyboard, type-to-select and VoiceOver. `configuration.icons` changes a row's icon, never the
   selection. Kit-drawn rows (for a rounded selection) were tried and dropped: they lost those.
 - The line under the toolbar is `titlebarSeparatorStyle = .line` on the detail item, set once:
-  macOS 14 and 15 show it always, as System Settings does there. Left `.automatic`, AppKit lost
-  track when SwiftUI swapped the page. macOS 26 and later ignore it and draw their own edge; on
-  26 that edge has no line (System Settings draws one through a private view): a documented
-  difference, not drawn by the kit.
+  macOS 14 and 15 show it always, as System Settings does there; left `.automatic`, AppKit lost
+  track when SwiftUI swapped the page. macOS 26 and later ignore it; 26 shows no line (System
+  Settings draws one through a private view), a known limit the kit does not draw around.
 - `ToolbarStyle.unifiedCompact` becomes `.automatic` on macOS 26 only: there a compact toolbar
   starts the sidebar below the title bar. `sidebarRunsUnderTheToolbar` catches it on macos-26.
 - The window adds no scroll view around a page; each page scrolls itself. On macOS 14 and 15 the

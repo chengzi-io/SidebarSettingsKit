@@ -48,8 +48,8 @@ The first release, 0.1.0.
   declares and runs in, English otherwise; each replaceable through
   `SidebarSettingsConfiguration.strings`. The back and forward arrows point the reading
   direction's way in Arabic and Hebrew.
-- macOS 26 and later: the sidebar keeps Liquid Glass, its rows fade at the scroll edge, and the detail sits
-  on the window's own background.
+- macOS 26 and later: the sidebar keeps Liquid Glass, its rows fade at the scroll edge, and the
+  detail sits on the window's own background.
 - Window position saved by AppKit under `autosaveName`; page and search kept for the session.
 - Tests (unit and window targets with shared fixtures), a demo app, the screenshot script, CI on
   macos-15 and macos-26, and an agent skill in `skills/sidebar-settings-kit/`, installed with

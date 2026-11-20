@@ -69,8 +69,8 @@ The controller stays free of `Page`: `SettingsWindowController.Navigation` holds
 1. The search field, when `configuration.search` is `.enabled`: AppKit's `NSSearchField` through
    `NSViewRepresentable`, at `.controlSize(.large)` with 8 pt insets, as System Settings has it.
    `.searchable` cannot put a field above the list, which is why the kit uses AppKit here.
-2. The list, which scrolls (below). The header is the list's
-   first item and scrolls with the pages, as System Settings' account row does.
+2. The list, which scrolls (below). The header is the list's first item and scrolls with the
+   pages, as System Settings' account row does.
 3. The footer, through `.safeAreaInset(edge: .bottom)`, so it stays at the bottom while the list
    scrolls above it and the list leaves room for it.
 
@@ -78,18 +78,18 @@ Search filtering is `visibleSections(_:search:searchText:)` in `Internal/Sidebar
 with search on, each group keeps the pages whose `matches(searchText:)` is true, and a group left
 with no pages is dropped. When no page matches, the list gives way to a small, light "No Results"
 line under a magnifying glass (`NoSearchResults`); `ContentUnavailableView.search` sizes itself
-for a whole window and cannot be made smaller. Only a
-search can empty the list, because a window has at least one page. The matching itself belongs to `SettingsPage`, not to the configuration, because the
-configuration is not generic over the page type.
+for a whole window and cannot be made smaller. Only a search can empty the list, because a
+window has at least one page. The matching itself belongs to `SettingsPage`, not to the
+configuration, because the configuration is not generic over the page type.
 
 ## The sidebar list
 
 The sidebar draws the pages with SwiftUI's `List` and `.listStyle(.sidebar)` (`SidebarList`), with
 plain icons or tiled, so selection, arrow keys, type-to-select, VoiceOver's list navigation and the
 selection's look on each macOS version are the system's. `configuration.icons` changes what a
-row's icon slot holds, never the selection. The system list cannot draw another selection shape; rows the kit
-drew itself to get a rounded one lost type-to-select, VoiceOver's list structure and the system's
-selection look, so the kit has no such renderer.
+row's icon slot holds, never the selection. The system list cannot draw another selection shape;
+rows the kit drew itself to get a rounded one lost type-to-select, VoiceOver's list structure and
+the system's selection look, so the kit has no such renderer.
 
 A row is as tall as its content plus the list's padding, so the kit has no row height option: the
 sidebar list ignores `defaultMinListRowHeight`, and a frame on the row's content adds the padding
@@ -98,18 +98,14 @@ size setting (`\.sidebarRowSize` in the row's environment), 6 points in from the
 An icon, plain or on a tile, fills that slot, as System Settings' tiles do, so the rows keep the
 system's height and the title starts where a plain row's does. A tile larger than the slot made a
 taller row and crowded the title, so tiles have no size of their own. A plain icon takes its tint
-through `listItemTint`, which the list turns white on the selected row; on a tile the tint is the
-tile's color and the glyph is white.
+through `listItemTint`, which the list turns white with the title on the selected row; a color
+set on the symbol with `foregroundStyle` stayed, and a blue icon vanished into the blue
+selection. On a tile the tint is the tile's color and the glyph is white.
 
 A group is a `Section` without a header, set apart by space as System Settings' groups are. A
 titled `Section` in a sidebar list becomes a group that folds when its heading is clicked, with
 SwiftUI's own animation; keeping it open takes `.collapsible(false)`, which SwiftUI marks for
 deprecation, so groups have no titles.
-
-A bare icon takes its tint through `listItemTint`, the sidebar's own tint for a row's icon: the
-list turns it white with the title on a selected row. A color set on the symbol with
-`foregroundStyle` stays, and a blue icon vanished into the blue selection. On a tile, the tint
-colors the tile and the symbol is white.
 
 The list ignores the `nil` a command-click writes into its selection, so the current page stays.
 It scrolls the selected page into view on appear and on every change. The scroll on appear waits
@@ -122,27 +118,24 @@ The kit sets `titlebarSeparatorStyle = .line` on the detail item once, when the 
 it. Left `.automatic`, AppKit lost track of the line once SwiftUI swapped the detail's content: it
 kept the line after the new page was shown from its top.
 
-What each version shows:
-
 | macOS | The line |
 | --- | --- |
 | 14, 15 | always, at the top of a page too, as System Settings has it |
 | 26 | none: the system ignores the setting and draws its own edge, without a line |
-| 27 | always: the system's hard scroll edge |
+| 27 | always: the system's hard scroll edge, as the window title floats in the title bar |
 
-macOS 27 uses its hard scroll edge because the window title floats in the title bar. macOS 26
-draws no line at all while System Settings on 26 draws a 1 pt one: AppKit reaches it through a
-private view, with no public API, and even a plain SwiftUI `NavigationSplitView` on 26 shows it
-only sometimes. The kit keeps the system's own behavior rather than drawing a line of its own,
-so this difference stays.
+System Settings on macOS 26 draws a 1 pt line through a private view of AppKit's scroll edge,
+with no public API, and even a plain SwiftUI `NavigationSplitView` on 26 shows it only
+sometimes. The kit keeps the system's edge rather than drawing a line of its own.
+
+## The detail
 
 A page scrolls itself; the window adds no scroll view around it. On macOS 14 and 15 the toolbar
-takes its background from the scroll view right under it: a grouped form or a list gives it one
+takes its background from the scroll view right under it: a grouped form or a list gives one
 that matches the page, while a plain SwiftUI `ScrollView` gives none, so the toolbar falls back
-to its own lighter material, whose edge shows like a line without any scrolling. The kit's own
-`ScrollView` around every page did exactly that, so pages now scroll themselves, as System
-Settings' do. `DetailContainer` puts `.id(page)` on the content, so switching pages builds the
-new page from its top, and hides the scroll content background on macOS 26 and later.
+to its own lighter material, whose edge shows without any scrolling. A `ScrollView` of the kit's
+around every page did exactly that. `DetailContainer` puts `.id(page)` on the content, so
+switching pages builds the new page from its top.
 
 ## Title and toolbar items
 
@@ -169,8 +162,8 @@ The toolbar is an `NSToolbar` with the controller as delegate, not SwiftUI's too
 which once produced an unlocalized first title. Its items are `.sidebarTrackingSeparator`, back and
 forward; each button takes its label and tooltip from `configuration.strings`, its image from
 `chevron.backward` or `chevron.forward` (which point right and left in Arabic and Hebrew) with
-the same accessibility description, and is marked
-navigational so it draws as a toolbar control.
+the same accessibility description, and is marked navigational so it draws as a toolbar
+control.
 
 With the buttons off, AppKit alone sets the title 11 points from the sidebar, left of the page's
 grouped form, which starts 20 points in. An empty navigational item takes the buttons' place:
@@ -243,11 +236,9 @@ tables would be looked in otherwise. The locale picks the language the app runs 
 own words (the Window menu, the search field's Cancel) do: Foundation chooses among the
 languages the app declares, and without a locale the resource would follow the system's
 language, so an English-only app on a Chinese Mac would show Chinese back and forward beside an
-English page. An app shows the kit's words in a language only when it declares that language
-itself (`CFBundleLocalizations` or an `.lproj` in its bundle) and runs in it; otherwise they are in
-the development language, English, and an app that wants other words passes them through
-`configuration.strings`. The kit cannot tell the language of text an app writes without
-localizing it, so it does not guess from the system's language.
+English page. The kit cannot tell the language of text an app writes without localizing it, so
+it does not guess from the system's language; what an app shows in each case is in the README's
+Languages section.
 
 Page titles, keywords and anything else user-visible come from the app, so the kit never writes
 a literal user-visible string.
@@ -260,35 +251,7 @@ a literal user-visible string.
 | `DetailContainer` | `scrollContentBackground(.hidden)` | the form or list sits on the window's background on macOS 26 and later; on macOS 15 the same call leaves a band under the toolbar, so it applies from 26 on |
 | Sidebar rows | no material anywhere | from 26 on the sidebar keeps the system's Liquid Glass; `configuration.icons` only changes the icons |
 
-## Tests, fixtures and the demo
+## Elsewhere
 
-| Target | Path | What it holds |
-| --- | --- | --- |
-| `SidebarSettingsKit` | `Sources/SidebarSettingsKit/` | the product; `Public/` and `Internal/` |
-| `SidebarSettingsFixtures` | `Tests/Fixtures/` | pages, sections, long and short content, header and footer views; in no product, so a dependent app never builds it |
-| `SidebarSettingsKitTests` | `Tests/SidebarSettingsKitTests/` | logic tests, no window on screen |
-| `SidebarSettingsKitWindowTests` | `Tests/SidebarSettingsKitWindowTests/` | tests that open real windows and drive them |
-
-Both test targets import the kit with `@testable import`, which is how they reach the
-`internal` controller, lists and search field.
-
-The demo at `Examples/SidebarSettingsDemo/` is a separate package that depends on `../..`, and
-the root package never references it. It compiles the same fixture files a second time as target
-`DemoFixtures`, through the symlink `Sources/DemoFixtures → ../../../Tests/Fixtures`, so the demo
-shows what the tests test. Fixture code therefore never names its module: the same files compile
-as `SidebarSettingsFixtures` and as `DemoFixtures`.
-
-`make test` runs both test targets, `make demo` runs the demo, `make ci` runs what CI runs.
-
-## Public API rules
-
-These come from `AGENTS.md` and apply to every public symbol:
-
-- No AppKit type in a public signature; the window is SwiftUI-shaped from the outside.
-- Every option has a default; the shortest use is `pages` plus `detail`.
-- Every public symbol has a `///` doc comment.
-- UI types are `@MainActor`. No `@unchecked Sendable`, no `nonisolated(unsafe)`.
-- The kit stores nothing: no `UserDefaults`, no files. The one exception is AppKit's window frame
-  autosave, which `configuration.autosaveName = nil` turns off.
-- Semantic versioning; during 0.x a breaking change is allowed but is listed in
-  `CHANGELOG.md`.
+The test targets and fixtures are in [TESTING.md](TESTING.md), the demo in
+[DEVELOPMENT.md](DEVELOPMENT.md), and the public API rules in `AGENTS.md`.

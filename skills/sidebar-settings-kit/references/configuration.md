@@ -98,10 +98,9 @@ func matches(searchText: String) -> Bool {
 
 ## Pages scroll themselves
 
-The kit adds no scroll view around a page: a grouped `Form` or a `List` scrolls by itself, and the
-line under the toolbar shows on macOS 14, 15 and 27, at the top of a page too. A page of other
-views that can be taller than the window goes in a `ScrollView`; on macOS 14 and 15 the toolbar
-then keeps a lighter background of its own, so prefer a grouped `Form` for settings.
+The kit adds no scroll view around a page: a grouped `Form` or a `List` scrolls by itself. A
+page of other views that can be taller than the window goes in a `ScrollView`; on macOS 14 and 15
+the toolbar then keeps a lighter background of its own, so prefer a grouped `Form` for settings.
 
 ```swift
 // A settings page, as in System Settings.

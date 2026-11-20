@@ -73,7 +73,7 @@ in the same way for the Sidebar icon size setting.
 | Scenario | What it shows |
 | --- | --- |
 | `1` | Three pages, the window on the short page, at the default 715 × 600 |
-| `2` | A long grouped form opened at its end, to check the line under the toolbar |
+| `2` | A long grouped form opened at its end, scrolled under the toolbar |
 | `3` | The 40+ page set, opened on its last page with the sidebar scrolled to it |
 | `4` | The pages in three groups, set apart by space |
 | `5` | An account header and the tall login area as the footer |
@@ -83,9 +83,6 @@ in the same way for the Sidebar icon size setting.
 
 `scripts/screenshots.sh` runs every scenario in `1 2 3 4 5 6 6b 7`. The scenario a screenshot
 shows is in its file name.
-
-Setting `SSK_DUMP_PATH` to a file makes a scenario write a PNG of the window's content view there
-as well, which needs no Screen Recording permission.
 
 ## Local screenshots
 
@@ -104,9 +101,6 @@ words.
 The terminal needs **Screen Recording** permission (System Settings > Privacy & Security >
 Screen Recording). Without it, `screencapture` returns a picture of the desktop instead of the
 window, and the script still reports `ok`.
-
-Peekaboo can drive and capture windows too, but its flags differ per version: run
-`peekaboo --help` before using it.
 
 Local screenshots are for debugging and are never committed: `screenshots/` is gitignored, and
 the README images come from the CI artifacts only.
