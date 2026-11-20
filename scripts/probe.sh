@@ -2,8 +2,8 @@
 # Probe branch only: capture the settings window and dump its layout for each probe variant.
 set -euo pipefail
 
-readonly VARIANTS=(base sep,searchLarge sep,searchRounded)
-readonly SCENARIOS=(1 2)
+readonly VARIANTS=(base noClearBg sep,noClearBg,adjust sep,noClearBg,adjust,detailHard)
+readonly SCENARIOS=(2)
 
 output_dir=${1:?usage: probe.sh OUTPUT_DIR}
 mkdir -p "$output_dir"
@@ -45,7 +45,7 @@ for variant in "${VARIANTS[@]}"; do
     done
 done
 # The same layout in plain SwiftUI: as it opens, scrolled to its end, and with the sidebar toggle.
-for mode in top end top,toggle; do
+for mode in end; do
     name="replica-${mode//,/+}"
     rm -f "$work_dir/id"
     SSK_PROBE_REPLICA="$mode" SSK_PROBE_DUMP="$output_dir/$name.txt" SSK_PROBE_ID_FILE="$work_dir/id" \

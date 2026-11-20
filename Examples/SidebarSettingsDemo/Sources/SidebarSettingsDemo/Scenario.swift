@@ -149,5 +149,25 @@ func probeDump(of window: NSWindow) -> String {
         for subview in view.subviews { walk(subview, depth: depth + 1) }
     }
     if let frameView = window.contentView?.superview { walk(frameView, depth: 0) }
+    var splitViews: [NSSplitView] = []
+    func findSplitViews(_ view: NSView) {
+        if let split = view as? NSSplitView { splitViews.append(split) }
+        view.subviews.forEach(findSplitViews)
+    }
+    if let frameView = window.contentView?.superview { findSplitViews(frameView) }
+    for split in splitViews {
+        guard let controller = split.delegate as? NSSplitViewController else {
+            lines.append("split view without controller: delegate=\(split.delegate.map { String(describing: type(of: $0)) } ?? "nil")")
+            continue
+        }
+        lines.append("split controller \(type(of: controller)) frame=\(split.convert(split.bounds, to: nil))")
+        for (index, item) in controller.splitViewItems.enumerated() {
+            var line = "  split item\(index): \(type(of: item)) behavior=\(item.behavior.rawValue) separator=\(item.titlebarSeparatorStyle.rawValue) fullHeight=\(item.allowsFullHeightLayout) controller=\(type(of: item.viewController)) view=\(type(of: item.viewController.view))"
+            if #available(macOS 26, *) {
+                line += " adjustsSafeArea=\(item.automaticallyAdjustsSafeAreaInsets) top=\(item.topAlignedAccessoryViewControllers.count) bottom=\(item.bottomAlignedAccessoryViewControllers.count)"
+            }
+            lines.append(line)
+        }
+    }
     return lines.joined(separator: "\n") + "\n"
 }
