@@ -11,18 +11,8 @@ extension WindowTestSuite {
     /// across that.
     @Suite(.serialized) @MainActor
     struct LifecycleTests {
-        private static func makeSettings(
-            configuration: SidebarSettingsConfiguration = .windowTest
-        ) -> SidebarSettingsWindow<FixturePage> {
-            SidebarSettingsWindow(
-                pages: FixturePages.three, configuration: configuration
-            ) { page in
-                FixtureDetail(page: page)
-            }
-        }
-
         @Test func showingTwiceOpensOneWindow() async throws {
-            let settings = Self.makeSettings()
+            let settings = fixtureWindow()
             defer { settings.close() }
             settings.show()
             let first = try await WindowUnderTest.attach(settings)
@@ -36,7 +26,7 @@ extension WindowTestSuite {
         }
 
         @Test func closingThenShowingReusesTheWindowAndTheNavigator() async throws {
-            let settings = Self.makeSettings()
+            let settings = fixtureWindow()
             defer { settings.close() }
             settings.show()
             let first = try await WindowUnderTest.attach(settings)
@@ -54,7 +44,7 @@ extension WindowTestSuite {
         @Test func sessionPersistenceKeepsThePageAndItsHistory() async throws {
             var configuration = SidebarSettingsConfiguration.windowTest
             configuration.navigationPersistence = .session
-            let settings = Self.makeSettings(configuration: configuration)
+            let settings = fixtureWindow(configuration: configuration)
             defer { settings.close() }
             settings.show()
             _ = try await WindowUnderTest.attach(settings)
@@ -75,7 +65,7 @@ extension WindowTestSuite {
         @Test func resetOnShowReturnsToTheInitialPage() async throws {
             var configuration = SidebarSettingsConfiguration.windowTest
             configuration.navigationPersistence = .resetOnShow
-            let settings = Self.makeSettings(configuration: configuration)
+            let settings = fixtureWindow(configuration: configuration)
             defer { settings.close() }
             settings.show()
             _ = try await WindowUnderTest.attach(settings)
@@ -94,10 +84,8 @@ extension WindowTestSuite {
         }
 
         @Test func showSelectsThePageItIsGiven() async throws {
-            let settings = Self.makeSettings()
-            defer { settings.close() }
-            try await withWindow(settings, page: FixturePages.advanced) { window in
-                #expect(settings.navigator.selection == FixturePages.advanced)
+            try await withWindow(page: FixturePages.advanced) { window in
+                #expect(window.settings.navigator.selection == FixturePages.advanced)
                 // The title is set once the page change has reached the window.
                 try await WindowTest.wait(for: "the title of the page show(page:) selected") {
                     window.window.title == String(localized: FixturePages.advanced.title)

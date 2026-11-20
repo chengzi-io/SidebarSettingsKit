@@ -147,8 +147,7 @@ extension WindowTestSuite {
         }
 
         @Test func titleFollowsThePage() async throws {
-            try await withWindow(pages: FixturePages.three, initialPage: FixturePages.general) {
-                window in
+            try await withWindow(initialPage: FixturePages.general) { window in
                 #expect(window.window.title == String(localized: FixturePages.general.title))
                 window.settings.navigator.open(FixturePages.appearance)
                 try await WindowTest.wait(for: "the title to follow the page to Appearance") {
@@ -160,8 +159,7 @@ extension WindowTestSuite {
         /// The title and the back button change in the update that draws the new page: set after
         /// it, the old title stayed over the new page for a frame.
         @Test func titleAndButtonsChangeInTheUpdateThatShowsThePage() async throws {
-            try await withWindow(pages: FixturePages.three, initialPage: FixturePages.general) {
-                window in
+            try await withWindow(initialPage: FixturePages.general) { window in
                 let back = try require(
                     window.toolbarItem(SettingsWindowController.backItem), "the back button")
                 window.window.toolbar?.validateVisibleItems()
@@ -191,10 +189,8 @@ extension WindowTestSuite {
         @Test func hiddenTitleHidesTheToolbarTitleAndStillFollowsThePage() async throws {
             var configuration = SidebarSettingsConfiguration.windowTest
             configuration.title = .hidden
-            try await withWindow(
-                pages: FixturePages.three, initialPage: FixturePages.general,
-                configuration: configuration
-            ) { window in
+            try await withWindow(initialPage: FixturePages.general, configuration: configuration) {
+                window in
                 #expect(window.window.titleVisibility == .hidden)
                 #expect(window.window.title == String(localized: FixturePages.general.title))
                 window.settings.navigator.open(FixturePages.appearance)

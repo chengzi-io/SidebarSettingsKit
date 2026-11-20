@@ -15,11 +15,7 @@ extension WindowTestSuite {
             weak var weakWindow: NSWindow?
 
             do {
-                let settings = SidebarSettingsWindow(
-                    pages: FixturePages.three, configuration: .windowTest
-                ) { page in
-                    FixtureDetail(page: page)
-                }
+                let settings = fixtureWindow()
                 settings.show()
                 let window = try await WindowUnderTest.attach(settings)
                 weakController = window.controller

@@ -17,21 +17,6 @@ struct NavigatorTests {
         #expect(navigator.searchText == "")
     }
 
-    @Test func openingANewPageAddsItToTheHistory() {
-        let navigator = SettingsNavigator(initial: FixturePages.general)
-
-        navigator.open(FixturePages.appearance)
-
-        #expect(navigator.selection == FixturePages.appearance)
-        #expect(navigator.canGoBack)
-        #expect(!navigator.canGoForward)
-        #expect(navigator.initialPage == FixturePages.general)
-
-        navigator.goBack()
-
-        #expect(navigator.selection == FixturePages.general)
-    }
-
     @Test func openingTheCurrentPageChangesNothing() {
         let navigator = SettingsNavigator(initial: FixturePages.general)
         navigator.open(FixturePages.appearance)
@@ -51,6 +36,7 @@ struct NavigatorTests {
         navigator.open(FixturePages.appearance)
         navigator.open(FixturePages.advanced)
 
+        #expect(navigator.selection == FixturePages.advanced)
         #expect(navigator.canGoBack)
         #expect(!navigator.canGoForward)
 

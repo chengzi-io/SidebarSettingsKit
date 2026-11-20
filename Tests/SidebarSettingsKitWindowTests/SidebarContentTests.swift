@@ -7,7 +7,7 @@ import Testing
 @testable import SidebarSettingsKit
 
 extension WindowTestSuite {
-    /// The sidebar's grouping and its search field.
+    /// The sidebar's grouping, its search field, and what it shows when a search finds nothing.
     @Suite(.serialized) @MainActor
     struct SidebarContentTests {
         /// The groups the sidebar shows: every page, and a heading row for each group that kept
@@ -15,7 +15,10 @@ extension WindowTestSuite {
         private static func check(_ sections: [SettingsPageSection<FixturePage>]) async throws {
             let pages = sections.flatMap(\.pages)
             let shownGroups = sections.filter { !$0.pages.isEmpty }.count
-            try await withWindow(sections: sections) { window in
+            let settings = SidebarSettingsWindow(sections: sections, configuration: .windowTest) {
+                FixtureDetail(page: $0)
+            }
+            try await withWindow(settings) { window in
                 #expect(window.sidebarPageRowCount() == pages.count)
                 #expect(window.sidebarHeadingRowCount() == shownGroups)
             }
@@ -52,7 +55,7 @@ extension WindowTestSuite {
         }
 
         @Test func searchTextFiltersTheSidebar() async throws {
-            try await withWindow(pages: FixturePages.three) { window in
+            try await withWindow { window in
                 #expect(window.sidebarPageRowCount() == FixturePages.three.count)
 
                 window.settings.navigator.searchText = "appearance"
@@ -68,6 +71,27 @@ extension WindowTestSuite {
 
                 window.settings.navigator.searchText = ""
                 try await WindowTest.wait(for: "the sidebar to show every page again") {
+                    window.sidebarPageRowCount() == FixturePages.three.count
+                }
+            }
+        }
+
+        @Test func aSearchWithoutAMatchShowsTheEmptyStateAndClearingItBringsTheRowsBack()
+            async throws
+        {
+            try await withWindow { window in
+                #expect(window.sidebarPageRowCount() == FixturePages.three.count)
+
+                window.settings.navigator.searchText = "nothing in this window matches"
+                try await WindowTest.wait(for: "the list to give way to the empty state") {
+                    window.sidebarTable() == nil
+                }
+                // No rows are left to show, and the sidebar still draws something in their place.
+                #expect(window.sidebarPageRowCount() == 0)
+                #expect(!window.sidebarView.subviews.isEmpty)
+
+                window.settings.navigator.searchText = ""
+                try await WindowTest.wait(for: "the rows to come back") {
                     window.sidebarPageRowCount() == FixturePages.three.count
                 }
             }

@@ -35,19 +35,10 @@ extension WindowTestSuite {
             }
         }
 
-        /// The sidebar must have more content than it can show, or a scroll test would pass
-        /// without scrolling.
+        /// The sidebar must have more content than it can show, by a margin, or a scroll test
+        /// would pass without scrolling.
         private static func requireTallerThanShown(_ sidebar: NSScrollView) throws {
-            let contentHeight = try require(
-                sidebar.documentView?.frame.height, "the sidebar's content")
-            let visibleHeight = sidebar.contentView.bounds.height
-            guard contentHeight > visibleHeight + 100 else {
-                throw WindowTestFailure(
-                    message: """
-                        the sidebar fits, so the test would pass without scrolling: content \
-                        \(contentHeight) pt, visible \(visibleHeight) pt
-                        """)
-            }
+            try requireScrollable(sidebar, atLeast: sidebar.contentView.bounds.height + 100)
         }
 
         /// What the sidebar shows once the last page is selected.

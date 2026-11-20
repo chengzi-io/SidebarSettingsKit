@@ -7,10 +7,23 @@ import Testing
 @testable import SidebarSettingsKit
 
 extension WindowTestSuite {
-    /// The page beside the sidebar: a new page starts at its top, and the line under the toolbar
-    /// stays wherever the page is scrolled.
+    /// The page beside the sidebar: it scrolls itself, a new page starts at its top, and the line
+    /// under the toolbar stays wherever the page is scrolled.
     @Suite(.serialized) @MainActor
     struct DetailTests {
+        /// On macOS 14 and 15 the toolbar takes its background from the scroll view right under
+        /// it; around a scroll view of the kit's, it drew a lighter bar with an edge, though
+        /// nothing was scrolled.
+        @Test func theFormsScrollViewIsTheOnlyOneInTheDetail() async throws {
+            let settings = SidebarSettingsWindow(
+                pages: FixturePages.three, configuration: .windowTest
+            ) { _ in GroupedFormPage() }
+            try await withWindow(settings) { window in
+                let scrollViews = allViews(in: window.detailView).compactMap { $0 as? NSScrollView }
+                #expect(scrollViews.count == 1, "scroll views in the detail: \(scrollViews)")
+            }
+        }
+
         /// macOS 14 and 15 draw the line, as System Settings has it; macOS 26 and later ignore
         /// the setting and draw their own edge.
         @Test func theLineUnderTheToolbarStaysThroughScrollingAndPageChanges() async throws {
@@ -52,5 +65,24 @@ extension WindowTestSuite {
                 }
             }
         }
+    }
+}
+
+/// Forty-five settings rows in a grouped form, as System Settings' pages are, several times the
+/// window's height.
+private struct GroupedFormPage: View {
+    private static let rowCount = 45
+
+    var body: some View {
+        Form {
+            ForEach(0..<Self.rowCount, id: \.self) { row in
+                LabeledContent("Setting \(row + 1)") {
+                    Toggle("Setting \(row + 1)", isOn: .constant(row.isMultiple(of: 2)))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                }
+            }
+        }
+        .formStyle(.grouped)
     }
 }
