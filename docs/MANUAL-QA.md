@@ -113,11 +113,12 @@ Launch with `--appearance dark`, plain and tiled:
 
 ## CI screenshots
 
-Before a release, download the artifacts of the latest run of both runners and look at them:
+Before a release, download the artifacts of the latest run of every runner and look at them:
 
 ```
 gh run download --name screenshots-macos-15 --dir shots-15
 gh run download --name screenshots-macos-26 --dir shots-26
+gh run download --name screenshots-xcode-27 --dir shots-27
 ```
 
 The matrix is two kinds of icons × two appearances × the scenarios in `scripts/screenshots.sh`, named

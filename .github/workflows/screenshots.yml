@@ -21,11 +21,17 @@ jobs:
       fail-fast: false
       matrix:
         # macos-14 was retired on 2026-11-02 (actions/runner-images#13518).
-        os: [macos-15, macos-26]
+        os: [macos-15, macos-26, xcode-27]
+        include:
+          # From Xcode 27 on, GitHub names an image after its Xcode: `xcode-27` runs macOS 27 and
+          # carries only Xcode 27, which is also what an app built for macOS 27 uses.
+          - os: xcode-27
+            image-xcode: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # .xcode-version is the one place the Xcode version is written.
       - name: Select Xcode from .xcode-version
+        if: ${{ !matrix.image-xcode }}
         run: |
           xcode_version=$(tr -d '[:space:]' <.xcode-version)
           developer_dir="/Applications/Xcode_$xcode_version.app/Contents/Developer"
@@ -35,6 +41,13 @@ jobs:
           sudo DEVELOPER_DIR="$developer_dir" xcodebuild -runFirstLaunch
           sw_vers
           DEVELOPER_DIR="$developer_dir" xcodebuild -version
+      - name: Use the image's Xcode
+        if: ${{ matrix.image-xcode }}
+        run: |
+          echo "XCODE_VERSION=$(xcodebuild -version | awk 'NR == 1 { print $2 }')" >>"$GITHUB_ENV"
+          sw_vers
+          xcodebuild -version
+          swift --version
       - run: scripts/screenshots.sh screenshots
       # Upload even on failure so a partially captured matrix can be inspected.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

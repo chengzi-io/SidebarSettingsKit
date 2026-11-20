@@ -107,16 +107,19 @@ the README images come from the CI artifacts only.
 
 ## CI
 
-Two workflows, each running on `macos-15` and `macos-26`:
+Two workflows, each running on `macos-15` and `macos-26`; screenshots also run on `xcode-27`.
+From Xcode 27 on, GitHub names a macOS image after its Xcode: `xcode-27` runs macOS 27 with only
+Xcode 27, so that job uses the image's Xcode instead of `.xcode-version`. `make ci` does not run
+there (see [TESTING.md](TESTING.md), Environment).
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
 | `.github/workflows/ci.yml` | pull requests, pushes to `main` | selects the Xcode in `.xcode-version`, caches `.build`, runs `make ci` |
 | `.github/workflows/screenshots.yml` | pull requests, manual dispatch | selects the same Xcode, runs `scripts/screenshots.sh screenshots`, uploads the PNGs |
 
-The screenshot artifacts are named `screenshots-<os>` (`screenshots-macos-15`,
-`screenshots-macos-26`) and are uploaded even when capture fails, so a partial matrix can be
-inspected:
+The screenshot artifacts are named `screenshots-<runner>` (`screenshots-macos-15`,
+`screenshots-macos-26`, `screenshots-xcode-27`) and are uploaded even when capture fails, so a
+partial matrix can be inspected:
 
 ```
 gh run download --name screenshots-macos-26 --dir shots

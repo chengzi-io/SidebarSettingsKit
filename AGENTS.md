@@ -16,8 +16,10 @@ task needs; the docs below hold the rest.
 | `make screenshots` | to capture the screenshot matrix locally (needs Screen Recording permission) | minutes |
 
 CI (`.github/workflows/ci.yml`) runs `make ci` on macos-15 and macos-26;
-`.github/workflows/screenshots.yml` uploads screenshots per runner. GitHub retired the macos-14
-runner on 2026-11-02, so macOS 14 has no CI: keep `#available` branches for 14 small and obvious.
+`.github/workflows/screenshots.yml` uploads screenshots per runner, xcode-27 (macOS 27) included.
+`make ci` skips macOS 27: a Tab sent in a test process does not leave the sidebar list there
+(`docs/TESTING.md`). GitHub retired the macos-14 runner on 2026-11-02, so macOS 14 has no CI:
+keep `#available` branches for 14 small and obvious.
 
 ## Layout
 
