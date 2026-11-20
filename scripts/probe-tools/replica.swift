@@ -5,6 +5,11 @@ import SwiftUI
 @main
 struct Replica: App {
     @State private var selection: String? = "General"
+    @State private var scrolled = false
+    // REPLICA_TITLE = shown | scroll (empty until the page scrolls) | hidden; REPLICA_SOFT asks
+    // the page for a soft top scroll edge.
+    private let titleMode = ProcessInfo.processInfo.environment["REPLICA_TITLE"] ?? "shown"
+    private let soft = ProcessInfo.processInfo.environment["REPLICA_SOFT"] != nil
     private let pages = ["General", "Appearance", "Advanced"]
 
     init() {
@@ -27,7 +32,14 @@ struct Replica: App {
                     }
                 }
                 .formStyle(.grouped)
-                .navigationTitle(selection ?? "")
+                .onScrollGeometryChange(for: Bool.self) {
+                    $0.contentOffset.y + $0.contentInsets.top > 0
+                } action: { _, isScrolled in
+                    scrolled = isScrolled
+                }
+                .modifier(SoftTopEdge(enabled: soft))
+                .navigationTitle(titleMode == "scroll" && !scrolled ? "" : (selection ?? ""))
+                .modifier(RemovesTitle(enabled: titleMode == "hidden"))
                 .toolbar {
                     ToolbarItemGroup(placement: .navigation) {
                         Button {} label: { Image(systemName: "chevron.backward") }
@@ -117,4 +129,22 @@ func probeTree(_ window: NSWindow) -> String {
     }
     if let frame = window.contentView?.superview { walk(frame, depth: 0) }
     return lines.joined(separator: "\n") + "\n"
+}
+
+struct SoftTopEdge: ViewModifier {
+    let enabled: Bool
+    func body(content: Content) -> some View {
+        if enabled, #available(macOS 26.0, *) {
+            content.scrollEdgeEffectStyle(.soft, for: .top)
+        } else {
+            content
+        }
+    }
+}
+
+struct RemovesTitle: ViewModifier {
+    let enabled: Bool
+    func body(content: Content) -> some View {
+        if enabled { content.toolbar(removing: .title) } else { content }
+    }
 }
