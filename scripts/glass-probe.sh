@@ -1,65 +1,109 @@
 #!/usr/bin/env bash
-# macOS 26 and 27, Reduce Transparency off: what gives a plain SwiftUI NavigationSplitView a soft
-# scroll edge under a toolbar that shows the title, as System Settings has; the SDK's new API.
+# macOS 27, Reduce Transparency off: how Apple's own apps draw the toolbar's scroll edge when
+# their content scrolls under it, and whether their toolbar shows a title.
 set -uo pipefail
 out=$PWD/glass; mkdir -p "$out"
 swiftc -O scripts/probe-tools/pointer.swift -o /tmp/pointer
-swiftc -O scripts/probe-tools/window-frame.swift -o /tmp/window-frame
-{ sw_vers; swift --version 2>&1 | head -1; xcodebuild -version; } | tee "$out/versions.txt"
-
+swiftc -O scripts/probe-tools/find-window.swift -o /tmp/find-window
+{ sw_vers; xcodebuild -version; } | tee "$out/versions.txt"
 defaults write com.apple.universalaccess reduceTransparency -bool false
 defaults write com.apple.universalaccess reduceMotion -bool false
 sleep 2
 read -r screen_w screen_h < <(osascript -l JavaScript -e 'ObjC.import("AppKit"); var f = $.NSScreen.mainScreen.frame; f.size.width + " " + f.size.height')
-echo "screen $screen_w x $screen_h"
 away() { /tmp/pointer $((screen_w - 5)) $((screen_h - 5)); }
 away
 
-pkg=Examples/SidebarSettingsDemo
-swift build -c release --build-system native --package-path $pkg 2>&1 | tail -1
-dir=$pkg/.build/release
-otool -l "$dir/SidebarSettingsDemo" | grep -A4 LC_BUILD_VERSION >"$out/demo-build-version.txt"
-
-# launch NAME SCENARIO [VAR=VALUE...]: opens the demo's settings window, light, tiled icons.
-launch() {
-    local name=$1 scenario=$2
-    shift 2
-    rm -f /tmp/wid
-    (cd "$dir" && env "$@" SSK_PROBE_DUMP="$out/dump-$name.txt" ./SidebarSettingsDemo --icons tiled \
-        --scenario "$scenario" --appearance light --window-id-file /tmp/wid >/dev/null 2>&1) &
-    for _ in $(seq 1 150); do [[ -s /tmp/wid ]] && break; sleep 0.2; done
-    sleep 3
+# ax_dump PROCESS FILE: the front window's title and its elements, not descending into lists.
+ax_dump() {
+    osascript - "$1" >"$2" 2>&1 <<'APPLESCRIPT'
+on run argv
+    tell application "System Events" to tell process (item 1 of argv)
+        set w to window 1
+        set out to "window AXTitle: " & (value of attribute "AXTitle" of w) & linefeed
+        set out to out & my walk(w, 0)
+    end tell
+    return out
+end run
+on walk(e, depth)
+    tell application "System Events"
+        set r to ""
+        try
+            set r to role of e
+        end try
+        set sr to ""
+        try
+            set sr to subrole of e
+        end try
+        set t to ""
+        try
+            set t to (value of attribute "AXTitle" of e) as text
+        end try
+        set v to ""
+        try
+            set v to (value of e) as text
+        end try
+        set d to ""
+        try
+            set d to description of e
+        end try
+        set i to ""
+        try
+            set i to (value of attribute "AXIdentifier" of e) as text
+        end try
+        set p to ""
+        try
+            set p to (position of e as text)
+        end try
+        set indent to ""
+        repeat depth times
+            set indent to indent & "  "
+        end repeat
+        set s to indent & r & "/" & sr & " title=" & t & " value=" & v & " desc=" & d & " id=" & i & " pos=" & p & linefeed
+        if depth < 7 and r is not in {"AXOutline", "AXTable", "AXList", "AXScrollArea", "AXWebArea"} then
+            try
+                repeat with c in (UI elements of e)
+                    set s to s & my walk(c, depth + 1)
+                end repeat
+            end try
+        end if
+    end tell
+    return s
+end walk
+APPLESCRIPT
 }
-finish() { pkill -f SidebarSettingsDemo; sleep 0.8; }
 
-swiftc -O scripts/probe-tools/find-window.swift -o /tmp/find-window
-swiftc -O -parse-as-library -swift-version 6 scripts/probe-tools/replica.swift -o /tmp/Replica
-otool -l /tmp/Replica | grep -A4 LC_BUILD_VERSION | grep -E 'minos|sdk' | xargs | tee "$out/replica-build-version.txt"
-
-# API new in this SDK: each declaration after an availability line.
-sdk=$(xcrun --sdk macosx --show-sdk-path)
-while IFS= read -r interface; do
-    echo "== $interface"
-    awk '/macOS 27/ { left = 3 } left > 0 { print FNR ": " $0; left-- }' "$interface"
-done < <(find "$sdk/System/Library/Frameworks/SwiftUI.framework/" "$sdk/System/Library/Frameworks/SwiftUICore.framework/" \
-    -name 'arm64e-apple-macos.swiftinterface' 2>/dev/null) >"$out/swiftui-27.txt"
-find "$sdk/System/Library/Frameworks/AppKit.framework/Headers/" -name '*.h' -exec grep -n "macos(27" {} + >"$out/appkit-27.txt"
-
-# A plain SwiftUI NavigationSplitView, scrolled by the wheel: its title shown, shown once the page
-# scrolls, or removed; with and without a soft top scroll edge asked for.
-for variant in shown scroll hidden shown-soft scroll-soft; do
-    title=${variant%-soft}
-    soft=(); [[ $variant == *-soft ]] && soft=(REPLICA_SOFT=1)
-    env REPLICA_TITLE="$title" ${soft[@]+"${soft[@]}"} SSK_PROBE_TREE="$out/tree-replica-$variant.txt" \
-        SSK_REPLICA_DUMP="$out/replica-dump-$variant.txt" /tmp/Replica >/dev/null 2>&1 &
-    replica=$!
-    for _ in $(seq 1 40); do /tmp/find-window Replica >/tmp/replica-window 2>/dev/null && break; sleep 0.5; done
+# app_shot LABEL OWNER COMMAND...: opens the app, captures its front window at rest and after the
+# wheel scrolls its content, and dumps the window's elements.
+app_shot() {
+    local label=$1 owner=$2
+    shift 2
+    "$@" >/dev/null 2>&1 &
+    for _ in $(seq 1 60); do /tmp/find-window "$owner" >/tmp/app-window 2>/dev/null && break; sleep 0.5; done
+    sleep 4
+    osascript -e "tell application \"System Events\" to set frontmost of process \"$owner\" to true" >/dev/null 2>&1
+    sleep 1
+    if ! /tmp/find-window "$owner" >/tmp/app-window; then
+        echo "no window $label"
+        return
+    fi
+    read -r id x y w h </tmp/app-window
+    echo "$label window $id at $x $y $w $h"
+    screencapture -o -l "$id" "$out/app-$label-rest.png"
+    ax_dump "$owner" "$out/ax-$label-rest.txt"
+    /tmp/pointer $((x + w * 2 / 3)) $((y + h / 2)) 8; away; sleep 1.5
+    screencapture -o -l "$id" "$out/app-$label-scrolled.png"
+    ax_dump "$owner" "$out/ax-$label-scrolled.txt"
+    osascript -e "tell application \"$owner\" to quit" >/dev/null 2>&1
     sleep 2
-    read -r id x y w h </tmp/replica-window
-    screencapture -o -l "$id" "$out/replica-$variant-top.png"
-    /tmp/pointer $((x + w * 2 / 3)) $((y + h / 2)) 6; away; sleep 1.5
-    screencapture -o -l "$id" "$out/replica-$variant-wheel.png"
-    sleep 2.5
-    kill "$replica"; sleep 1
-    echo "ok replica $variant"
-done
+    pkill -x "$owner" 2>/dev/null
+    echo "ok $label"
+}
+
+app_shot activity-monitor "Activity Monitor" open -a "Activity Monitor"
+app_shot font-book "Font Book" open -a "Font Book"
+app_shot finder Finder open /System/Library/Frameworks
+app_shot textedit TextEdit open -a TextEdit /etc/services
+app_shot system-information "System Information" open -a "System Information"
+app_shot console Console open -a Console
+app_shot music Music open -a Music
+app_shot notes Notes open -a Notes
