@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   probe:
-    name: Probe CGEvent keys (${{ matrix.os }})
+    name: Probe NSApp.sendEvent keys (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
