@@ -7,9 +7,9 @@ allowed-tools: Bash(grep -rEnI *)
 # Integrate SidebarSettingsKit
 
 SidebarSettingsKit builds the window: the sidebar, search, history, toolbar, the line under
-the toolbar, Liquid Glass on macOS 26 and later. The app keeps everything else: its settings data, how it
-stores them, and the views of each page. Integrating it is a small change; most of the work is
-deciding the pages and moving existing settings views into them.
+the toolbar, Liquid Glass on macOS 26 and later. The app keeps everything else: its settings
+data, how it stores them, and the views of each page. Integrating it is a small change; most of
+the work is deciding the pages and moving existing settings views into them.
 
 ## 1. Read the project
 
@@ -202,8 +202,8 @@ footer: [references/styling.md](references/styling.md).
    icon) has no app menu to check; its `MenuBarExtra` menu opens the window.
 4. A localized app declares its languages in the app bundle: `CFBundleLocalizations` in its
    Info.plist, or a `<language>.lproj` folder. The kit's words (Back, Forward, Search,
-   Settings…, No Results) follow those languages, as AppKit's menus do, so an app with Chinese pages that
-   declares only English shows them in English. Add the missing entry and tell the user. An
-   app without a bundle (a SwiftPM executable) or written in one language without localization
-   passes its words through `configuration.strings` instead (step 2). Either way, run it and
-   see the kit's words in the app's language.
+   Settings…, No Results) follow those languages, as AppKit's menus do, so an app with Chinese
+   pages that declares only English shows them in English. Add the missing entry and tell the
+   user. An app without a bundle (a SwiftPM executable) or written in one language without
+   localization passes its words through `configuration.strings` instead (step 2). Either way,
+   run it and see the kit's words in the app's language.

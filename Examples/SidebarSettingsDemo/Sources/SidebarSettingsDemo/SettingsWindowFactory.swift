@@ -58,7 +58,7 @@ private struct DemoFooter: View {
 /// itself and gives its switches System Settings' size.
 private struct DemoPage: View {
     let page: FixturePage
-    /// Whether the page opens scrolled to its end, so the line under the toolbar shows.
+    /// Whether the page opens scrolled to its end.
     let startScrolled: Bool
 
     /// The settings that are on; every second one to begin with.

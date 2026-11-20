@@ -4,10 +4,10 @@ import Foundation
 
 /// A demo scene a `--scenario` argument selects: how the settings window is set up, so a
 /// screenshot or a manual check sees one particular behaviour.
-enum Scenario: String, Sendable, CaseIterable {
+enum Scenario: String, Sendable {
     /// Three pages, opening on a short page, the window at its default 715 × 600.
     case one = "1"
-    /// A long grouped Form scrolled to its end, so the line under the toolbar shows.
+    /// A long grouped Form scrolled to its end, under the toolbar.
     case two = "2"
     /// The 40+ page set, opened on its last page with the sidebar scrolled to it.
     case three = "3"
@@ -40,7 +40,6 @@ extension Scenario {
         case .one:
             break
         case .two:
-            // The window's own scroll view, scrolled from inside the page.
             page = FixturePages.appearance
             startScrolled = true
         case .three:

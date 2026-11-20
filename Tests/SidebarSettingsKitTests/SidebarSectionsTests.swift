@@ -2,34 +2,11 @@ import SidebarSettingsKit
 import SidebarSettingsFixtures
 import Testing
 
-@testable import SidebarSettingsKit
-
-/// The groups the sidebar shows: their order and the empty ones left out, both as the sidebar
-/// filters them and as the window stores them.
-@Suite("Sidebar groups")
-struct SidebarSectionsTests {
-    @Test func groupsKeepTheirOrder() {
-        let sections = visibleSections(FixtureSections.grouped, search: .enabled, searchText: "")
-
-        #expect(
-            sections.map(\.pages)
-                == [[FixturePages.general], [FixturePages.appearance, FixturePages.advanced]])
-    }
-
-    @Test func aGroupWithoutPagesIsLeftOut() {
-        let sections = visibleSections(
-            FixtureSections.withEmptySection, search: .enabled, searchText: "")
-
-        #expect(
-            sections.map(\.pages) == [[FixturePages.general], [FixturePages.appearance]])
-    }
-}
-
-/// The groups the window keeps, which are the ones its sidebar shows once its empty groups are
-/// gone. Building the window does not open it.
+/// The groups a window keeps: its own, in order, without the empty ones. Building the window
+/// does not open it.
 @MainActor
 @Suite("Window groups")
-struct SidebarWindowSectionsTests {
+struct SidebarSectionsTests {
     @Test func theWindowLeavesOutAnEmptyGroup() {
         let window = SidebarSettingsWindow(sections: FixtureSections.withEmptySection) {
             FixtureDetail(page: $0)

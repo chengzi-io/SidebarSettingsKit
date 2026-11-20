@@ -16,13 +16,9 @@ extension WindowTestSuite {
         }
 
         private static func makeSettings(name: String?) -> SidebarSettingsWindow<FixturePage> {
-            var configuration = SidebarSettingsConfiguration()
+            var configuration = SidebarSettingsConfiguration.windowTest
             configuration.autosaveName = name
-            return SidebarSettingsWindow(
-                pages: FixturePages.three, configuration: configuration
-            ) { page in
-                FixtureDetail(page: page)
-            }
+            return fixtureWindow(configuration: configuration)
         }
 
         /// A spot away from where `center()` puts `window`, with the whole frame inside the
@@ -115,9 +111,7 @@ extension WindowTestSuite {
 
         @Test func aWindowWritesNoDefaultsButItsFrame() async throws {
             let before = defaultsKeys()
-            let settings = Self.makeSettings(name: nil)
-            defer { settings.close() }
-            try await withWindow(settings) { window in
+            try await withWindow { window in
                 window.settings.navigator.open(FixturePages.appearance)
                 try await WindowTest.wait(for: "the page to change") {
                     window.settings.navigator.selection == FixturePages.appearance

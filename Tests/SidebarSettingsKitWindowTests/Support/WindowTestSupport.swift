@@ -59,8 +59,7 @@ enum WindowTest {
         throw WindowTestFailure(message: "Timed out after \(timeout) waiting for \(condition)")
     }
 
-    /// Polls without throwing, and returns whether `condition` ever held. For the bodies of
-    /// `withKnownIssue`, which must not throw: it rethrows.
+    /// Polls without throwing, and returns whether `condition` ever held.
     static func poll(timeout: Duration = timeout, _ holds: () -> Bool) async -> Bool {
         let clock = ContinuousClock()
         let deadline = clock.now.advanced(by: timeout)
@@ -144,12 +143,6 @@ func scrollOffsetFromTop(_ scrollView: NSScrollView) -> CGFloat {
     scrollView.contentView.bounds.origin.y + scrollView.contentInsets.top
 }
 
-/// The furthest `scrollView` can scroll, where it shows the bottom of its content.
-@MainActor
-func maximumScrollOffset(_ scrollView: NSScrollView) -> CGFloat {
-    max(0, (scrollView.documentView?.frame.height ?? 0) - scrollView.contentView.bounds.height)
-}
-
 /// Scrolls `scrollView` to `offset` points below the top of its content.
 ///
 /// `reflectScrolledClipView` brings the scroll view up to date with its moved clip view, as a
@@ -160,8 +153,8 @@ func scroll(_ scrollView: NSScrollView, toOffsetFromTop offset: CGFloat) {
     scrollView.reflectScrolledClipView(scrollView.contentView)
 }
 
-/// Fails when `scrollView`'s content is not taller than the space it is shown in: a scroll test
-/// whose content fits would pass without ever scrolling.
+/// Fails when `scrollView`'s content is not taller than the space it is shown in, or shorter
+/// than `minimumContentHeight`: a scroll test whose content fits would pass without scrolling.
 @MainActor
 func requireScrollable(_ scrollView: NSScrollView, atLeast minimumContentHeight: CGFloat) throws {
     let contentHeight = try require(
@@ -170,7 +163,7 @@ func requireScrollable(_ scrollView: NSScrollView, atLeast minimumContentHeight:
     guard contentHeight > visibleHeight, contentHeight >= minimumContentHeight else {
         throw WindowTestFailure(
             message: """
-                the page cannot scroll, so the test would pass without scrolling: content \
+                the content cannot scroll, so the test would pass without scrolling: content \
                 \(contentHeight) pt, visible \(visibleHeight) pt, at least \(minimumContentHeight) \
                 pt of content expected
                 """)
@@ -203,7 +196,7 @@ func commandKey(_ characters: String, keyCode: UInt16, in window: NSWindow) thro
 @MainActor
 func typeKeys(_ text: String, in window: NSWindow) throws {
     for character in text.map(String.init) {
-        NSApp.sendEvent(try keyDown(character, keyCode: 0, in: window))
+        window.sendEvent(try keyDown(character, keyCode: 0, in: window))
     }
 }
 
@@ -241,7 +234,7 @@ enum Key {
 /// Presses `key` in `window`'s first responder.
 @MainActor
 func press(_ key: Key, in window: NSWindow) throws {
-    NSApp.sendEvent(
+    window.sendEvent(
         try keyDown(key.characters, keyCode: key.keyCode, modifierFlags: key.modifierFlags, in: window))
 }
 
@@ -407,8 +400,20 @@ struct WindowUnderTest {
 
 // MARK: - Opening and closing a window
 
-/// Shows a window built with `FixtureDetail` pages, and closes it when `body` returns, also
-/// when `body` throws.
+/// A window of `FixtureDetail` pages, built but not shown.
+@MainActor
+func fixtureWindow(
+    pages: [FixturePage] = FixturePages.three,
+    initialPage: FixturePage? = nil,
+    configuration: SidebarSettingsConfiguration = .windowTest
+) -> SidebarSettingsWindow<FixturePage> {
+    SidebarSettingsWindow(pages: pages, initialPage: initialPage, configuration: configuration) {
+        FixtureDetail(page: $0)
+    }
+}
+
+/// Shows a ``fixtureWindow(pages:initialPage:configuration:)``, and closes it when `body`
+/// returns.
 @MainActor
 func withWindow(
     pages: [FixturePage] = FixturePages.three,
@@ -417,49 +422,13 @@ func withWindow(
     page: FixturePage? = nil,
     _ body: (WindowUnderTest) async throws -> Void
 ) async throws {
-    let settings = SidebarSettingsWindow(
-        pages: pages, initialPage: initialPage, configuration: configuration
-    ) { page in
-        FixtureDetail(page: page)
-    }
-    try await withWindow(settings, page: page, body)
+    try await withWindow(
+        fixtureWindow(pages: pages, initialPage: initialPage, configuration: configuration),
+        page: page, body)
 }
 
-/// Shows a window with pages of the test's own view, for the pages that draw their own scroll
-/// view, and closes it when `body` returns.
-@MainActor
-func withWindow<Detail: View>(
-    pages: [FixturePage] = FixturePages.three,
-    initialPage: FixturePage? = nil,
-    configuration: SidebarSettingsConfiguration = .windowTest,
-    page: FixturePage? = nil,
-    @ViewBuilder detail: @escaping (FixturePage) -> Detail,
-    _ body: (WindowUnderTest) async throws -> Void
-) async throws {
-    let settings = SidebarSettingsWindow(
-        pages: pages, initialPage: initialPage, configuration: configuration,
-        detail: detail)
-    try await withWindow(settings, page: page, body)
-}
-
-/// Shows a window built from grouped pages, and closes it when `body` returns.
-@MainActor
-func withWindow(
-    sections: [SettingsPageSection<FixturePage>],
-    initialPage: FixturePage? = nil,
-    configuration: SidebarSettingsConfiguration = .windowTest,
-    page: FixturePage? = nil,
-    _ body: (WindowUnderTest) async throws -> Void
-) async throws {
-    let settings = SidebarSettingsWindow(
-        sections: sections, initialPage: initialPage, configuration: configuration
-    ) { page in
-        FixtureDetail(page: page)
-    }
-    try await withWindow(settings, page: page, body)
-}
-
-/// Shows `settings`, waits for its window, and closes it when `body` returns.
+/// Shows `settings`, waits for its window, and closes it when `body` returns, also when `body`
+/// throws.
 @MainActor
 func withWindow(
     _ settings: SidebarSettingsWindow<FixturePage>,

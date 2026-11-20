@@ -16,7 +16,7 @@ Planned work and the limits the kit has today. Nothing here is promised for a ve
 
 | Limit | Detail |
 | --- | --- |
-| macOS 26: no line under the toolbar | 26 ignores the separator style, and its edge has no line |
+| macOS 26: no line under the toolbar | 26 ignores the separator style and its edge has no line; System Settings draws one through a private view, and the kit draws none of its own ([ARCHITECTURE.md](ARCHITECTURE.md#the-line-under-the-toolbar)) |
 | No macOS 14 CI | GitHub retired the `macos-14` runner on 2026-11-02; macOS 14 is tested by hand |
 | Configuration is fixed per window object | `size`, `resizing`, `sidebarWidth`, `search` and the rest are read when the window is built; create a new `SidebarSettingsWindow` to change them |
 | A plain `ScrollView` page has a lighter toolbar on macOS 14 and 15 | AppKit matches the toolbar's background to a form's or a list's scroll view, not to a plain `ScrollView`'s; write pages as grouped forms |
@@ -25,7 +25,3 @@ Planned work and the limits the kit has today. Nothing here is promised for a ve
 | No custom selection shape | the selection is the system sidebar's, plain or tiled; a kit-drawn one would lose type-to-select and VoiceOver's list navigation |
 | No `SettingsLink` support | `SettingsLink` and `openSettings()` open the `Settings` scene, not this window; use `show(page:)` or `OpenSidebarSettingsButton` |
 | Pages cannot be previewed in the window | preview a page's view on its own, fixed to a frame |
-
-System Settings draws its 1 pt line on macOS 26 through a private view of AppKit's scroll edge. A
-line in the kit would take Apple making that API public, or the kit drawing one of its own, which
-it does not: it keeps the system's own edge. macOS 14, 15 and 27 show the line.

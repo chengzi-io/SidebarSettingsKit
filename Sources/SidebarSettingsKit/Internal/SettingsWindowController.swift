@@ -36,10 +36,10 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     static let forwardItem = NSToolbarItem.Identifier("SidebarSettingsKit.forward")
     static let leadingSpaceItem = NSToolbarItem.Identifier("SidebarSettingsKit.leadingSpace")
 
-    let configuration: SidebarSettingsConfiguration
     let sidebarItem: NSSplitViewItem
     let detailItem: NSSplitViewItem
-    let splitViewController: NSSplitViewController
+    private let configuration: SidebarSettingsConfiguration
+    private let splitViewController: NSSplitViewController
     private let navigation: Navigation
     /// An adjustable sidebar's ideal width, given to it when the window first shows.
     private var sidebarIdealOnceShown: CGFloat?

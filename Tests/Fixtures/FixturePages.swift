@@ -2,12 +2,6 @@ import Foundation
 
 /// The page sets the unit tests and the demo build windows from.
 public enum FixturePages {
-    /// No pages: the boundary `SidebarSettingsWindow` rejects with a precondition.
-    public static let empty: [FixturePage] = []
-
-    /// One page: the sidebar's smallest window, with nothing to group or scroll.
-    public static let one: [FixturePage] = [general]
-
     /// Three pages, the first one short so a window opens on a page that fits without
     /// scrolling; one of them is long enough to scroll.
     public static let three: [FixturePage] = [general, appearance, advanced]

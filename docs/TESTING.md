@@ -10,7 +10,8 @@ ones. `make test` runs both.
 | `SidebarSettingsKitTests` | `Tests/SidebarSettingsKitTests/` | none | navigation history, search matching, sidebar groups, configuration defaults, kit strings, the window's preconditions (each in a child process) |
 | `SidebarSettingsKitWindowTests` | `Tests/SidebarSettingsKitWindowTests/` | real, one at a time | frame and resizing, toolbar and title, the line under the toolbar, header and footer, sidebar rows and scrolling, keyboard, lifecycle, autosave, memory |
 
-If a behavior can be checked on values, it goes in the logic target: no window, no wait, no flake.
+Both import the kit with `@testable import`, to reach its internal types. If a behavior can be
+checked on values, it goes in the logic target: no window, no wait, no flake.
 
 | Command | Runs |
 | --- | --- |
@@ -31,11 +32,11 @@ fixture code never names its module: no `import SidebarSettingsFixtures`, no qua
 | File | Provides |
 | --- | --- |
 | `FixturePage.swift` | `FixturePage` (a struct page, equal by `id`), `FixtureIconDescription`, `FixtureTint`, `FixtureRenderingMode`, `FixtureSymbolWeight` |
-| `FixturePages.swift` | `empty`, `one`, `three` (`general`, `appearance` long, `advanced`), `many` (40 pages), `longText` with `longEnglishTitle`, `chineseTitle`, `mixedTitle`, `longKeyword`, `widthInsensitiveKeywords` |
+| `FixturePages.swift` | `three` (`general`, `appearance` long, `advanced`), `many` (40 pages), `longText` with `longEnglishTitle`, `chineseTitle`, `mixedTitle`, `longKeyword`, `widthInsensitiveKeywords` |
 | `FixtureSections.swift` | `ungrouped`, `grouped`, `withEmptySection` |
 | `FixtureIconPages.swift` | one page per `SettingsIcon` form, and `all` |
 | `DetailViews.swift` | `LongContentView` (`minimumHeight` 1800), `ShortContentView` (`maximumHeight` 300), `FixtureDetail(page:)`, which puts one of them in its own `ScrollView`, as every page scrolls itself |
-| `ChromeViews.swift` | `FixtureHeader` (`height` 56), `FixtureFooter` (`height` 28), `TallFooter` (`height` 80) |
+| `ChromeViews.swift` | `FixtureHeader`, `FixtureFooter` (`height` 28), `TallFooter` (`height` 80) |
 
 Add a page set or a view to a fixture file, not to a test, when a second suite will want it too.
 
@@ -44,6 +45,7 @@ Add a page set or a view to a fixture file, not to a test, when a second suite w
 | Piece | Where | What it does |
 | --- | --- | --- |
 | `WindowTestSuite` | `Support/WindowTestSupport.swift` | the one `@Suite(.serialized)` root; each area is a `@Suite(.serialized) @MainActor` struct in an `extension WindowTestSuite` |
+| `fixtureWindow` | support | builds, without showing, a window of `FixtureDetail` pages |
 | `withWindow` | support | opens a window, waits for it, and closes it in a `defer`, also when the body throws |
 | `WindowUnderTest` | support | the shown window and the parts the tests read |
 
@@ -51,10 +53,10 @@ The root is serial because the tests share one app process: first responder, `NS
 `UserDefaults`. Swift Testing serializes a suite's child suites too, so a new area needs its own
 nested suite, not a second root.
 
-`withWindow` has four forms: `pages:`, `pages:` with a `detail:` view of the test's own, `sections:`,
-and an existing `SidebarSettingsWindow`. Each takes `page:` to open on, and the first three take
-`configuration:`; `.windowTest.drawing(.tiled)` is the test configuration with tiled icons. Use
-the existing-settings form when the window needs a header or a footer.
+`withWindow` has two forms: one shows a `fixtureWindow` built from `pages:`, `initialPage:` and
+`configuration:`; the other shows a `SidebarSettingsWindow` the test built, for groups, a header, a
+footer or a detail of its own. Both take `page:` to open on. `.windowTest.drawing(.tiled)` is the
+test configuration with tiled icons.
 
 `WindowUnderTest` exposes `settings`, `controller`, `window`, and `sidebarView`, `detailView`,
 `separator`, `toolbarItem(_:)`, `detailScrollView()`, `sidebarScrollView()`, `sidebarTable()`,
@@ -119,7 +121,7 @@ key outside that rule, allowed by name in `AutosaveTests`.
 
 A scroll test whose content fits passes without ever scrolling, which is how a scroll test for a new
 page starting at its top, or for the sidebar scrolling to the selection, goes green.
-`requireScrollable` and the sidebar's own taller-than-shown check exist to make that fail loudly.
+`requireScrollable`, which the sidebar's taller-than-shown check also calls, makes that fail loudly.
 
 ## Environment
 
@@ -127,5 +129,6 @@ page starting at its top, or for the sidebar scrolling to the selection, goes gr
 | --- | --- |
 | No macOS 14 runner since 2026-11-02 | a macOS 14 `#available` branch asserts the fallback |
 | Stage Manager narrows the visible screen, and AppKit moves a restored frame into the visible area | a test that places a window puts it well inside `NSScreen.main.visibleFrame` |
-| Window tests read views and state, never pixels | they need no Screen Recording permission; that is for `scripts/screenshots.sh` |
+| Window tests read views, state and a row's own drawing (`cacheDisplay`), never the screen | they need no Screen Recording permission; that is for `scripts/screenshots.sh` |
 | CI runs both targets on `macos-15` and `macos-26` through `make ci` | a window test that passes locally can still fail on the other macOS version; run CI before assuming a window behavior |
+| On macOS 27 a Tab sent from the test process, through the window or `NSApp`, does not leave the sidebar list; a real key press goes to the search field, as in System Settings (checked with System Events on the `xcode-27` runner) | `make ci` does not run on macOS 27: `downArrowLeavesTheSearchFieldForThePagesFound` would fail there |

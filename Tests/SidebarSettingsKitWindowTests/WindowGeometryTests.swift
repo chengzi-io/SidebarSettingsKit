@@ -13,7 +13,6 @@ extension WindowTestSuite {
     struct WindowGeometryTests {
         @Test func defaultContentSize() async throws {
             try await withWindow { window in
-                #expect(SidebarSettingsConfiguration().size == CGSize(width: 715, height: 600))
                 #expect(window.window.contentView?.frame.size == CGSize(width: 715, height: 600))
             }
         }

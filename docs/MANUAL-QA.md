@@ -18,7 +18,7 @@ cd Examples/SidebarSettingsDemo && swift run SidebarSettingsDemo --icons tiled -
 | [ ] The sidebar keeps Liquid Glass, with plain icons and tiled | yes | no such look | no such look |
 | [ ] Sidebar rows fade under the toolbar as you scroll the list | yes | system default | system default |
 | [ ] The detail sits on the window's background, with no band under the toolbar | yes | yes | yes |
-| [ ] The line under the toolbar shows at the top and when scrolled | see below | yes | yes |
+| [ ] The line under the toolbar shows at the top and when scrolled | none ([known limit](ROADMAP.md)) | yes | yes |
 | [ ] Compact **Toolbar style**: the sidebar's top gap matches its bottom gap | yes | yes | yes |
 | [ ] The window opens at 715 × 600 and cannot be resized (default configuration) | yes | yes | yes |
 | [ ] The minimize and zoom buttons are dimmed, also with **Resizing** set to resizable; double-clicking the title bar does not zoom the window, and Window › Enter Full Screen is unavailable | yes | yes | yes |
@@ -27,13 +27,8 @@ cd Examples/SidebarSettingsDemo && swift run SidebarSettingsDemo --icons tiled -
 macOS 26 is the version where a wrong token or a stray background shows first. Check it with
 `--icons plain` and `--icons tiled`, in both appearances.
 
-macOS 26 runs a compact toolbar with the automatic style, so the sidebar there sits as it does
-with `.automatic`: its gap to the window's top matches its gap to the bottom. On macOS 14, 15 and
-27 both gaps are zero: the sidebar reaches the window's edge.
-
-On macOS 26 no line shows under the toolbar: the system ignores the separator style there and
-draws its own scroll edge, without a line, while System Settings draws one through a private
-view of that edge. A known difference; macOS 27 shows the line again.
+The sidebar's top and bottom gaps are zero on macOS 14, 15 and 27: it reaches the window's edge.
+macOS 26 runs a compact toolbar as `.automatic`, so both gaps are the floating sidebar's inset.
 
 ## By kind of icons
 
@@ -112,17 +107,18 @@ Launch with `--appearance dark`, plain and tiled:
 
 - [ ] Tiles and the selection stand out from the sidebar background.
 - [ ] Row text and secondary text keep their contrast.
-- [ ] The line under the toolbar is visible against the dark background.
+- [ ] Where the line under the toolbar shows, it is visible against the dark background.
 - [ ] Switching the Mac between Light and Dark (System Settings › Appearance) with the window open
       switches the window with it.
 
 ## CI screenshots
 
-Before a release, download the artifacts of the latest run of both runners and look at them:
+Before a release, download the artifacts of the latest run of every runner and look at them:
 
 ```
 gh run download --name screenshots-macos-15 --dir shots-15
 gh run download --name screenshots-macos-26 --dir shots-26
+gh run download --name screenshots-xcode-27 --dir shots-27
 ```
 
 The matrix is two kinds of icons × two appearances × the scenarios in `scripts/screenshots.sh`, named
@@ -140,11 +136,9 @@ For every shot:
 Per scenario, check the one thing the scenario adds (the list is also in
 [DEVELOPMENT.md](DEVELOPMENT.md)):
 
-- [ ] `1`: three rows, the default window. The line under the toolbar shows at the top of the page
-      on macOS 14, 15 and 27, and not on 26. On macOS 15 the toolbar above the page is the page's
+- [ ] `1`: three rows, the default window. On macOS 15 the toolbar above the page is the page's
       color, active or not, with the pointer over the window or away from it.
-- [ ] `2`: a long page opened at its end. The line under the toolbar shows on macOS 14, 15 and 27,
-      and not on 26.
+- [ ] `2`: a long page opened at its end, scrolled under the toolbar.
 - [ ] `3`: over 40 rows, the sidebar scrolled to the last page with its row selected.
 - [ ] `4`: three groups, set apart by space, without titles.
 - [ ] `5`: the account header above the rows scrolls away; the tall footer stays at the bottom

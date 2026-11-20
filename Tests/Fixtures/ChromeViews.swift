@@ -7,7 +7,7 @@ import SwiftUI
 /// avatar lines up with their icons, as in System Settings.
 public struct FixtureHeader: View {
     /// The row's height, about the one System Settings' Apple Account row has.
-    public static let height: CGFloat = 56
+    private static let height: CGFloat = 56
 
     public init() {}
 

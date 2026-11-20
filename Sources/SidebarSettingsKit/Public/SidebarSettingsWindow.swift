@@ -24,10 +24,10 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// Write each page as a grouped `Form`, as System Settings' pages are: a page scrolls itself,
-/// and the line under the toolbar follows the form's scroll position. A page that is not a
-/// form or a list and can be taller than the window goes in a `ScrollView`; on macOS 14 and 15
-/// the toolbar then keeps a lighter background of its own above it.
+/// Write each page as a grouped `Form`, as System Settings' pages are: a page scrolls itself.
+/// A page that is not a form or a list and can be taller than the window goes in a
+/// `ScrollView`; on macOS 14 and 15 the toolbar then keeps a lighter background of its own
+/// above it.
 ///
 /// The scene's environment does not reach the window's views: pass them your models
 /// through their initializers. `openSettings` and `SettingsLink` do not open this window;

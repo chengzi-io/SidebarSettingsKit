@@ -51,11 +51,13 @@ struct SearchTests {
         #expect(FixturePages.mixedTitle.matches(searchText: "无线网络"))
     }
 
-    @Test func aBlankSearchKeepsEveryPage() {
+    @Test func aBlankSearchKeepsEveryGroupAndPageInOrder() {
         let sections = visibleSections(
             FixtureSections.grouped, search: .enabled, searchText: " \n\t ")
 
-        #expect(sections.flatMap(\.pages) == [FixturePages.general, FixturePages.appearance, FixturePages.advanced])
+        #expect(
+            sections.map(\.pages)
+                == [[FixturePages.general], [FixturePages.appearance, FixturePages.advanced]])
         #expect(FixturePages.general.matches(searchText: "   "))
     }
 
@@ -64,16 +66,6 @@ struct SearchTests {
             FixtureSections.grouped, search: .enabled, searchText: "zzzz")
 
         #expect(sections.isEmpty)
-    }
-
-    @Test func clearingTheSearchRestoresEveryPage() {
-        let searched = visibleSections(
-            FixtureSections.grouped, search: .enabled, searchText: "appearance")
-        let cleared = visibleSections(FixtureSections.grouped, search: .enabled, searchText: "")
-
-        #expect(searched.flatMap(\.pages) == [FixturePages.appearance])
-        #expect(cleared.flatMap(\.pages) == FixtureSections.grouped.flatMap(\.pages))
-        #expect(cleared.count == FixtureSections.grouped.count)
     }
 
     @Test func disablingTheSearchShowsEveryPageWhateverTheText() {
@@ -100,18 +92,12 @@ struct SearchTests {
         #expect(visibleSections(sections, search: .enabled, searchText: "garden").isEmpty)
     }
 
+    /// General's group has no match and goes; Appearance's group stays, without Advanced.
     @Test func aGroupWithoutAMatchDisappears() {
         let sections = visibleSections(
             FixtureSections.grouped, search: .enabled, searchText: "appearance")
 
         #expect(sections.map(\.pages) == [[FixturePages.appearance]])
-    }
-
-    @Test func aGroupWithAMatchStaysWhenItsOtherPagesAreHidden() {
-        let sections = visibleSections(
-            FixtureSections.grouped, search: .enabled, searchText: "advanced")
-
-        #expect(sections.map(\.pages) == [[FixturePages.advanced]])
     }
 }
 

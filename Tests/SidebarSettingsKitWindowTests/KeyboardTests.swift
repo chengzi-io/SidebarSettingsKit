@@ -11,22 +11,12 @@ extension WindowTestSuite {
     /// the keys the sidebar list takes, which work as soon as the window opens.
     @Suite(.serialized) @MainActor
     struct KeyboardTests {
-        @Test func theListHasTheFocusWhenTheWindowOpens() async throws {
-            for icons in SidebarSettingsConfiguration.Icons.bothKinds {
-                try await withWindow(configuration: .windowTest.drawing(icons)) { window in
-                    let table = try require(window.sidebarTable(), "the sidebar's table")
-                    // Not the search field, the window's first key view, which AppKit picks.
-                    try await WindowTest.wait(for: "the list to take the focus") {
-                        window.window.firstResponder === table
-                    }
-                }
-            }
-        }
-
+        /// The list has the focus once the window opens, so typing reaches it without a click.
         @Test func typingAPageTitleSelectsItsRow() async throws {
             for icons in SidebarSettingsConfiguration.Icons.bothKinds {
                 try await withWindow(configuration: .windowTest.drawing(icons)) { window in
                     let table = try require(window.sidebarTable(), "the sidebar's table")
+                    // Not the search field, the window's first key view, which AppKit picks.
                     try await WindowTest.wait(for: "the list to take the focus") {
                         window.window.firstResponder === table
                     }
@@ -93,7 +83,7 @@ extension WindowTestSuite {
         /// A search that finds nothing replaces the list; the list that comes back when a letter
         /// is deleted must leave the focus in the field, or the next letter selects a row.
         @Test func theListComingBackLeavesTheFocusInTheSearchField() async throws {
-            try await withWindow(pages: FixturePages.three) { window in
+            try await withWindow { window in
                 let field = try require(window.searchField(), "the sidebar's search field")
                 let table = try require(window.sidebarTable(), "the sidebar's table")
                 try await WindowTest.wait(for: "the list to take the focus") {
@@ -116,7 +106,7 @@ extension WindowTestSuite {
         }
 
         @Test func commandBracketGoesBackAndForward() async throws {
-            try await withWindow(pages: FixturePages.three) { window in
+            try await withWindow { window in
                 window.settings.navigator.open(FixturePages.appearance)
                 try await WindowTest.wait(for: "the page to change") {
                     window.settings.navigator.selection == FixturePages.appearance

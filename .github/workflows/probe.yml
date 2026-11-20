@@ -10,9 +10,9 @@ permissions:
 
 jobs:
   probe:
-    name: Probe NSApp.sendEvent keys (${{ matrix.os }})
+    name: Probe transparency (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -29,4 +29,10 @@ jobs:
           developer_dir="/Applications/Xcode_$xcode_version.app/Contents/Developer"
           echo "DEVELOPER_DIR=$developer_dir" >>"$GITHUB_ENV"
           sudo DEVELOPER_DIR="$developer_dir" xcodebuild -runFirstLaunch
-      - run: make test
+      - run: scripts/glass-probe.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: glass-${{ matrix.os }}
+          path: glass/
+          if-no-files-found: error

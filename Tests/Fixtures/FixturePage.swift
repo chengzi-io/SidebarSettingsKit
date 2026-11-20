@@ -93,14 +93,13 @@ public enum FixtureIconDescription: Sendable, Hashable {
 }
 
 /// A color an icon is tinted with.
-public enum FixtureTint: Sendable, Hashable, CaseIterable {
-    case blue, green, orange, red
+public enum FixtureTint: Sendable, Hashable {
+    case blue, orange, red
 
     /// The tint's SwiftUI color.
     public var color: Color {
         switch self {
         case .blue: .blue
-        case .green: .green
         case .orange: .orange
         case .red: .red
         }
@@ -108,7 +107,7 @@ public enum FixtureTint: Sendable, Hashable, CaseIterable {
 }
 
 /// A symbol rendering mode an icon is drawn in.
-public enum FixtureRenderingMode: Sendable, Hashable, CaseIterable {
+public enum FixtureRenderingMode: Sendable, Hashable {
     case monochrome, hierarchical, palette, multicolor
 
     /// The rendering mode's SwiftUI value.
@@ -123,7 +122,7 @@ public enum FixtureRenderingMode: Sendable, Hashable, CaseIterable {
 }
 
 /// A symbol's stroke weight.
-public enum FixtureSymbolWeight: Sendable, Hashable, CaseIterable {
+public enum FixtureSymbolWeight: Sendable, Hashable {
     case bold
 
     /// The weight's SwiftUI value.

@@ -14,13 +14,11 @@ Settings.
 [![CI](https://github.com/chengzi-io/SidebarSettingsKit/actions/workflows/ci.yml/badge.svg)](https://github.com/chengzi-io/SidebarSettingsKit/actions/workflows/ci.yml)
 
 <p align="center">
-  <img src="docs/assets/screenshots/macos-26-plain-light-scenario-5.png" width="49%" alt="The settings window with plain icons, macOS 26, light appearance">
-  <img src="docs/assets/screenshots/macos-26-tiled-light-scenario-5.png" width="49%" alt="The settings window with icons on tiles, macOS 26, light appearance">
+  <img src="docs/assets/screenshots/macos-15-tiled-light-scenario-5.png" width="32%" alt="The settings window on macOS 15, icons on tiles, light appearance">
+  <img src="docs/assets/screenshots/macos-26-tiled-light-scenario-5.png" width="32%" alt="The settings window on macOS 26, icons on tiles, light appearance">
+  <img src="docs/assets/screenshots/macos-27-tiled-light-scenario-5.png" width="32%" alt="The settings window on macOS 27, icons on tiles, light appearance">
 </p>
-<p align="center">
-  <img src="docs/assets/screenshots/macos-26-plain-dark-scenario-1.png" width="49%" alt="The settings window with plain icons, macOS 26, dark appearance">
-  <img src="docs/assets/screenshots/macos-26-tiled-dark-scenario-1.png" width="49%" alt="The settings window with icons on tiles, macOS 26, dark appearance">
-</p>
+<p align="center"><sub>macOS 15 · macOS 26 · macOS 27</sub></p>
 
 ## Add it with an AI agent
 
@@ -55,9 +53,8 @@ result. An agent without the CLI can follow
 | Sidebar width | 215 pt, fixed |
 | Window | 715 × 600, fixed size, position saved |
 | Title | follows the selected page |
-| Line under the toolbar | shown on macOS 14, 15 and 27; not on 26 (known difference) |
+| Line under the toolbar | macOS 14, 15 and 27; none on 26 (a known limit) |
 | Page, history and search when the window reopens | kept while the app runs |
-| Pages scroll inside the window | on |
 | The kit's own words | every language macOS has, in the app's language |
 
 ## Quick start
@@ -319,18 +316,7 @@ struct MenuBarSettingsApp: App {
 
 ## Known limits
 
-- On macOS 26 no line shows under the toolbar. The system ignores the separator style there and
-  draws its own scroll edge, which has no line; System Settings draws one through a private view
-  of AppKit's scroll edge, with no public API, and even a plain SwiftUI `NavigationSplitView`
-  shows it only sometimes there. The kit does not draw a line of its own. macOS 14 and 15 show
-  the line always, as System Settings does on those versions, and macOS 27 does too.
-- On macOS 14 and 15 the toolbar takes its background from the scroll view under it. Above a form
-  or a list it matches the page; above a plain `ScrollView` it keeps a lighter background of its
-  own.
-- A window's pages and configuration are fixed at creation; to change them, close it and create
-  another one.
-
-Planned work is in [docs/ROADMAP.md](docs/ROADMAP.md).
+[docs/ROADMAP.md](docs/ROADMAP.md) lists the limits the kit has today, with the planned work.
 
 ## Documentation
 
