@@ -10,13 +10,13 @@ permissions:
 
 jobs:
   probe:
-    name: Probe transparency (${{ matrix.os }})
+    name: Probe System Settings titles (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
-        os: [xcode-27]
+        os: [macos-15, macos-26, xcode-27]
         include:
           - os: xcode-27
             image-xcode: true
