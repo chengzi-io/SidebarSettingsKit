@@ -37,7 +37,10 @@ repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$repo_root"
 
 echo "==> building $DEMO_BINARY (release)"
-swift build -c release --package-path "$DEMO_PACKAGE_DIR"
+# Swift 6.4's default build system links the executable as if built with the macOS 14 SDK, its
+# deployment target, and macOS 27 then draws the demo in the look it had before macOS 26. The
+# native build system records the SDK it built with.
+swift build -c release --build-system native --package-path "$DEMO_PACKAGE_DIR"
 
 # SwiftPM finds <Package>_<Target>.bundle next to the executable, so the demo is
 # run from its own build directory and its binary is never moved.

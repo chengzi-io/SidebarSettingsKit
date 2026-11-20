@@ -35,6 +35,9 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     static let backItem = NSToolbarItem.Identifier("SidebarSettingsKit.back")
     static let forwardItem = NSToolbarItem.Identifier("SidebarSettingsKit.forward")
     static let leadingSpaceItem = NSToolbarItem.Identifier("SidebarSettingsKit.leadingSpace")
+    // Probe only: the title as a toolbar item, the window's own title hidden.
+    static let probeTitleItem = NSToolbarItem.Identifier("SidebarSettingsKit.probeTitle")
+    static let probeTitleAsItem = ProcessInfo.processInfo.environment["SSK_PROBE_TITLE"] == "item"
 
     let sidebarItem: NSSplitViewItem
     let detailItem: NSSplitViewItem
@@ -65,14 +68,17 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         )
 
         let sidebarController = NSHostingController(rootView: sidebar.softScrollEdgeOnMacOS26())
+        let separator = ToolbarSeparator()
         // The title and the buttons change in the SwiftUI update that draws the new page. Set
         // after it, from an observation, the old title stayed over the new page for a frame.
         let detailController = NSHostingController(
-            rootView: detail.modifier(
-                FollowsNavigation(navigation: navigation) { [weak window] in
-                    Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
-                }
-            )
+            rootView: detail
+                .environment(\.pageScrolled, separator.follow(isScrolled:))
+                .modifier(
+                    FollowsNavigation(navigation: navigation) { [weak window] in
+                        Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
+                    }
+                )
         )
         // The split view and the window size the columns; the content's ideal size must not.
         sidebarController.sizingOptions = []
@@ -90,16 +96,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             sidebarIdealOnceShown = ideal
         }
         detailItem = NSSplitViewItem(viewController: detailController)
-        // A line under the toolbar on macOS 14 and 15, as System Settings has. Left to AppKit,
-        // it lost track of the scroll position once SwiftUI swapped the page. macOS 26 and
-        // later ignore it and draw their own edge.
-        detailItem.titlebarSeparatorStyle = .line
-        switch ProcessInfo.processInfo.environment["SSK_PROBE_SEPARATOR"] {
-        case "automatic": detailItem.titlebarSeparatorStyle = .automatic
-        case "none": detailItem.titlebarSeparatorStyle = .none
-        case "shadow": detailItem.titlebarSeparatorStyle = .shadow
-        default: break
-        }
+        separator.item = detailItem
         splitViewController = NSSplitViewController()
         splitViewController.addSplitViewItem(sidebarItem)
         splitViewController.addSplitViewItem(detailItem)
@@ -142,23 +139,27 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         window.toolbar = toolbar
         window.toolbarStyle = configuration.toolbarStyle.appKit
         if configuration.title == .hidden { window.titleVisibility = .hidden }
-        if ProcessInfo.processInfo.environment["SSK_PROBE_HIDE_TITLE"] != nil { window.titleVisibility = .hidden }
 
         Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
-        if let mode = ProcessInfo.processInfo.environment["SSK_PROBE_THEME_EFFECT"] {
-            Task { @MainActor [weak window] in
-                try? await Task.sleep(for: .milliseconds(300))
-                guard let frameView = window?.contentView?.superview else { return }
-                for case let effect as NSVisualEffectView in frameView.subviews {
-                    switch mode {
-                    case "hide": effect.isHidden = true
-                    case "window": effect.material = .windowBackground
-                    case "follow": effect.state = .followsWindowActiveState
-                    default: break
-                    }
-                }
+        // Probe only: once the window shows, record its title field, then move the title to the item.
+        Task { @MainActor [weak window] in
+            try? await Task.sleep(for: .milliseconds(1000))
+            guard let window else { return }
+            probeDumpTitleField(in: window)
+            guard Self.probeTitleAsItem, let label = Self.probeTitleLabel(in: window) else { return }
+            if let field = probeTitleField(in: window) {
+                label.font = field.font
+                label.textColor = field.textColor
             }
+            label.stringValue = window.title
+            window.titleVisibility = .hidden
+            probeDumpTitleField(in: window)
         }
+    }
+
+    private static func probeTitleLabel(in window: NSWindow) -> NSTextField? {
+        guard probeTitleAsItem else { return nil }
+        return window.toolbar?.items.first(where: { $0.itemIdentifier == probeTitleItem })?.view as? NSTextField
     }
 
     override func showWindow(_ sender: Any?) {
@@ -193,11 +194,15 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             case .followsPage, .hidden: navigation.pageTitle()
             case .fixed(let resource): String(localized: resource)
             }
+        probeTitleLabel(in: window)?.stringValue = window.title
         window.toolbar?.validateVisibleItems()
     }
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         if configuration.showsNavigationButtons {
+            if Self.probeTitleAsItem {
+                return [.sidebarTrackingSeparator, Self.backItem, Self.forwardItem, Self.probeTitleItem]
+            }
             return [.sidebarTrackingSeparator, Self.backItem, Self.forwardItem]
         }
         // Alone, the title sat 11 pt from the sidebar, left of the page's grouped form (20 pt
@@ -217,6 +222,16 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         itemForItemIdentifier identifier: NSToolbarItem.Identifier,
         willBeInsertedIntoToolbar flag: Bool
     ) -> NSToolbarItem? {
+        if identifier == Self.probeTitleItem {
+            let item = NSToolbarItem(itemIdentifier: identifier)
+            let label = NSTextField(labelWithString: "")
+            label.identifier = NSUserInterfaceItemIdentifier("probeTitleLabel")
+            label.font = .titleBarFont(ofSize: 0)
+            item.view = label
+            item.isBordered = false
+            item.isNavigational = true
+            return item
+        }
         if identifier == Self.leadingSpaceItem {
             let item = NSToolbarItem(itemIdentifier: identifier)
             let space = NSView()
@@ -258,6 +273,28 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
 
     @objc private func goForward() {
         navigation.goForward()
+    }
+}
+
+/// The line under the toolbar, as System Settings has it on macOS 15: none at the top of a page,
+/// a line with a shadow once the page scrolls under the toolbar. The page reports its scroll
+/// position; left to AppKit, the line lost track of it once SwiftUI swapped the page. macOS 14
+/// shows a line always, as SwiftUI reports no scroll position there. macOS 26 and later ignore
+/// the style and draw their own scroll edge.
+@MainActor
+private final class ToolbarSeparator {
+    weak var item: NSSplitViewItem? {
+        didSet {
+            if #available(macOS 15.0, *) {
+                follow(isScrolled: false)
+            } else {
+                item?.titlebarSeparatorStyle = .line
+            }
+        }
+    }
+
+    func follow(isScrolled: Bool) {
+        item?.titlebarSeparatorStyle = isScrolled ? .shadow : .none
     }
 }
 
@@ -329,5 +366,45 @@ extension View {
         } else {
             self
         }
+    }
+}
+
+// Probe only: the window's own title field and what it draws with.
+@MainActor
+private func probeTitleField(in window: NSWindow) -> NSTextField? {
+    @MainActor func walk(_ view: NSView) -> NSTextField? {
+        if let field = view as? NSTextField, field.stringValue == window.title, !field.stringValue.isEmpty,
+            field.identifier?.rawValue != "probeTitleLabel"
+        {
+            return field
+        }
+        for sub in view.subviews { if let found = walk(sub) { return found } }
+        return nil
+    }
+    return window.contentView?.superview.flatMap(walk)
+}
+
+@MainActor
+private func probeDumpTitleField(in window: NSWindow) {
+    guard let path = ProcessInfo.processInfo.environment["SSK_PROBE_DUMP"] else { return }
+    var line = "title \(window.title.debugDescription) visibility \(window.titleVisibility.rawValue)"
+    if let field = probeTitleField(in: window) {
+        line += " field \(type(of: field)) font \(field.font.map { "\($0.fontName) \($0.pointSize)" } ?? "nil") color \(field.textColor.map { "\($0)" } ?? "nil") frame \(field.frame)"
+        var chain: [String] = []
+        var v: NSView? = field.superview
+        while let view = v { chain.append("\(type(of: view))"); v = view.superview }
+        line += " in \(chain.joined(separator: " < "))"
+    } else {
+        line += " field none"
+    }
+    probeAppend(line, to: path)
+}
+
+func probeAppend(_ line: String, to path: String) {
+    let data = Data((line + "\n").utf8)
+    if let handle = FileHandle(forWritingAtPath: path) {
+        handle.seekToEndOfFile(); handle.write(data); handle.closeFile()
+    } else {
+        FileManager.default.createFile(atPath: path, contents: data)
     }
 }
