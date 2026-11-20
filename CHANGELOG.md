@@ -37,8 +37,9 @@ The first release, 0.1.0.
   Mac unless the app sets one.
 - `SidebarSettingsCommands`: the app menu's "Settings…" item and ⌘,, in place of the `Settings`
   scene's; `OpenSidebarSettingsButton` opens the window from anywhere, optionally on a page.
-- Pages scroll themselves, as System Settings' grouped forms do. The line under the toolbar shows
-  on macOS 14, 15 and 27, and not on macOS 26, where the system ignores the separator style.
+- Pages scroll themselves, as System Settings' grouped forms do. The line under the toolbar is
+  System Settings' on each macOS version: on macOS 15 it shows once the page scrolls under the
+  toolbar; macOS 26 and later draw their own scroll edge; macOS 14 shows it always.
 - Keyboard: arrow keys move the selection, ⌘[ and ⌘] go back and forward, ⌘F focuses the search
   field, ↓ in it moves to the pages found, Tab goes back to it, Esc clears it, ⌘W closes the
   window, ⌘, opens it. Typing a page's title selects its row. VoiceOver reads each row's title and

@@ -65,14 +65,17 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         )
 
         let sidebarController = NSHostingController(rootView: sidebar.softScrollEdgeOnMacOS26())
+        let separator = ToolbarSeparator()
         // The title and the buttons change in the SwiftUI update that draws the new page. Set
         // after it, from an observation, the old title stayed over the new page for a frame.
         let detailController = NSHostingController(
-            rootView: detail.modifier(
-                FollowsNavigation(navigation: navigation) { [weak window] in
-                    Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
-                }
-            )
+            rootView: detail
+                .environment(\.pageScrolled, separator.follow(isScrolled:))
+                .modifier(
+                    FollowsNavigation(navigation: navigation) { [weak window] in
+                        Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
+                    }
+                )
         )
         // The split view and the window size the columns; the content's ideal size must not.
         sidebarController.sizingOptions = []
@@ -90,10 +93,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             sidebarIdealOnceShown = ideal
         }
         detailItem = NSSplitViewItem(viewController: detailController)
-        // A line under the toolbar on macOS 14 and 15, as System Settings has. Left to AppKit,
-        // it lost track of the scroll position once SwiftUI swapped the page. macOS 26 and
-        // later ignore it and draw their own edge.
-        detailItem.titlebarSeparatorStyle = .line
+        separator.item = detailItem
         splitViewController = NSSplitViewController()
         splitViewController.addSplitViewItem(sidebarItem)
         splitViewController.addSplitViewItem(detailItem)
@@ -237,6 +237,28 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
 
     @objc private func goForward() {
         navigation.goForward()
+    }
+}
+
+/// The line under the toolbar, as System Settings has it on macOS 15: none at the top of a page,
+/// a line with a shadow once the page scrolls under the toolbar. The page reports its scroll
+/// position; left to AppKit, the line lost track of it once SwiftUI swapped the page. macOS 14
+/// shows a line always, as SwiftUI reports no scroll position there. macOS 26 and later ignore
+/// the style and draw their own scroll edge.
+@MainActor
+private final class ToolbarSeparator {
+    weak var item: NSSplitViewItem? {
+        didSet {
+            if #available(macOS 15.0, *) {
+                follow(isScrolled: false)
+            } else {
+                item?.titlebarSeparatorStyle = .line
+            }
+        }
+    }
+
+    func follow(isScrolled: Bool) {
+        item?.titlebarSeparatorStyle = isScrolled ? .shadow : .none
     }
 }
 

@@ -114,19 +114,22 @@ rows have their heights, it stops short and clips a row below the fold.
 
 ## The line under the toolbar
 
-The kit sets `titlebarSeparatorStyle = .line` on the detail item once, when the controller builds
-it. Left `.automatic`, AppKit lost track of the line once SwiftUI swapped the detail's content: it
-kept the line after the new page was shown from its top.
+The line follows System Settings on each macOS version, with no option. On macOS 15 the page
+reports whether it is scrolled past its top (`onScrollGeometryChange` in `DetailContainer`), and
+`ToolbarSeparator` sets the detail item's `titlebarSeparatorStyle` from it: `.none` at the top,
+`.shadow` once scrolled, which matches System Settings' line and shadow pixel for pixel. Left
+`.automatic`, AppKit lost track of the page once SwiftUI swapped it: it kept the line on a new
+page shown from its top.
 
-| macOS | The line |
-| --- | --- |
-| 14, 15 | always, at the top of a page too, as System Settings has it |
-| 26 | none: the system ignores the setting and draws its own edge, without a line |
-| 27 | always: the system's hard scroll edge, as the window title floats in the title bar |
+| macOS | System Settings | The kit |
+| --- | --- | --- |
+| 14 | (not checked: no CI) | a line always: SwiftUI reports no scroll position before 15 |
+| 15 | no line at the top; a line with a shadow once scrolled | the same |
+| 26 | no line; a soft scroll edge | the same: the system ignores the style |
+| 27 | no line at the top, one while the pointer is over the toolbar; a soft edge once scrolled | the same at the top and under the pointer; once scrolled, a hard edge with a line: 27 makes the edge hard while the window title shows in the toolbar, soft with `title = .hidden` |
 
-System Settings on macOS 26 draws a 1 pt line through a private view of AppKit's scroll edge,
-with no public API, and even a plain SwiftUI `NavigationSplitView` on 26 shows it only
-sometimes. The kit keeps the system's edge rather than drawing a line of its own.
+Compare on a Mac with Reduce Transparency off, as a Mac comes. GitHub's macOS images turn it on,
+and with it System Settings on 26 and 27 shows a line at the top of a page too.
 
 ## The detail
 

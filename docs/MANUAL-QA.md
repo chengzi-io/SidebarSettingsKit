@@ -18,7 +18,7 @@ cd Examples/SidebarSettingsDemo && swift run SidebarSettingsDemo --icons tiled -
 | [ ] The sidebar keeps Liquid Glass, with plain icons and tiled | yes | no such look | no such look |
 | [ ] Sidebar rows fade under the toolbar as you scroll the list | yes | system default | system default |
 | [ ] The detail sits on the window's background, with no band under the toolbar | yes | yes | yes |
-| [ ] The line under the toolbar shows at the top and when scrolled | none ([known limit](ROADMAP.md)) | yes | yes |
+| [ ] The line under the toolbar: none at the top of a page, shown once it scrolls, none again on a new page | no line at all | yes | always shows ([known limit](ROADMAP.md)) |
 | [ ] Compact **Toolbar style**: the sidebar's top gap matches its bottom gap | yes | yes | yes |
 | [ ] The window opens at 715 × 600 and cannot be resized (default configuration) | yes | yes | yes |
 | [ ] The minimize and zoom buttons are dimmed, also with **Resizing** set to resizable; double-clicking the title bar does not zoom the window, and Window › Enter Full Screen is unavailable | yes | yes | yes |

@@ -67,10 +67,12 @@ through `-Xswiftc -warnings-as-errors` in the Makefile, never through `unsafeFla
 - The sidebar is SwiftUI's `List` with `.listStyle(.sidebar)`, plain or tiled: native selection,
   keyboard, type-to-select and VoiceOver. `configuration.icons` changes a row's icon, never the
   selection. Kit-drawn rows (for a rounded selection) were tried and dropped: they lost those.
-- The line under the toolbar is `titlebarSeparatorStyle = .line` on the detail item, set once:
-  macOS 14 and 15 show it always, as System Settings does there; left `.automatic`, AppKit lost
-  track when SwiftUI swapped the page. macOS 26 and later ignore it; 26 shows no line (System
-  Settings draws one through a private view), a known limit the kit does not draw around.
+- The line under the toolbar follows System Settings on each macOS version, with no option. On
+  macOS 15 the page reports its scroll position and `ToolbarSeparator` sets `.none` at the top,
+  `.shadow` once scrolled; left `.automatic`, AppKit lost track when SwiftUI swapped the page.
+  macOS 14 shows `.line` always: SwiftUI reports no scroll position there. macOS 26 and later
+  ignore the style and draw their own scroll edge. Compare with Reduce Transparency off: GitHub's
+  runner images turn it on, and System Settings on 26 and 27 then shows a line at rest too.
 - `ToolbarStyle.unifiedCompact` becomes `.automatic` on macOS 26 only: there a compact toolbar
   starts the sidebar below the title bar. `sidebarRunsUnderTheToolbar` catches it on macos-26.
 - The window adds no scroll view around a page; each page scrolls itself. On macOS 14 and 15 the

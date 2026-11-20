@@ -53,7 +53,7 @@ result. An agent without the CLI can follow
 | Sidebar width | 215 pt, fixed |
 | Window | 715 × 600, fixed size, position saved |
 | Title | follows the selected page |
-| Line under the toolbar | macOS 14, 15 and 27; none on 26 (a known limit) |
+| Line under the toolbar | as System Settings on each macOS version (always on macOS 14) |
 | Page, history and search when the window reopens | kept while the app runs |
 | The kit's own words | every language macOS has, in the app's language |
 
