@@ -100,7 +100,9 @@ system's height and the title starts where a plain row's does. A tile larger tha
 taller row and crowded the title, so tiles have no size of their own. A plain icon takes its tint
 through `listItemTint`, which the list turns white with the title on the selected row; a color
 set on the symbol with `foregroundStyle` stayed, and a blue icon vanished into the blue
-selection. On a tile the tint is the tile's color and the glyph is white.
+selection. On a tile the tint is the tile's color and the glyph is white, at the medium image
+scale: the sidebar list on macOS 27 asks its rows for a large one, which drew the symbol to the
+tile's edges.
 
 A group is a `Section` without a header, set apart by space as System Settings' groups are. A
 titled `Section` in a sidebar list becomes a group that folds when its heading is clicked, with

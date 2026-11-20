@@ -25,7 +25,9 @@ struct SettingsIconView: View {
                 .symbolRenderingMode(renderingMode)
                 .fontWeight(weight)
             if case .tiled(let defaultColor) = icons {
-                onTile(symbol.font(.system(size: glyph)), defaultColor)
+                // The sidebar list on macOS 27 asks its rows for a large image scale, which drew
+                // the symbol to the tile's edges; the tile keeps the scale it has on 14 to 26.
+                onTile(symbol.font(.system(size: glyph)).imageScale(.medium), defaultColor)
             } else {
                 symbol
             }
