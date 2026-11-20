@@ -94,6 +94,12 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         // it lost track of the scroll position once SwiftUI swapped the page. macOS 26 and
         // later ignore it and draw their own edge.
         detailItem.titlebarSeparatorStyle = .line
+        switch ProcessInfo.processInfo.environment["SSK_PROBE_SEPARATOR"] {
+        case "automatic": detailItem.titlebarSeparatorStyle = .automatic
+        case "none": detailItem.titlebarSeparatorStyle = .none
+        case "shadow": detailItem.titlebarSeparatorStyle = .shadow
+        default: break
+        }
         splitViewController = NSSplitViewController()
         splitViewController.addSplitViewItem(sidebarItem)
         splitViewController.addSplitViewItem(detailItem)
@@ -138,6 +144,20 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         if configuration.title == .hidden { window.titleVisibility = .hidden }
 
         Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
+        if let mode = ProcessInfo.processInfo.environment["SSK_PROBE_THEME_EFFECT"] {
+            Task { @MainActor [weak window] in
+                try? await Task.sleep(for: .milliseconds(300))
+                guard let frameView = window?.contentView?.superview else { return }
+                for case let effect as NSVisualEffectView in frameView.subviews {
+                    switch mode {
+                    case "hide": effect.isHidden = true
+                    case "window": effect.material = .windowBackground
+                    case "follow": effect.state = .followsWindowActiveState
+                    default: break
+                    }
+                }
+            }
+        }
     }
 
     override func showWindow(_ sender: Any?) {

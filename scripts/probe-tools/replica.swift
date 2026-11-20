@@ -34,8 +34,34 @@ struct Replica: App {
             .onAppear {
                 NSApp.setActivationPolicy(.regular)
                 NSApp.activate(ignoringOtherApps: true)
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(2))
+                    dumpWindows()
+                }
             }
         }
         .windowResizability(.contentSize)
     }
+}
+
+@MainActor
+func dumpWindows() {
+    var lines: [String] = []
+    func walk(_ view: NSView, depth: Int) {
+        guard depth < 6 else { return }
+        var line = String(repeating: "  ", count: depth) + "\(type(of: view)) \(view.convert(view.bounds, to: nil))"
+        if view.isHidden { line += " hidden" }
+        if let effect = view as? NSVisualEffectView {
+            line += " EFFECT material=\(effect.material.rawValue) blending=\(effect.blendingMode.rawValue) state=\(effect.state.rawValue)"
+        }
+        if let color = view.layer?.backgroundColor, color.alpha > 0 { line += " layerBg=\(color.components ?? [])" }
+        lines.append(line)
+        for subview in view.subviews { walk(subview, depth: depth + 1) }
+    }
+    for window in NSApp.windows where window.isVisible {
+        lines.append("window \(type(of: window)) opaque=\(window.isOpaque) bg=\(window.backgroundColor.description) styleMask=\(window.styleMask.rawValue) toolbarStyle=\(window.toolbarStyle.rawValue)")
+        if let frameView = window.contentView?.superview { walk(frameView, depth: 0) }
+    }
+    let path = ProcessInfo.processInfo.environment["SSK_REPLICA_DUMP"] ?? "/tmp/replica-dump.txt"
+    try! lines.joined(separator: "\n").write(toFile: path, atomically: true, encoding: .utf8)
 }
