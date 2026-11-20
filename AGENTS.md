@@ -71,8 +71,10 @@ through `-Xswiftc -warnings-as-errors` in the Makefile, never through `unsafeFla
   macOS 15 the page reports its scroll position and `ToolbarSeparator` sets `.none` at the top,
   `.shadow` once scrolled; left `.automatic`, AppKit lost track when SwiftUI swapped the page.
   macOS 14 shows `.line` always: SwiftUI reports no scroll position there. macOS 26 and later
-  ignore the style and draw their own scroll edge. Compare with Reduce Transparency off: GitHub's
-  runner images turn it on, and System Settings on 26 and 27 then shows a line at rest too.
+  ignore the style and draw their own scroll edge; on 27 it turns hard with a line once scrolled,
+  because the title shows, as on System Settings' titled pages. Compare with Reduce Transparency
+  off: GitHub's runner images turn it on, and System Settings on 26 and 27 then shows a line at
+  rest too.
 - The demo builds with `--build-system native` (`make demo`, `scripts/screenshots.sh`): Swift
   6.4's default build system links it as if built with the macOS 14 SDK, and macOS 27 then draws
   it in the look from before macOS 26.

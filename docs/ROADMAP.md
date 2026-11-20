@@ -16,7 +16,6 @@ Planned work and the limits the kit has today. Nothing here is promised for a ve
 
 | Limit | Detail |
 | --- | --- |
-| macOS 27: a line under the toolbar once the page scrolls | System Settings keeps a soft edge there; 27 makes the edge hard while the window title shows in the toolbar. `title = .hidden` gives the soft edge, without a title ([ARCHITECTURE.md](ARCHITECTURE.md#the-line-under-the-toolbar)) |
 | macOS 14: the line under the toolbar always shows | System Settings shows it once the page scrolls; SwiftUI reports no scroll position before macOS 15 ([ARCHITECTURE.md](ARCHITECTURE.md#the-line-under-the-toolbar)) |
 | No macOS 14 CI | GitHub retired the `macos-14` runner on 2026-11-02; macOS 14 is tested by hand |
 | Configuration is fixed per window object | `size`, `resizing`, `sidebarWidth`, `search` and the rest are read when the window is built; create a new `SidebarSettingsWindow` to change them |

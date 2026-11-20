@@ -128,7 +128,15 @@ page shown from its top.
 | 14 | (not checked: no CI) | a line always: SwiftUI reports no scroll position before 15 |
 | 15 | no line at the top; a line with a shadow once scrolled | the same |
 | 26 | no line; a soft scroll edge | the same: the system ignores the style |
-| 27 | no line at the top, one while the pointer is over the toolbar; a soft edge once scrolled | the same at the top and under the pointer; once scrolled, a hard edge with a line: 27 makes the edge hard while the window title shows in the toolbar, soft with `title = .hidden` |
+| 27 | no line at the top, one while the pointer is over the toolbar; once scrolled, a hard edge with a line | the same |
+
+On macOS 27 the edge turns hard because the window title shows in the toolbar: the automatic
+style resolves to a hard edge when free-floating text such as the window title is in the title
+bar (WWDC26 session 289). System Settings' pages show their title and turn hard the same way
+(checked on Accessibility and Privacy & Security); only General shows no title until its header
+card scrolls away. With `title = .hidden` the kit's
+edge stays soft. Setting `.soft` over the automatic style does not remove the line while the
+title shows, and Apple advises against it on 27 (WWDC26 session 278).
 
 Compare on a Mac with Reduce Transparency off, as a Mac comes. GitHub's macOS images turn it on,
 and with it System Settings on 26 and 27 shows a line at the top of a page too.
