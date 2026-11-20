@@ -43,12 +43,12 @@ struct Replica: App {
                 Task { @MainActor in
                     try? await Task.sleep(for: .seconds(2))
                     dumpWindows()
-                    // After the probe script scrolls the page, at about 5 s.
-                    try? await Task.sleep(for: .seconds(6))
-                    if let path = ProcessInfo.processInfo.environment["SSK_PROBE_TREE"],
-                        let window = NSApp.windows.first(where: { $0.isVisible && $0.toolbar != nil })
-                    {
-                        try? probeTree(window).write(toFile: path, atomically: true, encoding: .utf8)
+                    // Again every 2 s, so the last one is after the probe script scrolls the page.
+                    while let path = ProcessInfo.processInfo.environment["SSK_PROBE_TREE"] {
+                        if let window = NSApp.windows.first(where: { $0.isVisible && $0.toolbar != nil }) {
+                            try? probeTree(window).write(toFile: path, atomically: true, encoding: .utf8)
+                        }
+                        try? await Task.sleep(for: .seconds(2))
                     }
                 }
             }

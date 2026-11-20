@@ -39,12 +39,13 @@ otool -l /tmp/Replica | grep -A4 LC_BUILD_VERSION | grep -E 'minos|sdk' | xargs 
 # A plain SwiftUI NavigationSplitView, its title shown always, scrolled by the wheel.
 SSK_PROBE_TREE="$out/tree-replica.txt" SSK_REPLICA_DUMP="$out/replica-dump.txt" /tmp/Replica >/dev/null 2>&1 &
 replica=$!
-sleep 3
-read -r id x y w h < <(/tmp/find-window Replica)
+for _ in $(seq 1 40); do /tmp/find-window Replica >/tmp/replica-window 2>/dev/null && break; sleep 0.5; done
+sleep 2
+read -r id x y w h </tmp/replica-window
 screencapture -o -l "$id" "$out/replica-top.png"
 /tmp/pointer $((x + w * 2 / 3)) $((y + h / 2)) 6; away; sleep 1.5
 screencapture -o -l "$id" "$out/replica-wheel.png"
-sleep 4
+sleep 4.5
 kill "$replica"
 echo "ok replica"
 
