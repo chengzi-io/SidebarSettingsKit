@@ -10,9 +10,9 @@ permissions:
 
 jobs:
   probe:
-    name: Probe window layout (${{ matrix.os }})
+    name: Verify the kit (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -30,10 +30,12 @@ jobs:
           echo "DEVELOPER_DIR=$developer_dir" >>"$GITHUB_ENV"
           sudo DEVELOPER_DIR="$developer_dir" xcodebuild -runFirstLaunch
       - run: sw_vers && xcodebuild -version && swift --version
-      - run: scripts/probe.sh probe
+      - run: make ci
+      - run: scripts/screenshots.sh screenshots
+        if: always()
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: probe-${{ matrix.os }}
-          path: probe/
+          name: verify-${{ matrix.os }}
+          path: screenshots/
           if-no-files-found: error

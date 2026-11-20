@@ -72,14 +72,6 @@ extension Scenario {
             DemoArguments.exit("The settings window did not appear.")
         }
         window.layoutIfNeeded()
-        if let dumpPath = ProcessInfo.processInfo.environment["SSK_PROBE_DUMP"] {
-            try? await Task.sleep(for: .milliseconds(800))
-            do {
-                try probeDump(of: window).write(toFile: dumpPath, atomically: true, encoding: .utf8)
-            } catch {
-                DemoArguments.exit("Cannot write \(dumpPath): \(error)")
-            }
-        }
         do {
             try "\(window.windowNumber)\n".write(toFile: path, atomically: true, encoding: .utf8)
         } catch {
@@ -101,73 +93,4 @@ extension Scenario {
         }
         return nil
     }
-}
-
-/// Probe branch only: the window's layout, for comparing macOS releases.
-@MainActor
-func probeDump(of window: NSWindow) -> String {
-    let env = ProcessInfo.processInfo.environment
-    var lines = [
-        "os: \(ProcessInfo.processInfo.operatingSystemVersionString)",
-        "probe: \(env["SSK_PROBE"] ?? "")",
-        "window.frame: \(window.frame) contentLayoutRect: \(window.contentLayoutRect)",
-        "toolbarStyle: \(window.toolbarStyle.rawValue) titlebarSeparatorStyle: \(window.titlebarSeparatorStyle.rawValue) titleVisibility: \(window.titleVisibility.rawValue)",
-        "toolbar items: \((window.toolbar?.items ?? []).map { "\($0.itemIdentifier.rawValue)<\(type(of: $0))> bordered=\($0.isBordered) nav=\($0.isNavigational) view=\($0.view.map { String(describing: type(of: $0)) } ?? "-")" })",
-    ]
-    if let split = window.contentViewController as? NSSplitViewController {
-        for (index, item) in split.splitViewItems.enumerated() {
-            let view = item.viewController.view
-            var line = "item\(index): behavior=\(item.behavior.rawValue) fullHeight=\(item.allowsFullHeightLayout) separator=\(item.titlebarSeparatorStyle.rawValue) frameInWindow=\(view.convert(view.bounds, to: nil)) safeArea=\(view.safeAreaInsets) controller=\(type(of: item.viewController))"
-            if #available(macOS 26, *) { line += " adjustsSafeArea=\(item.automaticallyAdjustsSafeAreaInsets)" }
-            lines.append(line)
-        }
-    }
-    func walk(_ view: NSView, depth: Int) {
-        guard depth < 24, lines.count < 20000 else { return }
-        var line = String(repeating: "  ", count: depth) + "\(type(of: view)) \(view.convert(view.bounds, to: nil))"
-        if view.isHidden { line += " hidden" }
-        if view.safeAreaInsets.top != 0 || view.safeAreaInsets.left != 0 { line += " safeArea=\(view.safeAreaInsets)" }
-        if let scroll = view as? NSScrollView {
-            line += " contentInsets=\(scroll.contentInsets) autoInsets=\(scroll.automaticallyAdjustsContentInsets) clip=\(scroll.contentView.bounds)"
-        }
-        if let effect = view as? NSVisualEffectView {
-            line += " material=\(effect.material.rawValue) blending=\(effect.blendingMode.rawValue) state=\(effect.state.rawValue)"
-        }
-        if let layer = view.layer, layer.cornerRadius > 0 { line += " corner=\(layer.cornerRadius)" }
-        if let layer = view.layer, layer.borderWidth > 0 { line += " border=\(layer.borderWidth)" }
-        if let color = view.layer?.backgroundColor, color.alpha > 0 { line += " bg=\(color.components ?? [])" }
-        if view.bounds.height > 0, view.bounds.height <= 1.5 { line += " THIN" }
-        if let field = view as? NSTextField {
-            line += " field bezeled=\(field.isBezeled) bezelStyle=\(field.bezelStyle.rawValue) bordered=\(field.isBordered) drawsBg=\(field.drawsBackground) size=\(field.controlSize.rawValue)"
-        }
-        if let button = view as? NSButton {
-            line += " button bezelStyle=\(button.bezelStyle.rawValue) bordered=\(button.isBordered) size=\(button.controlSize.rawValue)"
-        }
-        if let control = view as? NSSegmentedControl { line += " segmentStyle=\(control.segmentStyle.rawValue)" }
-        if let box = view as? NSBox { line += " boxType=\(box.boxType.rawValue)" }
-        lines.append(line)
-        for subview in view.subviews { walk(subview, depth: depth + 1) }
-    }
-    if let frameView = window.contentView?.superview { walk(frameView, depth: 0) }
-    var splitViews: [NSSplitView] = []
-    func findSplitViews(_ view: NSView) {
-        if let split = view as? NSSplitView { splitViews.append(split) }
-        view.subviews.forEach(findSplitViews)
-    }
-    if let frameView = window.contentView?.superview { findSplitViews(frameView) }
-    for split in splitViews {
-        guard let controller = split.delegate as? NSSplitViewController else {
-            lines.append("split view without controller: delegate=\(split.delegate.map { String(describing: type(of: $0)) } ?? "nil")")
-            continue
-        }
-        lines.append("split controller \(type(of: controller)) frame=\(split.convert(split.bounds, to: nil))")
-        for (index, item) in controller.splitViewItems.enumerated() {
-            var line = "  split item\(index): \(type(of: item)) behavior=\(item.behavior.rawValue) separator=\(item.titlebarSeparatorStyle.rawValue) fullHeight=\(item.allowsFullHeightLayout) controller=\(type(of: item.viewController)) view=\(type(of: item.viewController.view))"
-            if #available(macOS 26, *) {
-                line += " adjustsSafeArea=\(item.automaticallyAdjustsSafeAreaInsets) top=\(item.topAlignedAccessoryViewControllers.count) bottom=\(item.bottomAlignedAccessoryViewControllers.count)"
-            }
-            lines.append(line)
-        }
-    }
-    return lines.joined(separator: "\n") + "\n"
 }

@@ -34,10 +34,6 @@ public struct SidebarSettingsConfiguration: Sendable {
     /// The window's title. Default ``TitleMode/followsPage``.
     public var title = TitleMode.followsPage
 
-    /// When the line under the toolbar shows. Default ``SeparatorMode/whenScrolled``, which
-    /// follows the page's own form, list or scroll view.
-    public var toolbarSeparator = SeparatorMode.whenScrolled
-
     /// Whether the sidebar has a search field. Default ``SearchMode/enabled``. To change
     /// what a search finds, implement ``SettingsPage/matches(searchText:)``.
     public var search = SearchMode.enabled
@@ -73,7 +69,9 @@ public struct SidebarSettingsConfiguration: Sendable {
     /// The toolbar's look, named after AppKit's styles. The others do not suit a window with
     /// a sidebar and back and forward buttons.
     public enum ToolbarStyle: Sendable, CaseIterable {
-        /// One row with the title and buttons, as in System Settings.
+        /// One row with the title and buttons, as in System Settings. On macOS 26 the window
+        /// uses ``automatic`` instead: there AppKit starts the sidebar below a compact toolbar
+        /// rather than under it.
         case unifiedCompact
         /// One taller row with the title and buttons.
         case unified
@@ -90,17 +88,6 @@ public struct SidebarSettingsConfiguration: Sendable {
         /// No title in the toolbar. The Window menu and VoiceOver still name the window
         /// after the selected page.
         case hidden
-    }
-
-    /// When the line under the toolbar shows.
-    public enum SeparatorMode: Sendable {
-        /// Only while the page is scrolled down, as in System Settings. On macOS 14, which
-        /// cannot report the scroll position to SwiftUI, the line always shows.
-        case whenScrolled
-        /// Always.
-        case always
-        /// Never.
-        case never
     }
 
     /// Whether the sidebar has a search field.

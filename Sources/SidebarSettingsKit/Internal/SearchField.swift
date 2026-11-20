@@ -12,8 +12,6 @@ struct SearchField: NSViewRepresentable {
     func makeNSView(context: Context) -> NSSearchField {
         let field = FindShortcutSearchField()
         field.sendsSearchStringImmediately = true
-        if SettingsWindowController.probe.contains("searchLarge") { field.controlSize = .large }
-        if SettingsWindowController.probe.contains("searchRounded") { field.bezelStyle = .roundedBezel }
         field.placeholderString = prompt
         field.target = context.coordinator
         field.action = #selector(Coordinator.searchChanged(_:))

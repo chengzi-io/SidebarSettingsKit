@@ -7,11 +7,7 @@ struct SidebarSettingsDemoApp: App {
 
     var body: some Scene {
         WindowGroup("Sidebar Settings Demo") {
-            if ProcessInfo.processInfo.environment["SSK_PROBE_REPLICA"] != nil {
-                ProbeReplica()
-            } else {
-                ControlPanelView(demo: delegate.demo)
-            }
+            ControlPanelView(demo: delegate.demo)
         }
         .commands {
             DemoCommands(demo: delegate.demo)
@@ -55,6 +51,6 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
-        if ProcessInfo.processInfo.environment["SSK_PROBE_REPLICA"] == nil { demo.start() }
+        demo.start()
     }
 }
