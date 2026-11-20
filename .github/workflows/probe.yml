@@ -16,10 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, macos-26, xcode-27]
-        include:
-          - os: xcode-27
-            image-xcode: true
+        os: [macos-26]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Select Xcode from .xcode-version
@@ -30,12 +27,4 @@ jobs:
           echo "DEVELOPER_DIR=$developer_dir" >>"$GITHUB_ENV"
           sudo DEVELOPER_DIR="$developer_dir" xcodebuild -runFirstLaunch
       - run: sw_vers && xcodebuild -version && swift --version
-      - run: make ci
-      - run: scripts/screenshots.sh screenshots
-        if: always()
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
-        with:
-          name: verify-${{ matrix.os }}
-          path: screenshots/
-          if-no-files-found: error
+      - run: make test

@@ -283,16 +283,7 @@ final class SettingsWindow: NSWindow {
 extension SidebarSettingsConfiguration.ToolbarStyle {
     var appKit: NSWindow.ToolbarStyle {
         switch self {
-        case .unifiedCompact:
-            // On macOS 26 a compact toolbar starts the sidebar below the title bar and leaves
-            // the window buttons on a bare strip; macOS 27 runs it to the top again.
-            if #available(macOS 27, *) {
-                .unifiedCompact
-            } else if #available(macOS 26, *) {
-                .automatic
-            } else {
-                .unifiedCompact
-            }
+        case .unifiedCompact: .unifiedCompact
         case .unified: .unified
         case .automatic: .automatic
         }
