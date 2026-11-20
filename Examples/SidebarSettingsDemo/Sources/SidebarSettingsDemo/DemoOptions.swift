@@ -18,6 +18,7 @@ struct DemoOptions {
     var toolbarStyle = ToolbarStyle.automatic
     var showsNavigationButtons = true
     var title = Title.followsPage
+    var separator = Separator.whenScrolled
     var search = true
     var navigationPersistence = NavigationPersistence.session
     var customStrings = false
@@ -209,6 +210,29 @@ extension DemoOptions {
         }
     }
 
+    /// When the line under the toolbar shows.
+    enum Separator: DemoChoice {
+        case whenScrolled
+        case always
+        case never
+
+        var label: String {
+            switch self {
+            case .whenScrolled: "When scrolled"
+            case .always: "Always"
+            case .never: "Never"
+            }
+        }
+
+        var value: SidebarSettingsConfiguration.SeparatorMode {
+            switch self {
+            case .whenScrolled: .whenScrolled
+            case .always: .always
+            case .never: .never
+            }
+        }
+    }
+
     /// What the window shows when it opens again.
     enum NavigationPersistence: DemoChoice {
         case session
@@ -252,6 +276,7 @@ extension DemoOptions {
         configuration.toolbarStyle = toolbarStyle.value
         configuration.showsNavigationButtons = showsNavigationButtons
         configuration.title = title.value
+        configuration.toolbarSeparator = separator.value
         configuration.search = search ? .enabled : .disabled
         configuration.navigationPersistence = navigationPersistence.value
         configuration.strings = strings
