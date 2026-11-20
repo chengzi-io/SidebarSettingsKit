@@ -73,9 +73,9 @@ window you show yourself.
 | `require(_:_:)` | the value or throws | unwrapping a view, a table, a frame, with a message |
 
 `WindowTest.timeout` is 5 s and `WindowTest.step` is 20 ms. Every wait is `async` for a reason: the
-kit updates the title and the toolbar separator from `Task { @MainActor in … }`, and a synchronous
-body that blocks the main thread in `RunLoop.main.run(until:)` starves that task and the main queue
-both (checked on macOS 15.7), so the test reads stale state. Never replace a wait with a run loop.
+kit focuses the list from a SwiftUI task, and a synchronous body that blocks the main thread in
+`RunLoop.main.run(until:)` starves tasks and the main queue both (checked on macOS 15.7), so the
+test reads stale state. Never replace a wait with a run loop.
 
 ### Reading views
 
@@ -117,15 +117,15 @@ key outside that rule, allowed by name in `AutosaveTests`.
 | A test for a fix is seen failing without the fix | revert the fix once, watch the new test fail, restore it |
 | No `withKnownIssue` in the suite | the issue is fixed or the test is deleted; a skipped assertion is not a test |
 
-A scroll test whose content fits passes without ever scrolling, which is how a broken separator or
-sidebar-scrolling test goes green. `requireScrollable` and the sidebar's own taller-than-shown check
-exist to make that fail loudly.
+A scroll test whose content fits passes without ever scrolling, which is how a scroll test for a new
+page starting at its top, or for the sidebar scrolling to the selection, goes green.
+`requireScrollable` and the sidebar's own taller-than-shown check exist to make that fail loudly.
 
 ## Environment
 
 | Fact | Consequence |
 | --- | --- |
-| No macOS 14 runner: GitHub retired `macos-14` on 2026-11-02 | `#available(macOS 15.0, *)` tests the live behavior; the `else` branch asserts the documented fallback, such as `separator == .line` |
+| No macOS 14 runner since 2026-11-02 | a macOS 14 `#available` branch asserts the fallback |
 | Stage Manager narrows the visible screen, and AppKit moves a restored frame into the visible area | a test that places a window puts it well inside `NSScreen.main.visibleFrame` |
 | Window tests read views and state, never pixels | they need no Screen Recording permission; that is for `scripts/screenshots.sh` |
 | CI runs both targets on `macos-15` and `macos-26` through `make ci` | a window test that passes locally can still fail on the other macOS version; run CI before assuming a window behavior |

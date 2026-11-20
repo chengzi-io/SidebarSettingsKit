@@ -126,8 +126,8 @@ Pages known only at run time (plug-ins, pages behind a permission) can be a stru
 Move each tab's view into its page as it is. Delete what only the tabbed window needed: the
 `TabView`, `.tabItem`, and fixed `.frame(width:height:)` sizes. Make each page a grouped `Form`
 (`.formStyle(.grouped)`), as System Settings' pages are: the window adds no scroll view, so a
-page scrolls itself, and the line under the toolbar follows the form. A page that is neither a
-form nor a list goes in a `ScrollView` if it can grow taller than the window.
+page scrolls itself. A page that is neither a form nor a list goes in a `ScrollView` if it can
+grow taller than the window.
 
 ## 5. Create the window once and open it
 

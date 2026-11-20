@@ -19,7 +19,6 @@ struct ConfigurationTests {
         #expect(configuration.toolbarStyle.appKit == .automatic)
         #expect(configuration.showsNavigationButtons)
         #expect(configuration.title == .followsPage)
-        #expect(configuration.toolbarSeparator.showsOnlyWhenScrolled)
         #expect(configuration.search.isEnabled)
         #expect(configuration.navigationPersistence.isSession)
         #expect(resolvedStrings(configuration.strings) == resolvedStrings(.default))
@@ -28,9 +27,11 @@ struct ConfigurationTests {
         #expect(SidebarSettingsConfiguration.Icons.tiled == .tiled(defaultColor: .gray))
     }
 
+    /// Except on macOS 26, where a compact toolbar starts the sidebar below the title bar.
     @Test func eachToolbarStyleMapsToItsAppKitNamesake() {
+        let isMacOS26 = ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 26
         let mapping: [(SidebarSettingsConfiguration.ToolbarStyle, NSWindow.ToolbarStyle)] = [
-            (.unifiedCompact, .unifiedCompact),
+            (.unifiedCompact, isMacOS26 ? .automatic : .unifiedCompact),
             (.unified, .unified),
             (.automatic, .automatic),
         ]
@@ -55,11 +56,6 @@ private func resolvedStrings(
     ].map {
         resolved($0, in: locale)
     }
-}
-
-private extension SidebarSettingsConfiguration.SeparatorMode {
-    /// Whether the line under the toolbar shows only while the page is scrolled.
-    var showsOnlyWhenScrolled: Bool { if case .whenScrolled = self { true } else { false } }
 }
 
 private extension SidebarSettingsConfiguration.SearchMode {

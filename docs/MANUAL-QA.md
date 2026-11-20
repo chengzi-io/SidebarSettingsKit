@@ -18,13 +18,22 @@ cd Examples/SidebarSettingsDemo && swift run SidebarSettingsDemo --icons tiled -
 | [ ] The sidebar keeps Liquid Glass, with plain icons and tiled | yes | no such look | no such look |
 | [ ] Sidebar rows fade under the toolbar as you scroll the list | yes | system default | system default |
 | [ ] The detail sits on the window's background, with no band under the toolbar | yes | yes | yes |
-| [ ] The line under the toolbar follows the page: shown when scrolled, gone at the top | yes | yes | always shown; documented limit, not a bug |
+| [ ] The line under the toolbar shows at the top and when scrolled | see below | yes | yes |
+| [ ] Compact **Toolbar style**: the sidebar's top gap matches its bottom gap | yes | yes | yes |
 | [ ] The window opens at 715 × 600 and cannot be resized (default configuration) | yes | yes | yes |
 | [ ] The minimize and zoom buttons are dimmed, also with **Resizing** set to resizable; double-clicking the title bar does not zoom the window, and Window › Enter Full Screen is unavailable | yes | yes | yes |
 | [ ] The window opens where it was last positioned, across launches (AppKit's frame autosave) | yes | yes | yes |
 
 macOS 26 is the version where a wrong token or a stray background shows first. Check it with
 `--icons plain` and `--icons tiled`, in both appearances.
+
+macOS 26 runs a compact toolbar with the automatic style, so the sidebar there sits as it does
+with `.automatic`: its gap to the window's top matches its gap to the bottom. On macOS 14, 15 and
+27 both gaps are zero: the sidebar reaches the window's edge.
+
+On macOS 26 no line shows under the toolbar: the system ignores the separator style there and
+draws its own scroll edge, without a line, while System Settings draws one through a private
+view of that edge. A known difference; macOS 27 shows the line again.
 
 ## By kind of icons
 
@@ -131,10 +140,11 @@ For every shot:
 Per scenario, check the one thing the scenario adds (the list is also in
 [DEVELOPMENT.md](DEVELOPMENT.md)):
 
-- [ ] `1`: three rows, the default window, no line under the toolbar at the top of the page. On
-      macOS 15 the toolbar above the page is the page's color, active or not, with the pointer
-      over the window or away from it.
-- [ ] `2`: a long page opened at its end, the line under the toolbar shown while it is scrolled.
+- [ ] `1`: three rows, the default window. The line under the toolbar shows at the top of the page
+      on macOS 14, 15 and 27, and not on 26. On macOS 15 the toolbar above the page is the page's
+      color, active or not, with the pointer over the window or away from it.
+- [ ] `2`: a long page opened at its end. The line under the toolbar shows on macOS 14, 15 and 27,
+      and not on 26.
 - [ ] `3`: over 40 rows, the sidebar scrolled to the last page with its row selected.
 - [ ] `4`: three groups, set apart by space, without titles.
 - [ ] `5`: the account header above the rows scrolls away; the tall footer stays at the bottom

@@ -83,8 +83,7 @@ public final class SidebarSettingsWindow<Page: SettingsPage> {
         let header = header()
         let footer = footer()
         makeController = {
-            let scrollState = DetailScrollState()
-            return SettingsWindowController(
+            SettingsWindowController(
                 configuration: configuration,
                 navigation: .init(
                     canGoBack: { navigator.canGoBack },
@@ -93,7 +92,6 @@ public final class SidebarSettingsWindow<Page: SettingsPage> {
                     goForward: { navigator.goForward() },
                     pageTitle: { String(localized: navigator.selection.title) }
                 ),
-                scrollState: scrollState,
                 sidebar: SidebarView(
                     navigator: navigator,
                     sections: sections,
@@ -101,11 +99,7 @@ public final class SidebarSettingsWindow<Page: SettingsPage> {
                     header: header,
                     footer: footer
                 ),
-                detail: DetailContainer(
-                    navigator: navigator,
-                    scrollState: scrollState,
-                    content: detail
-                )
+                detail: DetailContainer(navigator: navigator, content: detail)
             )
         }
     }

@@ -10,13 +10,13 @@ permissions:
 
 jobs:
   probe:
-    name: Verify the kit (${{ matrix.os }})
+    name: Probe Tab (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        os: [xcode-27]
+        os: [macos-15, macos-26, xcode-27]
         include:
           - os: xcode-27
             image-xcode: true
@@ -29,5 +29,4 @@ jobs:
           developer_dir="/Applications/Xcode_$xcode_version.app/Contents/Developer"
           echo "DEVELOPER_DIR=$developer_dir" >>"$GITHUB_ENV"
           sudo DEVELOPER_DIR="$developer_dir" xcodebuild -runFirstLaunch
-      - run: sw_vers && xcodebuild -version && swift --version
-      - run: make test
+      - run: scripts/tab-probe.sh

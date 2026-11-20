@@ -55,7 +55,7 @@ result. An agent without the CLI can follow
 | Sidebar width | 215 pt, fixed |
 | Window | 715 × 600, fixed size, position saved |
 | Title | follows the selected page |
-| Line under the toolbar | shows while the page is scrolled |
+| Line under the toolbar | shown on macOS 14, 15 and 27; not on 26 (known difference) |
 | Page, history and search when the window reopens | kept while the app runs |
 | Pages scroll inside the window | on |
 | The kit's own words | every language macOS has, in the app's language |
@@ -135,9 +135,8 @@ Delete the app's `Settings` scene: `SidebarSettingsCommands` replaces its "Setti
 ⌘, and keeping both gives two items.
 
 Write each page as a grouped `Form` (`.formStyle(.grouped)`), as System Settings' pages are. A
-page scrolls itself; the window adds no scroll view, and the line under the toolbar follows the
-form. A page that is neither a form nor a list and can grow taller than the window goes in a
-`ScrollView`.
+page scrolls itself, and the window adds no scroll view around it. A page that is neither a form
+nor a list and can grow taller than the window goes in a `ScrollView`.
 
 The scene's environment does not reach this window, so pass pages their models in the `detail`
 closure. `SettingsLink` and `openSettings` do not open it either; use `settings.show()` or
@@ -210,10 +209,9 @@ let settings = SidebarSettingsWindow(pages: Pane.allCases, configuration: config
 | `resizing` | `.fixed` | `.resizable(min:max:)`, either limit `nil` |
 | `autosaveName` | `"SidebarSettingsWindow"` | any name; `nil` saves no position |
 | `sidebarWidth` | `.fixed(215)` | `.adjustable(min:ideal:max:)` |
-| `toolbarStyle` | `.automatic` | `.unifiedCompact`, `.unified` |
+| `toolbarStyle` | `.automatic` | `.unifiedCompact` (automatic on macOS 26), `.unified` |
 | `showsNavigationButtons` | `true` | `false`, which also drops ⌘[ and ⌘] |
 | `title` | `.followsPage` | `.fixed(_:)`, `.hidden` |
-| `toolbarSeparator` | `.whenScrolled` | `.always`, `.never` |
 | `search` | `.enabled` | `.disabled` |
 | `navigationPersistence` | `.session` | `.resetOnShow` |
 | `strings` | `Strings.default` | `Strings(back:forward:searchPrompt:settingsMenuItem:noSearchResults:)` |
@@ -321,8 +319,11 @@ struct MenuBarSettingsApp: App {
 
 ## Known limits
 
-- On macOS 14 the line under the toolbar always shows: SwiftUI there cannot report the page's
-  scroll position.
+- On macOS 26 no line shows under the toolbar. The system ignores the separator style there and
+  draws its own scroll edge, which has no line; System Settings draws one through a private view
+  of AppKit's scroll edge, with no public API, and even a plain SwiftUI `NavigationSplitView`
+  shows it only sometimes there. The kit does not draw a line of its own. macOS 14 and 15 show
+  the line always, as System Settings does on those versions, and macOS 27 does too.
 - On macOS 14 and 15 the toolbar takes its background from the scroll view under it. Above a form
   or a list it matches the page; above a plain `ScrollView` it keeps a lighter background of its
   own.
