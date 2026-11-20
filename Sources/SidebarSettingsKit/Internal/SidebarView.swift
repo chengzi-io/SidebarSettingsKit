@@ -39,10 +39,10 @@ struct SidebarView<Page: SettingsPage, Header: View, Footer: View>: View {
             }
         }
         .task {
-            // After the window's first layout, or the window gives its first key view, the
-            // search field, the focus. System Settings opens with the list focused; ⌘F reaches
-            // the field. Not the list's own task: a list that comes back when a search finds
-            // pages again would take the focus from the field mid-word.
+            // After the window's first layout, which focuses its first key view, the search
+            // field; System Settings opens with the list focused. Not the list's own task: a
+            // list that comes back when a search finds pages again would take the focus from
+            // the field mid-word.
             await Task.yield()
             listFocused = true
         }

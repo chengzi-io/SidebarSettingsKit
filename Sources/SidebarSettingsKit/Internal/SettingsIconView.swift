@@ -13,11 +13,11 @@ struct SettingsIconView: View {
         case .custom(let view):
             view.frame(width: slot, height: slot)
         case .image(let image):
+            let image = image.resizable().scaledToFit()
             if case .tiled(let defaultColor) = icons {
-                onTile(image.resizable().scaledToFit().frame(width: glyph, height: glyph), defaultColor)
+                onTile(image.frame(width: glyph, height: glyph), defaultColor)
             } else {
-                image.resizable().scaledToFit()
-                    .frame(width: slot, height: slot)
+                image.frame(width: slot, height: slot)
             }
         case .system(let name, let renderingMode, let variant, let weight):
             let symbol = Image(systemName: name)

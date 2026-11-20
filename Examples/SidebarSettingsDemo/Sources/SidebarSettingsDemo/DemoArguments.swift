@@ -5,7 +5,7 @@ import SidebarSettingsKit
 
 /// What the demo's command line asks for: how the sidebar looks, in which appearance, and which
 /// scenario to open.
-struct DemoArguments: Sendable, Equatable {
+struct DemoArguments: Sendable {
     /// How the sidebar draws the pages' icons.
     var icons = Icons.plain
 
@@ -25,7 +25,7 @@ struct DemoArguments: Sendable, Equatable {
     }
 
     /// The name of an `NSAppearance`.
-    enum Appearance: String, Sendable, CaseIterable {
+    enum Appearance: String, Sendable {
         case light
         case dark
     }
@@ -33,7 +33,7 @@ struct DemoArguments: Sendable, Equatable {
 
 extension DemoArguments {
     /// A command line the demo cannot run.
-    enum ParseError: Error, Equatable {
+    enum ParseError: Error {
         case unknownOption(String)
         case missingValue(option: String)
         case unknownValue(option: String, value: String)
@@ -87,16 +87,16 @@ extension DemoArguments {
         [--scenario 1|2|3|4|5|6|6b|7] [--window-id-file PATH]
         """
 
-    /// Writes `message` and the usage to stderr, then exits with `code`.
-    static func exitWithUsage(_ message: String, code: Int32 = 2) -> Never {
+    /// Writes `message` and the usage to stderr, then exits with 2.
+    static func exitWithUsage(_ message: String) -> Never {
         writeToStandardError("\(message)\n\n\(usage)\n")
-        Darwin.exit(code)
+        Darwin.exit(2)
     }
 
-    /// Writes `message` to stderr, then exits with `code`.
-    static func exit(_ message: String, code: Int32 = 1) -> Never {
+    /// Writes `message` to stderr, then exits with 1.
+    static func exit(_ message: String) -> Never {
         writeToStandardError("\(message)\n")
-        Darwin.exit(code)
+        Darwin.exit(1)
     }
 
     private static func writeToStandardError(_ message: String) {

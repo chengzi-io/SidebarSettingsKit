@@ -1,6 +1,5 @@
 /// The groups the sidebar shows: with search on, each group keeps the pages that match the
-/// search text, and a group left without pages is dropped. Groups without pages are always
-/// dropped.
+/// search text. A group without pages is dropped.
 func visibleSections<Page: SettingsPage>(
     _ sections: [SettingsPageSection<Page>],
     search: SidebarSettingsConfiguration.SearchMode,

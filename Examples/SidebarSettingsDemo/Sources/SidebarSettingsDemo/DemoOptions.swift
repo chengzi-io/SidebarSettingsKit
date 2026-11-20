@@ -42,9 +42,9 @@ extension DemoOptions {
             }
         }
 
-        /// The pages themselves; the large set mixes long and short pages, so the separator
-        /// and the sidebar's scrolling can be seen. Its first page carries the 60-character
-        /// title, so scenario 7 shows that row without scrolling the sidebar.
+        /// The pages themselves; the large set mixes long and short pages and makes the
+        /// sidebar scroll. Its first page carries the 60-character title, so scenario 7 shows
+        /// that row without scrolling the sidebar.
         var fixturePages: [FixturePage] {
             switch self {
             case .three: FixturePages.three
