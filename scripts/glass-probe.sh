@@ -1,52 +1,37 @@
 #!/usr/bin/env bash
-# With Reduce Transparency off: the kit's window with the appearance forced by the demo, left to
-# the system, and dark through the argument domain; with each separator style; and the replica
-# with and without a forced aqua appearance.
+# Why the demo's window on macOS 27 is gray while a plain SwiftUI replica is white: the replica
+# built for macOS 27 and for macOS 14, the binaries' build versions, and the demo window's layers.
 set -uo pipefail
 out=$PWD/glass; mkdir -p "$out"
 swiftc -O scripts/probe-tools/find-window.swift -o /tmp/find-window
 swiftc -O -parse-as-library scripts/probe-tools/replica.swift -o /tmp/Replica
-swiftc -O scripts/probe-tools/pointer.swift -o /tmp/pointer
+swiftc -O -parse-as-library -target "$(uname -m)-apple-macosx14.0" scripts/probe-tools/replica.swift -o /tmp/Replica14
 
 sw_vers -productVersion
+xcode-select -p; xcrun --show-sdk-version; swift --version 2>&1 | head -1
 defaults write com.apple.universalaccess reduceTransparency -bool false
 defaults write com.apple.universalaccess reduceMotion -bool false
 sleep 2
-/tmp/pointer 1000 740
 
 swift build -c release --package-path Examples/SidebarSettingsDemo 2>&1 | tail -1
 demo=$PWD/Examples/SidebarSettingsDemo/.build/release/SidebarSettingsDemo
-
-shot() { # NAME SEPARATOR ARGS... : the demo's settings window as NAME.png
-    local name=$1 separator=$2; shift 2
-    local id_file=/tmp/window-id
-    rm -f "$id_file"
-    (cd "$(dirname "$demo")" && SSK_PROBE_SEPARATOR=$separator ./SidebarSettingsDemo --icons tiled --window-id-file "$id_file" "$@" >/dev/null 2>&1) &
-    local pid=$!
-    for _ in $(seq 1 150); do [[ -s $id_file ]] && break; sleep 0.2; done
-    sleep 1.5
-    screencapture -o -l "$(<"$id_file")" "$out/$name.png" && echo "ok $name"
-    pkill -f SidebarSettingsDemo; wait "$pid" 2>/dev/null; sleep 0.5
-}
-
-for sep in line automatic none; do
-    for sc in 5 2; do
-        shot "system-light-$sep-$sc" "$sep" --scenario "$sc"
-    done
+for bin in /tmp/Replica /tmp/Replica14 "$demo"; do
+    echo "== $bin"; otool -l "$bin" | grep -A4 LC_BUILD_VERSION | grep -E 'minos|sdk'
 done
-for sc in 5 2; do
-    shot "forced-light-line-$sc" line --appearance light --scenario "$sc"
-done
-shot forced-dark-line-5 line --appearance dark --scenario 5
-shot argdark-line-5 line --scenario 5 -AppleInterfaceStyle Dark
-shot argdark-automatic-5 automatic --scenario 5 -AppleInterfaceStyle Dark
 
-for variant in default aqua; do
-    if [[ $variant == aqua ]]; then export SSK_REPLICA_AQUA=1; fi
-    /tmp/Replica >/dev/null 2>&1 &
+rm -f /tmp/window-id
+(cd "$(dirname "$demo")" && SSK_PROBE_DUMP=$out/demo-dump.txt ./SidebarSettingsDemo --icons tiled --scenario 5 --window-id-file /tmp/window-id >/dev/null 2>&1) &
+for _ in $(seq 1 150); do [[ -s /tmp/window-id ]] && break; sleep 0.2; done
+sleep 3
+screencapture -o -l "$(</tmp/window-id)" "$out/demo.png" && echo "ok demo"
+pkill -f SidebarSettingsDemo; sleep 1
+head -12 "$out/demo-dump.txt"
+
+for name in Replica Replica14; do
+    "/tmp/$name" >/dev/null 2>&1 &
     pid=$!
     sleep 6
-    read -r id _ < <(/tmp/find-window Replica)
-    screencapture -o -l "$id" "$out/replica-$variant.png" && echo "ok replica $variant"
+    read -r id _ < <(/tmp/find-window "$name")
+    screencapture -o -l "$id" "$out/$name.png" && echo "ok $name"
     kill "$pid"; sleep 1
 done
