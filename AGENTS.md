@@ -73,6 +73,9 @@ through `-Xswiftc -warnings-as-errors` in the Makefile, never through `unsafeFla
   macOS 14 shows `.line` always: SwiftUI reports no scroll position there. macOS 26 and later
   ignore the style and draw their own scroll edge. Compare with Reduce Transparency off: GitHub's
   runner images turn it on, and System Settings on 26 and 27 then shows a line at rest too.
+- The demo builds with `--build-system native` (`make demo`, `scripts/screenshots.sh`): Swift
+  6.4's default build system links it as if built with the macOS 14 SDK, and macOS 27 then draws
+  it in the look from before macOS 26.
 - `ToolbarStyle.unifiedCompact` becomes `.automatic` on macOS 26 only: there a compact toolbar
   starts the sidebar below the title bar. `sidebarRunsUnderTheToolbar` catches it on macos-26.
 - The window adds no scroll view around a page; each page scrolls itself. On macOS 14 and 15 the

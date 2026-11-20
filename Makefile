@@ -20,8 +20,9 @@ test: ## Run the package tests
 	swift test $(SWIFT_FLAGS)
 
 .PHONY: demo
+# --build-system native: see scripts/screenshots.sh.
 demo: ## Run the example app
-	cd $(DEMO_DIR) && swift run SidebarSettingsDemo
+	cd $(DEMO_DIR) && swift run --build-system native SidebarSettingsDemo
 
 .PHONY: demo-build
 demo-build: ## Build the example app

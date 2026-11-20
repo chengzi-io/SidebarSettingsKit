@@ -8,7 +8,7 @@ control panel and press **Open Settings**:
 
 ```
 make demo
-cd Examples/SidebarSettingsDemo && swift run SidebarSettingsDemo --icons tiled --appearance dark
+cd Examples/SidebarSettingsDemo && swift run --build-system native SidebarSettingsDemo --icons tiled --appearance dark
 ```
 
 ## By macOS version
