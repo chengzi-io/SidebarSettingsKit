@@ -34,7 +34,10 @@ private func onlineDisplayIDs() -> [CGDirectDisplayID] {
 }
 
 private func modes(of id: CGDirectDisplayID) -> [CGDisplayMode] {
-    (CGDisplayCopyAllDisplayModes(id, nil) as? [CGDisplayMode]) ?? []
+    // Without this option the list leaves out the HiDPI modes, which share a size in pixels with
+    // a 1x mode.
+    let options = [kCGDisplayShowDuplicateLowResolutionModes: kCFBooleanTrue] as CFDictionary
+    return (CGDisplayCopyAllDisplayModes(id, options) as? [CGDisplayMode]) ?? []
 }
 
 private func summary(_ mode: CGDisplayMode) -> String {
@@ -61,8 +64,21 @@ private func logDisplays(_ label: String) {
 /// Puts the virtual display in its 2x mode: the one whose pixels are twice its points.
 @discardableResult
 private func select2xMode(_ id: CGDirectDisplayID) -> Bool {
-    let all = modes(of: id)
-    let candidates = all.filter { $0.pixelWidth >= 2 * $0.width }
+    // A new display lists its modes a moment after it comes online.
+    var all: [CGDisplayMode] = []
+    var candidates: [CGDisplayMode] = []
+    let deadline = Date().addingTimeInterval(15)
+    repeat {
+        RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+        all = modes(of: id)
+        candidates = all.filter { $0.pixelWidth >= 2 * $0.width }
+    } while candidates.isEmpty && Date() < deadline
+    let current = CGDisplayCopyDisplayMode(id)
+    log("display \(id): \(all.count) modes, current \(current.map(summary) ?? "none")")
+    if let current, current.pixelWidth >= 2 * current.width {
+        log("display \(id) is already 2x")
+        return true
+    }
     guard let mode = candidates.first(where: { $0.pixelWidth == Int(pixelWidth) })
         ?? candidates.first
     else {
