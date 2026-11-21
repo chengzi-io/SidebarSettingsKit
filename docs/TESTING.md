@@ -27,7 +27,8 @@ type name.
 `Tests/Fixtures/` is target `SidebarSettingsFixtures`, in no product, so an app depending on the
 kit never builds it. The demo compiles the same files a second time as `DemoFixtures` through the
 symlink `Examples/SidebarSettingsDemo/Sources/DemoFixtures → ../../../Tests/Fixtures`, which is why
-fixture code never names its module: no `import SidebarSettingsFixtures`, no qualified symbols.
+fixture code never names its module, writing no `import SidebarSettingsFixtures` and no qualified
+symbol.
 
 | File | Provides |
 | --- | --- |
@@ -127,7 +128,7 @@ page starting at its top, or for the sidebar scrolling to the selection, goes gr
 
 | Fact | Consequence |
 | --- | --- |
-| No macOS 14 runner since 2026-11-02 | a macOS 14 `#available` branch asserts the fallback |
+| Nothing runs on macOS 14: no runner since 2026-11-02, and no Mac on 14 | the kit builds for 14 and keeps its `#available` branches small; a test's 14 branch still asserts the fallback, though nothing runs it |
 | Stage Manager narrows the visible screen, and AppKit moves a restored frame into the visible area | a test that places a window puts it well inside `NSScreen.main.visibleFrame` |
 | Window tests read views, state and a row's own drawing (`cacheDisplay`), never the screen | they need no Screen Recording permission; that is for `scripts/screenshots.sh` |
 | CI runs both targets on `macos-15` and `macos-26` through `make ci` | a window test that passes locally can still fail on the other macOS version; run CI before assuming a window behavior |

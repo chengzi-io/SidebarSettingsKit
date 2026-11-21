@@ -1,7 +1,9 @@
 # Manual QA
 
 The checks a maintainer makes before a release. Run each one on every macOS version you have; CI
-covers macOS 15 and macOS 26 only.
+covers macOS 15 and macOS 26 only, and macOS 14 is not checked at all. The kit builds for 14, its
+deployment target, with `#available` branches kept small, but nothing runs on 14, neither CI nor a
+person.
 
 Start the demo with the flags for the combination you are checking, or set the same thing in its
 control panel and press **Open Settings**:
@@ -13,16 +15,16 @@ cd Examples/SidebarSettingsDemo && swift run --build-system native SidebarSettin
 
 ## By macOS version
 
-| Check | 26 | 15 | 14 |
-| --- | --- | --- | --- |
-| [ ] The sidebar keeps Liquid Glass, with plain icons and tiled | yes | no such look | no such look |
-| [ ] Sidebar rows fade under the toolbar as you scroll the list | yes | system default | system default |
-| [ ] The detail sits on the window's background, with no band under the toolbar | yes | yes | yes |
-| [ ] The line under the toolbar: none at the top of a page, shown once it scrolls, none again on a new page | no line at all | yes | always shows ([known limit](ROADMAP.md)) |
-| [ ] Compact **Toolbar style**: the sidebar's top gap matches its bottom gap | yes | yes | yes |
-| [ ] The window opens at 715 × 600 and cannot be resized (default configuration) | yes | yes | yes |
-| [ ] The minimize and zoom buttons are dimmed, also with **Resizing** set to resizable; double-clicking the title bar does not zoom the window, and Window › Enter Full Screen is unavailable | yes | yes | yes |
-| [ ] The window opens where it was last positioned, across launches (AppKit's frame autosave) | yes | yes | yes |
+| Check | 26 | 15 |
+| --- | --- | --- |
+| [ ] The sidebar keeps Liquid Glass, with plain icons and tiled | yes | no such look |
+| [ ] Sidebar rows fade under the toolbar as you scroll the list | yes | system default |
+| [ ] The detail sits on the window's background, with no band under the toolbar | yes | yes |
+| [ ] The line under the toolbar: none at the top of a page, shown once it scrolls, none again on a new page | no line at all | yes |
+| [ ] Compact **Toolbar style**: the sidebar's top gap matches its bottom gap | yes | yes |
+| [ ] The window opens at 715 × 600 and cannot be resized (default configuration) | yes | yes |
+| [ ] The minimize and zoom buttons are dimmed, also with **Resizing** set to resizable; double-clicking the title bar does not zoom the window, and Window › Enter Full Screen is unavailable | yes | yes |
+| [ ] The window opens where it was last positioned, across launches (AppKit's frame autosave) | yes | yes |
 
 macOS 26 is the version where a wrong token or a stray background shows first. Check it with
 `--icons plain` and `--icons tiled`, in both appearances.
@@ -146,9 +148,9 @@ Per scenario, check the one thing the scenario adds (the list is also in
 - [ ] `6`: the search shows only the pages that match.
 - [ ] In every toolbar style of the control panel, the back and forward arrows show no labels
       under them.
-- [ ] With **Back and forward buttons** off, the title starts in line with the page's grouped form,
-      not against the sidebar. On macOS 26, note where it sits and whether an empty glass shape
-      shows before it.
+- [ ] With **Back and forward buttons** off, the title starts in line with the page's grouped
+      form, not against the sidebar, and on macOS 26 and 27 no empty glass shape shows before
+      it.
 - [ ] `6b`: a search that matches nothing shows a small, light "No Results" under a small
       magnifying glass, and clearing it brings every page back.
 - [ ] `7`: a 60-character title is truncated with an ellipsis instead of widening the sidebar;

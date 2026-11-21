@@ -181,8 +181,8 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         }
         // Alone, the title sat 11 pt from the sidebar, left of the page's grouped form (20 pt
         // in). An empty navigational item comes before the title, as the buttons do, and the
-        // gap AppKit leaves after it lines the title up with the page. macOS 26 puts toolbar
-        // items on glass, where an empty item is unchecked, so its toolbar stays AppKit's.
+        // gap AppKit leaves after it lines the title up with the page. On macOS 26 AppKit
+        // starts the title in line with the form by itself, so its toolbar stays AppKit's.
         if #available(macOS 26, *) { return [.sidebarTrackingSeparator] }
         return [.sidebarTrackingSeparator, Self.leadingSpaceItem]
     }

@@ -1,12 +1,12 @@
 # Development
 
-The daily loop, the demo, screenshots, CI and releasing.
+How to work on the kit day to day: the demo, screenshots, CI and releasing.
 
 ## Requirements
 
 | | |
 | --- | --- |
-| macOS | 14 or later to run what you build (the deployment target) |
+| macOS | 14 or later to run what you build (the deployment target); nothing runs on 14, neither CI nor a person |
 | Xcode | 26.2, the version in `.xcode-version` |
 | Swift | 6.2 (the manifest is `swift-tools-version: 6.2`) |
 | Dependencies | none; the package and the demo build offline |
@@ -65,8 +65,8 @@ through the symlink `Sources/DemoFixtures`, so its pages are the ones the tests 
 An unknown flag, or a flag without its value, prints the usage to stderr and exits with 2. A
 single-dash argument is passed through with its value, as a launch-only default: the demo steps
 over `-AppleLanguages "(zh-Hans)"` and the system reads it, without writing anything to the app's
-persistent defaults. `-NSTableViewDefaultSizeMode 1` (small), `2` (medium) or `3` (large) stands
-in the same way for the Sidebar icon size setting.
+persistent defaults. `-NSTableViewDefaultSizeMode 1` (small), `2` (medium) or `3` (large) works
+the same way for the Sidebar icon size setting.
 
 ### Scenarios
 
@@ -95,7 +95,7 @@ One PNG per kind of icons, appearance and scenario, named
 `macos-<major>-<icons>-<appearance>-scenario-<n>.png` in the output directory, for example
 `macos-26-tiled-light-scenario-5.png`. The script builds the demo in release, runs it once per
 combination, waits for the window number, and copies the window with `screencapture -o -l`.
-It builds with `--build-system native`, as `make demo` runs: Swift 6.4's default build system
+It builds with `--build-system native`, as `make demo` does: Swift 6.4's default build system
 links the executable as if built with the macOS 14 SDK, and macOS 27 then draws the demo in its
 look from before macOS 26, gray and without glass.
 Scenario 7 is launched with `-AppleLanguages "(zh-Hans)"`, so its screenshot shows the Chinese
@@ -118,11 +118,22 @@ there (see [TESTING.md](TESTING.md), Environment).
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
 | `.github/workflows/ci.yml` | pull requests, pushes to `main` | selects the Xcode in `.xcode-version`, caches `.build`, runs `make ci` |
-| `.github/workflows/screenshots.yml` | pull requests, manual dispatch | selects the same Xcode, turns off Reduce Transparency and Reduce Motion, runs `scripts/screenshots.sh screenshots`, uploads the PNGs |
+| `.github/workflows/screenshots.yml` | pull requests, manual dispatch | selects the same Xcode, turns off Reduce Transparency and Reduce Motion, sets the default wallpaper, runs `scripts/screenshots.sh screenshots`, uploads the PNGs |
 
 GitHub's macOS images turn on Reduce Transparency and Reduce Motion; a Mac has them off. With
 Reduce Transparency on, macOS 26 and 27 draw no glass, and their System Settings shows a line
 under the toolbar even at the top of a page, so the screenshot workflow turns both off first.
+
+The images also set a solid black wallpaper. A window takes a tint from the wallpaper behind it,
+so over black the sidebar and the page came out a flat, darker gray than on a Mac: on macOS 15
+the page was 238 gray where a Mac with its default wallpaper shows 244. The workflow sets the
+wallpaper that `/System/Library/CoreServices/DefaultDesktop.heic` links to, the default of the
+macOS that runs, before it captures.
+
+The runners' only display is 1024 × 768 at 1x, so a screenshot has one pixel per point: the
+default window comes out 715 × 600 pixels, where a Retina Mac gives 1430 × 1200. A 2x virtual
+display was tried: CoreGraphics creates it on the runners, but gives it no display mode, so the
+README shows the 1x images at their own size rather than shrunk.
 
 The screenshot artifacts are named `screenshots-<runner>` (`screenshots-macos-15`,
 `screenshots-macos-26`, `screenshots-xcode-27`) and are uploaded even when capture fails, so a
@@ -132,8 +143,9 @@ partial matrix can be inspected:
 gh run download --name screenshots-macos-26 --dir shots
 ```
 
-GitHub retired the `macos-14` runner on 2026-11-02, so macOS 14 has no CI. Keep `#available`
-branches for macOS 14 small and obvious, and act on the macOS 14 limits in
+GitHub retired the `macos-14` runner on 2026-11-02, and nobody runs macOS 14 by hand either, so
+nothing runs on 14. The kit builds for macOS 14, its deployment target, and keeps its `#available`
+branches for 14 small and obvious; the limits that follow from that are in
 [ROADMAP.md](ROADMAP.md).
 
 ## Bumping Xcode

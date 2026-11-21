@@ -18,8 +18,8 @@ the kit fills. No AppKit type appears in a public signature.
 
 The window cannot be minimized, zoomed or made full screen, as Apple's guidelines ask of a
 settings window: ⌘, brings it back, and it is sized for its pages. Its style mask leaves out
-`.miniaturizable`; `.fullScreenNone` and a dimmed zoom button take back what AppKit gives a
-resizable window; and `SettingsWindow.zoom(_:)` does nothing, so nothing that calls it zooms the
+`.miniaturizable`. `.fullScreenNone` and a dimmed zoom button take back what AppKit gives a
+resizable window, and `SettingsWindow.zoom(_:)` does nothing, so nothing that calls it zooms the
 window. A resizable window still resizes from its edges.
 
 The kit sets no appearance. The window follows the app's (`NSApp.appearance`), which follows the
@@ -87,8 +87,8 @@ configuration, because the configuration is not generic over the page type.
 The sidebar draws the pages with SwiftUI's `List` and `.listStyle(.sidebar)` (`SidebarList`), with
 plain icons or tiled, so selection, arrow keys, type-to-select, VoiceOver's list navigation and the
 selection's look on each macOS version are the system's. `configuration.icons` changes what a
-row's icon slot holds, never the selection. The system list cannot draw another selection shape;
-rows the kit drew itself to get a rounded one lost type-to-select, VoiceOver's list structure and
+row's icon slot holds, never the selection. The system list cannot draw another selection shape.
+Rows the kit drew itself to get a rounded one lost type-to-select, VoiceOver's list structure and
 the system's selection look, so the kit has no such renderer.
 
 A row is as tall as its content plus the list's padding, so the kit has no row height option: the
@@ -98,7 +98,7 @@ size setting (`\.sidebarRowSize` in the row's environment), 6 points in from the
 An icon, plain or on a tile, fills that slot, as System Settings' tiles do, so the rows keep the
 system's height and the title starts where a plain row's does. A tile larger than the slot made a
 taller row and crowded the title, so tiles have no size of their own. A plain icon takes its tint
-through `listItemTint`, which the list turns white with the title on the selected row; a color
+through `listItemTint`, which the list turns white with the title on the selected row. A color
 set on the symbol with `foregroundStyle` stayed, and a blue icon vanished into the blue
 selection. On a tile the tint is the tile's color and the glyph is white, at the medium image
 scale: the sidebar list on macOS 27 asks its rows for a large one, which drew the symbol to the
@@ -125,7 +125,7 @@ page shown from its top.
 
 | macOS | System Settings | The kit |
 | --- | --- | --- |
-| 14 | (not checked: no CI) | a line always: SwiftUI reports no scroll position before 15 |
+| 14 | (not checked: nothing runs on 14) | a line always: SwiftUI reports no scroll position before 15 |
 | 15 | no line at the top; a line with a shadow once scrolled | the same |
 | 26 | no line; a soft scroll edge | the same: the system ignores the style |
 | 27 | no line at the top, one while the pointer is over the toolbar; once scrolled, a hard edge with a line | the same |
@@ -134,12 +134,12 @@ On macOS 27 the edge turns hard because the window title shows in the toolbar: t
 style resolves to a hard edge when free-floating text such as the window title is in the title
 bar (WWDC26 session 289). System Settings' pages show their title and turn hard the same way
 (checked on Accessibility and Privacy & Security); only General shows no title until its header
-card scrolls away. With `title = .hidden` the kit's
-edge stays soft. Setting `.soft` over the automatic style does not remove the line while the
-title shows, and Apple advises against it on 27 (WWDC26 session 278).
+card scrolls away. With `title = .hidden` the kit's edge stays soft. Setting `.soft` over the
+automatic style does not remove the line while the title shows, and Apple advises against it on 27
+(WWDC26 session 278).
 
-Compare on a Mac with Reduce Transparency off, as a Mac comes. GitHub's macOS images turn it on,
-and with it System Settings on 26 and 27 shows a line at the top of a page too.
+Compare on a Mac with Reduce Transparency off, as it is on a Mac out of the box. GitHub's macOS
+images turn it on, and with it System Settings on 26 and 27 shows a line at the top of a page too.
 
 ## The detail
 
@@ -155,14 +155,14 @@ switching pages builds the new page from its top.
 The window's title and the back and forward buttons follow the page through `FollowsNavigation`,
 a modifier around the detail that watches the title and the history with `onChange` and sets the
 title and validates the toolbar items in the SwiftUI update that draws the new page, so the title
-changes in the same frame as the page. Set from a task after an observation fired, the old title
-stayed over the new page for a frame. `.fixed` shows one title everywhere;
+changes in the same frame as the page. When it was set from a task after an observation fired,
+the old title stayed over the new page for a frame. `.fixed` shows one title everywhere;
 `.hidden` hides it with `titleVisibility = .hidden` while the window keeps a title for the Window
 menu and VoiceOver.
 
 The toolbar shows icons only: in an app, the taller toolbar that `.automatic` picks on macOS 15
 shows "Back" and "Forward" under the arrows, which System Settings does not. A test process gets
-icons only whatever the setting, so this is a manual check.
+icons only, whatever the setting, so only a person can check this.
 
 The controller maps a `.unifiedCompact` toolbar style to `.automatic` on macOS 26 only: there a
 compact toolbar starts the sidebar below the title bar, which leaves the window buttons on a bare
@@ -181,8 +181,9 @@ control.
 With the buttons off, AppKit alone sets the title 11 points from the sidebar, left of the page's
 grouped form, which starts 20 points in. An empty navigational item takes the buttons' place:
 navigational items come before the title, and the gap AppKit leaves after one lines the title up
-with the page. macOS 26 puts toolbar items on glass, where an empty item has not been checked, so
-there the toolbar stays as AppKit lays it out.
+with the page. On macOS 26 AppKit starts the title in line with the form by itself, within a
+point, and no empty glass shape shows before it (checked on a macOS 26 screenshot at 2x), so there
+the toolbar stays as AppKit lays it out. macOS 27 has not been checked.
 
 The window frame autosave name is set on the controller after `super.init(window:)`, because
 `init(window:)` clears a name set on the window. A window that cannot be resized gets back only

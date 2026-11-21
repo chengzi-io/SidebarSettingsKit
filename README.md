@@ -14,11 +14,14 @@ Settings.
 [![CI](https://github.com/chengzi-io/SidebarSettingsKit/actions/workflows/ci.yml/badge.svg)](https://github.com/chengzi-io/SidebarSettingsKit/actions/workflows/ci.yml)
 
 <p align="center">
-  <img src="docs/assets/screenshots/macos-15-tiled-light-scenario-5.png" width="32%" alt="The settings window on macOS 15, icons on tiles, light appearance">
-  <img src="docs/assets/screenshots/macos-26-tiled-light-scenario-5.png" width="32%" alt="The settings window on macOS 26, icons on tiles, light appearance">
-  <img src="docs/assets/screenshots/macos-27-tiled-light-scenario-5.png" width="32%" alt="The settings window on macOS 27, icons on tiles, light appearance">
+  <img src="docs/assets/screenshots/macos-27-tiled-light-scenario-5.png" width="715" alt="The settings window on macOS 27, icons on tiles, light appearance">
 </p>
-<p align="center"><sub>macOS 15 · macOS 26 · macOS 27</sub></p>
+<p align="center"><sub>macOS 27</sub></p>
+<p align="center">
+  <img src="docs/assets/screenshots/macos-26-tiled-light-scenario-5.png" width="49%" alt="The settings window on macOS 26, icons on tiles, light appearance">
+  <img src="docs/assets/screenshots/macos-15-tiled-light-scenario-5.png" width="49%" alt="The settings window on macOS 15, icons on tiles, light appearance">
+</p>
+<p align="center"><sub>macOS 26 · macOS 15</sub></p>
 
 ## Add it with an AI agent
 
@@ -27,35 +30,35 @@ npx skills add chengzi-io/SidebarSettingsKit
 ```
 
 The [skills CLI](https://github.com/vercel-labs/skills) installs the repo's agent skill into the
-project for Claude Code, Codex, Cursor and the other agents it knows; `-g` installs it for every
-project. Then ask the agent to give the app sidebar settings: the skill reads the project, picks
-pages and their icons, adds the dependency, moves an existing `Settings` scene over and checks the
-result. An agent without the CLI can follow
+project, for Claude Code, Codex, Cursor and the other agents it knows; `-g` installs it for every
+project. Then ask the agent to give the app sidebar settings. The skill reads the project, picks
+pages and their icons, adds the dependency, moves an existing `Settings` scene over, and checks
+the result. An agent without the CLI can follow
 [`skills/sidebar-settings-kit/SKILL.md`](skills/sidebar-settings-kit/SKILL.md) directly.
 
 ## Why
 
 | What you want | SwiftUI's `Settings` scene | SwiftUI's `NavigationSplitView` | SidebarSettingsKit |
 | --- | --- | --- | --- |
-| A settings window whose toolbar you control | keeps the preferences toolbar; no back or forward, no items of yours | a normal window, whose ⌘, item you add by hand; not the app's settings window | an `NSWindow` with a toolbar the kit fills |
-| A sidebar that stays put | has no sidebar | collapses when its divider is dragged in, and nothing brings it back | a fixed-width sidebar that cannot collapse |
+| A settings window whose toolbar you control | keeps the preferences toolbar, with no back or forward and no items of yours | a normal window: you add its ⌘, item by hand, and it is not the app's settings window | an `NSWindow` with a toolbar the kit fills |
+| A sidebar that stays put | has no sidebar | collapses when its divider is dragged in, and nothing brings it back | a sidebar that cannot collapse; its width is fixed by default, or adjustable between limits |
 | A search field above the pages | has none | `.searchable` puts the field in the toolbar | fixed above the list; ⌘F focuses it, ↓ moves to the pages found, Esc clears it |
 
 ## Features
 
-| Feature | Default |
-| --- | --- |
-| Sidebar of pages, grouped | one ungrouped list |
-| Search field above the pages, matching titles and keywords | on |
-| Back and forward, with a browser-like history | on: ⌘[ and ⌘] |
-| Sidebar header (scrolls with the pages) and footer (stays) | none |
-| Icons plain or on colored tiles | plain |
-| Sidebar width | 215 pt, fixed |
-| Window | 715 × 600, fixed size, position saved |
-| Title | follows the selected page |
-| Line under the toolbar | as System Settings on each macOS version (always on macOS 14) |
-| Page, history and search when the window reopens | kept while the app runs |
-| The kit's own words | every language macOS has, in the app's language |
+| Feature | Default | Can be changed to |
+| --- | --- | --- |
+| Sidebar of pages, grouped | one ungrouped list | pages in groups, set apart by space (`sections:`) |
+| Search field above the pages, matching titles and keywords | on | off (`.disabled`) |
+| Back and forward, with a browser-like history | on: ⌘[ and ⌘] | off, and the two shortcuts with them |
+| Sidebar header (scrolls with the pages) and footer (stays) | none | any view, in `header:` and `footer:` |
+| Icons plain or on colored tiles | plain | on tiles, in white, with a default color for pages without a tint |
+| Sidebar width | 215 pt, fixed | any fixed width, or adjustable by dragging between a minimum and a maximum |
+| Window | 715 × 600, fixed size, position saved | any size, resizable between optional limits, or with no saved position |
+| Title | follows the selected page | one fixed title, or none in the toolbar |
+| Line under the toolbar | as System Settings on each macOS version (always on macOS 14) | no option |
+| Page, history and search when the window reopens | kept while the app runs | reset on every show |
+| The kit's own words | every language macOS has, in the app's language | your own words for any of the five |
 
 ## Quick start
 
@@ -77,7 +80,8 @@ targets: [
 ]
 ```
 
-While the kit is 0.x, a minor release may break the API, hence `.upToNextMinor`.
+While the kit is 0.x, a minor release may break the API, which is why the snippet asks for
+`.upToNextMinor`.
 
 In Xcode: File > Add Package Dependencies…, paste
 `https://github.com/chengzi-io/SidebarSettingsKit.git`, choose "Up to Next Minor Version" from
@@ -85,8 +89,8 @@ In Xcode: File > Add Package Dependencies…, paste
 
 ### Use
 
-One page type, one window, one menu item. `ContentView`, `GeneralSettings` and `AdvancedSettings`
-stand for the app's own views.
+An app needs one page type, one window object and one menu item. `ContentView`, `GeneralSettings`
+and `AdvancedSettings` stand for the app's own views.
 
 ```swift
 import SidebarSettingsKit
@@ -128,8 +132,8 @@ struct MyApp: App {
 }
 ```
 
-Delete the app's `Settings` scene: `SidebarSettingsCommands` replaces its "Settings…" item and
-⌘, and keeping both gives two items.
+Delete the app's `Settings` scene. `SidebarSettingsCommands` replaces its Settings… item and its
+⌘, shortcut, and keeping both gives two items.
 
 Write each page as a grouped `Form` (`.formStyle(.grouped)`), as System Settings' pages are. A
 page scrolls itself, and the window adds no scroll view around it. A page that is neither a form
@@ -157,8 +161,8 @@ let settings = SidebarSettingsWindow(
 }
 ```
 
-Groups are set apart by space, as System Settings' are; an empty group is left out. The header
-is the list's first item and scrolls with the pages; the footer stays at the bottom.
+Groups are set apart by space, as System Settings' are, and an empty group is left out. The
+header is the list's first item and scrolls with the pages. The footer stays at the bottom.
 
 ## Icons
 
@@ -180,10 +184,10 @@ Settings does. The square takes the page's tint (`.system("paintpalette", tint: 
 without one gets gray, or the color in `.tiled(defaultColor: .indigo)`. An icon that is your own
 view (`.custom`) is drawn as it is either way.
 
-Every icon fills the sidebar's icon slot, so like System Settings' it follows the Sidebar icon
-size setting (16, 20 or 24 pt), and the rows keep the system's height and text. Either way the
-sidebar is the system's sidebar list: selection, arrow keys, type-to-select and VoiceOver work as
-in any Mac sidebar, and on macOS 26 and later it keeps Liquid Glass.
+Every icon fills the sidebar's icon slot, so it follows the Sidebar icon size setting (16, 20 or
+24 pt) as System Settings' icons do, and the rows keep the system's height and text. The sidebar
+is still the system's sidebar list: selection, arrow keys, type-to-select and VoiceOver work as in
+any Mac sidebar, and on macOS 26 and later it keeps Liquid Glass.
 
 ## Configuration
 
@@ -214,9 +218,9 @@ let settings = SidebarSettingsWindow(pages: Pane.allCases, configuration: config
 | `strings` | `Strings.default` | `Strings(back:forward:searchPrompt:settingsMenuItem:noSearchResults:)` |
 | `icons` | `.plain` | `.tiled`, `.tiled(defaultColor:)` |
 
-The configuration is fixed when the window object is created. Whatever it says, the minimize and
-zoom buttons are dimmed and the window cannot go full screen, as Apple's guidelines ask of a
-settings window; a resizable window resizes from its edges.
+The configuration is fixed when the window object is created. The minimize and zoom buttons are
+dimmed and the window cannot go full screen, as Apple's guidelines ask of a settings window, and
+no configuration changes that. A resizable window still resizes from its edges.
 
 ## Light and dark
 
@@ -238,17 +242,21 @@ SwiftUI's `.preferredColorScheme` does not reach the settings window, even from 
 
 The kit owns five pieces of text: Back, Forward, Search, Settings… and No Results, which the
 sidebar shows when a search finds no page. It ships them in every language macOS has, in the
-words macOS uses for the same controls, and shows them in the language the app runs in, as
-AppKit does its menus:
+words macOS uses for the same controls, and shows them in the language the app runs in, the way
+AppKit shows the titles of its own menus:
 
 | The app | The kit's words |
 | --- | --- |
 | declares languages (`CFBundleLocalizations` or `<language>.lproj` folders in the app bundle) and runs in one | that language |
 | declares no language (a bare `swift run` executable, or an app bundle without the entry) | English, whatever the Mac's language |
 
-An app whose text is written in one language without localization runs in English as far as the
-kit can tell, so it passes its own words; so does an app that wants other words, such as
-Preferences… for Settings…:
+The kit ships every language, but it shows the one the app runs in. An app that declares no
+language runs in English, whatever its interface is written in. So an app whose text is Japanese,
+but whose bundle declares no localization (no `CFBundleLocalizations` entry and no `.lproj`
+folder), runs in English as far as macOS is concerned, and the kit would show Back, Forward and
+Search in English beside its Japanese pages. Such an app passes its own words, as the code block
+below does with Japanese. An app that wants other wording, such as Preferences… for Settings…,
+passes its words too:
 
 ```swift
 configuration.strings = .init(
@@ -304,13 +312,14 @@ struct MenuBarSettingsApp: App {
 ```
 
 `OpenSidebarSettingsButton` opens the window on any page, with the kit's word for the menu item
-("Settings…") or a label of yours. A `Settings` scene kept only to give the app a scene can go.
+(Settings…) or a label of yours. A `Settings` scene that the app kept only so that it has a scene
+can go: `MenuBarExtra` is one.
 
 ## Requirements
 
 | | |
 | --- | --- |
-| To run an app using the kit | macOS 14 or later |
+| To run an app using the kit | macOS 14 or later; macOS 14 is not tested, neither in CI nor by hand |
 | To build it | Xcode 26 or later, with Swift 6.2 or later (the manifest is `swift-tools-version: 6.2`) |
 | Dependencies | none |
 
