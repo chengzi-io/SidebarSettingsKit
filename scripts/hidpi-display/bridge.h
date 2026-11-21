@@ -36,5 +36,5 @@
 @interface CGVirtualDisplay : NSObject
 @property (nonatomic, readonly) CGDirectDisplayID displayID;
 - (instancetype)initWithDescriptor:(CGVirtualDisplayDescriptor *)descriptor;
-- (int)apply:(CGVirtualDisplaySettings *)settings;
+- (BOOL)applySettings:(CGVirtualDisplaySettings *)settings;
 @end

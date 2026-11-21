@@ -156,9 +156,9 @@ settings.modes = [
     CGVirtualDisplayMode(width: pointWidth, height: pointHeight, refreshRate: 60),
     CGVirtualDisplayMode(width: pixelWidth, height: pixelHeight, refreshRate: 60),
 ]
-let applied = display.apply(settings)
-log("apply \(pointWidth)x\(pointHeight)pt \(pixelWidth)x\(pixelHeight)px hiDPI settings: CGError \(applied), display id \(display.displayID)")
-guard applied == 0 else {
+let applied = display.applySettings(settings)
+log("applySettings \(pointWidth)x\(pointHeight)pt \(pixelWidth)x\(pixelHeight)px hiDPI: \(applied), display id \(display.displayID)")
+guard applied else {
     log("FAIL: the system refused the virtual display")
     exit(2)
 }
