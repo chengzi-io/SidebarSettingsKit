@@ -7,9 +7,6 @@ struct SettingsIconView: View {
     let icons: SidebarSettingsConfiguration.Icons
 
     @Environment(\.sidebarRowSize) private var rowSize
-    @Environment(\.imageScale) private var probeImageScale
-    @Environment(\.font) private var probeFont
-    @Environment(\.controlSize) private var probeControlSize
 
     var body: some View {
         switch icon.content {
@@ -28,11 +25,9 @@ struct SettingsIconView: View {
                 .symbolRenderingMode(renderingMode)
                 .fontWeight(weight)
             if case .tiled(let defaultColor) = icons {
-                probeTiled(
-                    name: name, symbol: symbol,
-                    fit: Image(systemName: name).resizable().scaledToFit().symbolVariant(variant)
-                        .symbolRenderingMode(renderingMode).fontWeight(weight),
-                    defaultColor)
+                // The sidebar list on macOS 27 asks its rows for a large image scale, which drew
+                // the symbol to the tile's edges; the tile keeps the scale it has on 14 to 26.
+                onTile(symbol.font(.system(size: glyph)).imageScale(.medium), defaultColor)
             } else {
                 symbol
             }
@@ -64,28 +59,4 @@ struct SettingsIconView: View {
                     .fill((icon.tint ?? defaultColor).gradient)
             )
     }
-
-    // Probe only: SSK_PROBE_ICON picks how the symbol is sized on its tile.
-    @ViewBuilder
-    private func probeTiled(name: String, symbol: some View, fit: some View, _ defaultColor: Color) -> some View {
-        let mode = ProcessInfo.processInfo.environment["SSK_PROBE_ICON"] ?? "font"
-        Group {
-            switch mode {
-            case "medium": onTile(symbol.font(.system(size: glyph)).imageScale(.medium), defaultColor)
-            case "small": onTile(symbol.font(.system(size: glyph)).imageScale(.small), defaultColor)
-            case "fit": onTile(fit.frame(width: glyph, height: glyph), defaultColor)
-            default: onTile(symbol.font(.system(size: glyph)), defaultColor)
-            }
-        }
-        .onAppear {
-            guard let path = ProcessInfo.processInfo.environment["SSK_PROBE_DUMP"] else { return }
-            let config = NSImage.SymbolConfiguration(pointSize: glyph, weight: .regular)
-            let size = NSImage(systemSymbolName: name, accessibilityDescription: nil)?
-                .withSymbolConfiguration(config)?.size ?? .zero
-            probeAppend(
-                "icon \(name) mode \(mode) slot \(slot) glyph \(glyph) rowSize \(rowSize) imageScale \(probeImageScale) controlSize \(probeControlSize) font \(probeFont.map { "\($0)" } ?? "nil") nsimage \(size)",
-                to: path)
-        }
-    }
 }
-

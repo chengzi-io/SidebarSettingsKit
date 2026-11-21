@@ -36,7 +36,7 @@ so it always runs the code you are editing. It is manual QA and the source of th
 the root package never references it.
 
 ```
-make demo                 # or: cd Examples/SidebarSettingsDemo && swift run SidebarSettingsDemo
+make demo                 # or: cd Examples/SidebarSettingsDemo && swift run --build-system native SidebarSettingsDemo
 ```
 
 The main window is the demo's control panel: a grouped form with a picker or toggle for the
@@ -95,6 +95,9 @@ One PNG per kind of icons, appearance and scenario, named
 `macos-<major>-<icons>-<appearance>-scenario-<n>.png` in the output directory, for example
 `macos-26-tiled-light-scenario-5.png`. The script builds the demo in release, runs it once per
 combination, waits for the window number, and copies the window with `screencapture -o -l`.
+It builds with `--build-system native`, as `make demo` runs: Swift 6.4's default build system
+links the executable as if built with the macOS 14 SDK, and macOS 27 then draws the demo in its
+look from before macOS 26, gray and without glass.
 Scenario 7 is launched with `-AppleLanguages "(zh-Hans)"`, so its screenshot shows the Chinese
 words.
 
@@ -115,7 +118,11 @@ there (see [TESTING.md](TESTING.md), Environment).
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
 | `.github/workflows/ci.yml` | pull requests, pushes to `main` | selects the Xcode in `.xcode-version`, caches `.build`, runs `make ci` |
-| `.github/workflows/screenshots.yml` | pull requests, manual dispatch | selects the same Xcode, runs `scripts/screenshots.sh screenshots`, uploads the PNGs |
+| `.github/workflows/screenshots.yml` | pull requests, manual dispatch | selects the same Xcode, turns off Reduce Transparency and Reduce Motion, runs `scripts/screenshots.sh screenshots`, uploads the PNGs |
+
+GitHub's macOS images turn on Reduce Transparency and Reduce Motion; a Mac has them off. With
+Reduce Transparency on, macOS 26 and 27 draw no glass, and their System Settings shows a line
+under the toolbar even at the top of a page, so the screenshot workflow turns both off first.
 
 The screenshot artifacts are named `screenshots-<runner>` (`screenshots-macos-15`,
 `screenshots-macos-26`, `screenshots-xcode-27`) and are uploaded even when capture fails, so a

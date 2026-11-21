@@ -8,7 +8,7 @@ import Testing
 
 extension WindowTestSuite {
     /// The page beside the sidebar: it scrolls itself, a new page starts at its top, and the line
-    /// under the toolbar stays wherever the page is scrolled.
+    /// under the toolbar follows the page's scroll position.
     @Suite(.serialized) @MainActor
     struct DetailTests {
         /// On macOS 14 and 15 the toolbar takes its background from the scroll view right under
@@ -24,26 +24,23 @@ extension WindowTestSuite {
             }
         }
 
-        /// macOS 14 and 15 draw the line, as System Settings has it; macOS 26 and later ignore
-        /// the setting and draw their own edge.
-        @Test func theLineUnderTheToolbarStaysThroughScrollingAndPageChanges() async throws {
+        /// As System Settings on macOS 15: no line at the top of the page, a line with a shadow
+        /// once it scrolls under the toolbar. macOS 14 cannot report the scroll position, so the
+        /// line shows always; macOS 26 and later ignore the style.
+        @Test func theLineUnderTheToolbarFollowsTheScroll() async throws {
             try await withWindow(initialPage: FixturePages.appearance) { window in
-                #expect(window.separator == .line)
                 let detail = try window.detailScrollView()
                 // The false-pass rule: the page must be taller than the space it is shown in.
                 try requireScrollable(detail, atLeast: LongContentView.minimumHeight)
-                scroll(detail, toOffsetFromTop: 300)
-                await WindowTest.settle()
-                #expect(window.separator == .line)
-
-                window.settings.navigator.open(FixturePages.general)
-                try await WindowTest.wait(for: "the short page to replace the long one") {
-                    guard let short = firstScrollView(in: window.detailView),
-                        let height = short.documentView?.frame.height
-                    else { return false }
-                    return height <= ShortContentView.maximumHeight
+                guard #available(macOS 15.0, *) else {
+                    #expect(window.separator == .line)
+                    return
                 }
-                #expect(window.separator == .line)
+                try await WindowTest.wait(for: "no line at the top") { window.separator == .none }
+                scroll(detail, toOffsetFromTop: 200)
+                try await WindowTest.wait(for: "the line past the top") { window.separator == .shadow }
+                scroll(detail, toOffsetFromTop: 0)
+                try await WindowTest.wait(for: "no line back at the top") { window.separator == .none }
             }
         }
 
@@ -54,6 +51,11 @@ extension WindowTestSuite {
                 scroll(long, toOffsetFromTop: 400)
                 // Otherwise the page would pass by never having left the top.
                 try #require(scrollOffsetFromTop(long) > 0)
+                if #available(macOS 15.0, *) {
+                    try await WindowTest.wait(for: "the line while scrolled") {
+                        window.separator == .shadow
+                    }
+                }
 
                 window.settings.navigator.open(FixturePages.general)
                 try await WindowTest.wait(for: "the new page to start at its top") {
@@ -62,6 +64,11 @@ extension WindowTestSuite {
                         height <= ShortContentView.maximumHeight
                     else { return false }
                     return scrollOffsetFromTop(detail) == 0
+                }
+                if #available(macOS 15.0, *) {
+                    try await WindowTest.wait(for: "no line on the new page") {
+                        window.separator == .none
+                    }
                 }
             }
         }

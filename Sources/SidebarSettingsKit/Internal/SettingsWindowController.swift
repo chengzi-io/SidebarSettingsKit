@@ -35,13 +35,6 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
     static let backItem = NSToolbarItem.Identifier("SidebarSettingsKit.back")
     static let forwardItem = NSToolbarItem.Identifier("SidebarSettingsKit.forward")
     static let leadingSpaceItem = NSToolbarItem.Identifier("SidebarSettingsKit.leadingSpace")
-    // Probe only: the title as a toolbar item, the window's own title hidden.
-    static let probeTitleItem = NSToolbarItem.Identifier("SidebarSettingsKit.probeTitle")
-    static let probeTitleAsItem = ProcessInfo.processInfo.environment["SSK_PROBE_TITLE"] == "item"
-    // Probe only: SSK_PROBE_EDGE = none | accessory | late | empty | auto.
-    static let probeEdge = ProcessInfo.processInfo.environment["SSK_PROBE_EDGE"] ?? "none"
-    static var probePageTitle = ""
-    static var probeScrolled = false
 
     let sidebarItem: NSSplitViewItem
     let detailItem: NSSplitViewItem
@@ -101,12 +94,6 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         }
         detailItem = NSSplitViewItem(viewController: detailController)
         separator.item = detailItem
-        if Self.probeEdge == "accessory", #available(macOS 26.1, *) {
-            let accessory = NSSplitViewItemAccessoryViewController()
-            accessory.view = NSView(frame: .zero)
-            accessory.preferredScrollEdgeEffectStyle = .soft
-            detailItem.addTopAlignedAccessoryViewController(accessory)
-        }
         splitViewController = NSSplitViewController()
         splitViewController.addSplitViewItem(sidebarItem)
         splitViewController.addSplitViewItem(detailItem)
@@ -149,45 +136,8 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         window.toolbar = toolbar
         window.toolbarStyle = configuration.toolbarStyle.appKit
         if configuration.title == .hidden { window.titleVisibility = .hidden }
-        if Self.probeEdge == "late" { window.titleVisibility = .hidden }
 
         Self.showNavigation(in: window, configuration: configuration, navigation: navigation)
-        // Probe only: once the window shows, record its title field, then move the title to the item.
-        Task { @MainActor [weak window] in
-            try? await Task.sleep(for: .milliseconds(1000))
-            guard let window else { return }
-            if Self.probeEdge == "late" { window.titleVisibility = .visible }
-            if let path = ProcessInfo.processInfo.environment["SSK_PROBE_DUMP"],
-                let item = (window.contentViewController as? NSSplitViewController)?.splitViewItems.last
-            {
-                var line = "edge \(Self.probeEdge) separator \(item.titlebarSeparatorStyle.rawValue)"
-                if #available(macOS 26.0, *) {
-                    line += " accessories \(item.topAlignedAccessoryViewControllers.map { "\($0.view.frame)" })"
-                }
-                probeAppend(line, to: path)
-            }
-            probeDumpTitleField(in: window)
-            if let path = ProcessInfo.processInfo.environment["SSK_PROBE_TREE"] {
-                Task { @MainActor [weak window] in
-                    try? await Task.sleep(for: .milliseconds(1000))
-                    guard let window else { return }
-                    try? probeTree(window).write(toFile: path, atomically: true, encoding: .utf8)
-                }
-            }
-            guard Self.probeTitleAsItem, let label = Self.probeTitleLabel(in: window) else { return }
-            if let field = probeTitleField(in: window) {
-                label.font = field.font
-                label.textColor = field.textColor
-            }
-            label.stringValue = window.title
-            window.titleVisibility = .hidden
-            probeDumpTitleField(in: window)
-        }
-    }
-
-    private static func probeTitleLabel(in window: NSWindow) -> NSTextField? {
-        guard probeTitleAsItem else { return nil }
-        return window.toolbar?.items.first(where: { $0.itemIdentifier == probeTitleItem })?.view as? NSTextField
     }
 
     override func showWindow(_ sender: Any?) {
@@ -222,19 +172,11 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
             case .followsPage, .hidden: navigation.pageTitle()
             case .fixed(let resource): String(localized: resource)
             }
-        if probeEdge == "empty" {
-            probePageTitle = window.title
-            window.title = probeScrolled ? probePageTitle : ""
-        }
-        probeTitleLabel(in: window)?.stringValue = window.title
         window.toolbar?.validateVisibleItems()
     }
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         if configuration.showsNavigationButtons {
-            if Self.probeTitleAsItem {
-                return [.sidebarTrackingSeparator, Self.backItem, Self.forwardItem, Self.probeTitleItem]
-            }
             return [.sidebarTrackingSeparator, Self.backItem, Self.forwardItem]
         }
         // Alone, the title sat 11 pt from the sidebar, left of the page's grouped form (20 pt
@@ -254,16 +196,6 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate,
         itemForItemIdentifier identifier: NSToolbarItem.Identifier,
         willBeInsertedIntoToolbar flag: Bool
     ) -> NSToolbarItem? {
-        if identifier == Self.probeTitleItem {
-            let item = NSToolbarItem(itemIdentifier: identifier)
-            let label = NSTextField(labelWithString: "")
-            label.identifier = NSUserInterfaceItemIdentifier("probeTitleLabel")
-            label.font = .titleBarFont(ofSize: 0)
-            item.view = label
-            item.isBordered = false
-            item.isNavigational = true
-            return item
-        }
         if identifier == Self.leadingSpaceItem {
             let item = NSToolbarItem(itemIdentifier: identifier)
             let space = NSView()
@@ -326,11 +258,6 @@ private final class ToolbarSeparator {
     }
 
     func follow(isScrolled: Bool) {
-        if SettingsWindowController.probeEdge == "empty" {
-            SettingsWindowController.probeScrolled = isScrolled
-            item?.viewController.view.window?.title = isScrolled ? SettingsWindowController.probePageTitle : ""
-        }
-        if SettingsWindowController.probeEdge == "auto", #available(macOS 26.0, *) { return }
         item?.titlebarSeparatorStyle = isScrolled ? .shadow : .none
     }
 }
@@ -404,84 +331,4 @@ extension View {
             self
         }
     }
-}
-
-// Probe only: the window's own title field and what it draws with.
-@MainActor
-private func probeTitleField(in window: NSWindow) -> NSTextField? {
-    @MainActor func walk(_ view: NSView) -> NSTextField? {
-        if let field = view as? NSTextField, field.stringValue == window.title, !field.stringValue.isEmpty,
-            field.identifier?.rawValue != "probeTitleLabel"
-        {
-            return field
-        }
-        for sub in view.subviews { if let found = walk(sub) { return found } }
-        return nil
-    }
-    return window.contentView?.superview.flatMap(walk)
-}
-
-@MainActor
-private func probeDumpTitleField(in window: NSWindow) {
-    guard let path = ProcessInfo.processInfo.environment["SSK_PROBE_DUMP"] else { return }
-    var line = "title \(window.title.debugDescription) visibility \(window.titleVisibility.rawValue)"
-    if let field = probeTitleField(in: window) {
-        line += " field \(type(of: field)) font \(field.font.map { "\($0.fontName) \($0.pointSize)" } ?? "nil") color \(field.textColor.map { "\($0)" } ?? "nil") frame \(field.frame)"
-        var chain: [String] = []
-        var v: NSView? = field.superview
-        while let view = v { chain.append("\(type(of: view))"); v = view.superview }
-        line += " in \(chain.joined(separator: " < "))"
-    } else {
-        line += " field none"
-    }
-    probeAppend(line, to: path)
-}
-
-func probeAppend(_ line: String, to path: String) {
-    let data = Data((line + "\n").utf8)
-    if let handle = FileHandle(forWritingAtPath: path) {
-        handle.seekToEndOfFile(); handle.write(data); handle.closeFile()
-    } else {
-        FileManager.default.createFile(atPath: path, contents: data)
-    }
-}
-
-// Probe only: the window frame's views, deep, for comparing the kit with a SwiftUI window.
-@MainActor
-func probeTree(_ window: NSWindow) -> String {
-    var lines: [String] = []
-    lines.append("window \(type(of: window)) title=\(window.title.debugDescription) titleVisibility=\(window.titleVisibility.rawValue) toolbarStyle=\(window.toolbarStyle.rawValue) titlebarSeparatorStyle=\(window.titlebarSeparatorStyle.rawValue) contentVC=\(window.contentViewController.map { "\(type(of: $0))" } ?? "nil")")
-    if let toolbar = window.toolbar {
-        lines.append("toolbar items=\(toolbar.items.map { "\($0.itemIdentifier.rawValue)" }) displayMode=\(toolbar.displayMode.rawValue)")
-    }
-    @MainActor func splitInfo(_ vc: NSViewController, depth: Int) {
-        if let split = vc as? NSSplitViewController {
-            for (i, item) in split.splitViewItems.enumerated() {
-                var line = String(repeating: "  ", count: depth) + "splitItem[\(i)] behavior=\(item.behavior.rawValue) sep=\(item.titlebarSeparatorStyle.rawValue) fullHeight=\(item.allowsFullHeightLayout) vc=\(type(of: item.viewController))"
-                if #available(macOS 26.0, *) {
-                    line += " safeArea=\(item.automaticallyAdjustsSafeAreaInsets) top=\(item.topAlignedAccessoryViewControllers.count)"
-                }
-                lines.append(line)
-                splitInfo(item.viewController, depth: depth + 1)
-            }
-        }
-        for child in vc.children where !(vc is NSSplitViewController) { splitInfo(child, depth: depth + 1) }
-    }
-    if let vc = window.contentViewController { splitInfo(vc, depth: 0) }
-    @MainActor func walk(_ view: NSView, depth: Int) {
-        guard depth < 30 else { return }
-        var line = String(repeating: " ", count: depth) + "\(type(of: view)) \(view.convert(view.bounds, to: nil).integral)"
-        if view.isHidden { line += " hidden" }
-        if view.alphaValue < 1 { line += " alpha=\(view.alphaValue)" }
-        if let scroll = view as? NSScrollView {
-            line += " SCROLL insets=\(scroll.contentInsets) auto=\(scroll.automaticallyAdjustsContentInsets) y=\(scroll.contentView.bounds.origin.y)"
-        }
-        if let field = view as? NSTextField { line += " text=\(field.stringValue.debugDescription)" }
-        lines.append(line)
-        // Rows of the lists and forms add nothing.
-        if view is NSTableRowView { return }
-        for sub in view.subviews { walk(sub, depth: depth + 1) }
-    }
-    if let frame = window.contentView?.superview { walk(frame, depth: 0) }
-    return lines.joined(separator: "\n") + "\n"
 }
