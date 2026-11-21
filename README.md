@@ -14,14 +14,11 @@ Settings.
 [![CI](https://github.com/chengzi-io/SidebarSettingsKit/actions/workflows/ci.yml/badge.svg)](https://github.com/chengzi-io/SidebarSettingsKit/actions/workflows/ci.yml)
 
 <p align="center">
-  <img src="docs/assets/screenshots/macos-27-tiled-light-scenario-5.png" width="715" alt="The settings window on macOS 27, icons on tiles, light appearance">
+  <img src="docs/assets/screenshots/macos-27-tiled-light-scenario-5.png" width="32%" alt="The settings window on macOS 27, icons on tiles, light appearance">
+  <img src="docs/assets/screenshots/macos-26-tiled-light-scenario-5.png" width="32%" alt="The settings window on macOS 26, icons on tiles, light appearance">
+  <img src="docs/assets/screenshots/macos-15-tiled-light-scenario-5.png" width="32%" alt="The settings window on macOS 15, icons on tiles, light appearance">
 </p>
-<p align="center"><sub>macOS 27</sub></p>
-<p align="center">
-  <img src="docs/assets/screenshots/macos-26-tiled-light-scenario-5.png" width="49%" alt="The settings window on macOS 26, icons on tiles, light appearance">
-  <img src="docs/assets/screenshots/macos-15-tiled-light-scenario-5.png" width="49%" alt="The settings window on macOS 15, icons on tiles, light appearance">
-</p>
-<p align="center"><sub>macOS 26 · macOS 15</sub></p>
+<p align="center"><sub>macOS 27 · macOS 26 · macOS 15</sub></p>
 
 ## Add it with an AI agent
 

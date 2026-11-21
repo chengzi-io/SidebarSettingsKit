@@ -13,14 +13,11 @@
 [![CI](https://github.com/chengzi-io/SidebarSettingsKit/actions/workflows/ci.yml/badge.svg)](https://github.com/chengzi-io/SidebarSettingsKit/actions/workflows/ci.yml)
 
 <p align="center">
-  <img src="docs/assets/screenshots/macos-27-tiled-light-scenario-5.png" width="715" alt="macOS 27 上的设置窗口，图标放在方块上，浅色外观">
+  <img src="docs/assets/screenshots/macos-27-tiled-light-scenario-5.png" width="32%" alt="macOS 27 上的设置窗口，图标放在方块上，浅色外观">
+  <img src="docs/assets/screenshots/macos-26-tiled-light-scenario-5.png" width="32%" alt="macOS 26 上的设置窗口，图标放在方块上，浅色外观">
+  <img src="docs/assets/screenshots/macos-15-tiled-light-scenario-5.png" width="32%" alt="macOS 15 上的设置窗口，图标放在方块上，浅色外观">
 </p>
-<p align="center"><sub>macOS 27</sub></p>
-<p align="center">
-  <img src="docs/assets/screenshots/macos-26-tiled-light-scenario-5.png" width="49%" alt="macOS 26 上的设置窗口，图标放在方块上，浅色外观">
-  <img src="docs/assets/screenshots/macos-15-tiled-light-scenario-5.png" width="49%" alt="macOS 15 上的设置窗口，图标放在方块上，浅色外观">
-</p>
-<p align="center"><sub>左：macOS 26 · 右：macOS 15</sub></p>
+<p align="center"><sub>从左到右：macOS 27 · macOS 26 · macOS 15</sub></p>
 
 ## 用 AI agent 添加
 
