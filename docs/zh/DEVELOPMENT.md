@@ -112,13 +112,14 @@ GitHub 的 macOS 镜像默认打开减弱透明度和减弱动态效果，Mac �
 和 27 不画玻璃，系统设置即使在页面顶部也会在工具栏下面显示一条线，所以截图工作流先把这两项关掉。
 
 这些镜像还把墙纸设成纯黑。窗口会从背后的墙纸上取色调，所以在黑底上，侧边栏和页面拍出来是一片更暗、更平
-的灰，和 Mac 上不一样：macOS 15 上页面是 238 灰，而用默认墙纸的 Mac 上是 244。截图工作流在抓图之前，把
-`/System/Library/CoreServices/DefaultDesktop.heic` 指向的那张墙纸设上，也就是所跑的那个 macOS 的默认
-墙纸。
+的灰，和 Mac 上不一样。截图工作流在抓图之前，把 `/System/Library/CoreServices/DefaultDesktop.heic` 指向
+的那张墙纸设上，也就是所跑的那个 macOS 的默认墙纸。在 macOS 15 上，这一步把页面从 238 灰提到了 241，而
+用同一张墙纸的 Mac 是 244。剩下的差别还没有解释：runner 的虚拟显示有自己的色彩描述文件，窗口盖住的也
+是墙纸的另一部分。macOS 26 和 27 两种情况下都是白色页面。
 
 runner 上唯一的显示器是 1024 × 768，1x，也就是一个点一个像素：默认窗口截出来就是 715 × 600 像素，而在
 Retina Mac 上是 1430 × 1200。也试过 2x 的虚拟显示器：CoreGraphics 能在 runner 上建出来，却给不了它
-显示模式，所以 README 里的 1x 图片就按原尺寸放着，不再缩小。
+显示模式，所以图片就保持 1x。
 
 截图产物命名成 `screenshots-<runner>`（`screenshots-macos-15`、`screenshots-macos-26`、
 `screenshots-xcode-27`），抓取失败也会上传，所以不完整的矩阵也能查看：

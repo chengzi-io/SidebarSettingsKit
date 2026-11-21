@@ -125,15 +125,17 @@ Reduce Transparency on, macOS 26 and 27 draw no glass, and their System Settings
 under the toolbar even at the top of a page, so the screenshot workflow turns both off first.
 
 The images also set a solid black wallpaper. A window takes a tint from the wallpaper behind it,
-so over black the sidebar and the page came out a flat, darker gray than on a Mac: on macOS 15
-the page was 238 gray where a Mac with its default wallpaper shows 244. The workflow sets the
-wallpaper that `/System/Library/CoreServices/DefaultDesktop.heic` links to, the default of the
-macOS that runs, before it captures.
+so over black the sidebar and the page came out a flat, darker gray than on a Mac. The workflow
+sets the wallpaper that `/System/Library/CoreServices/DefaultDesktop.heic` links to, the default
+of the macOS that runs, before it captures. On macOS 15 that lifted the page from 238 gray to
+241, where a Mac with the same wallpaper shows 244. The rest is unexplained: the runner's virtual
+display has its own color profile, and the window covers another part of the wallpaper. macOS 26
+and 27 show a white page either way.
 
 The runners' only display is 1024 × 768 at 1x, so a screenshot has one pixel per point: the
 default window comes out 715 × 600 pixels, where a Retina Mac gives 1430 × 1200. A 2x virtual
 display was tried: CoreGraphics creates it on the runners, but gives it no display mode, so the
-README shows the 1x images at their own size rather than shrunk.
+images stay 1x.
 
 The screenshot artifacts are named `screenshots-<runner>` (`screenshots-macos-15`,
 `screenshots-macos-26`, `screenshots-xcode-27`) and are uploaded even when capture fails, so a
