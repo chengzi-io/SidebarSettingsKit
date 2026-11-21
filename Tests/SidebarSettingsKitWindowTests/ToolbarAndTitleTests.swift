@@ -36,14 +36,21 @@ extension WindowTestSuite {
             }
         }
 
-        /// The sidebar runs up under the toolbar, as System Settings' does, whatever the style.
-        /// On macOS 26 a compact toolbar started it below the title bar, with the window buttons
-        /// on a bare strip. Its gap to the window's top must match its gap to the bottom: none
-        /// on macOS 14, 15 and 27, the floating sidebar's inset on macOS 26.
-        @Test(arguments: SidebarSettingsConfiguration.ToolbarStyle.allCases)
-        func sidebarRunsUnderTheToolbar(style: SidebarSettingsConfiguration.ToolbarStyle) async throws {
+        /// The sidebar runs up under the toolbar, as System Settings' does, whatever the style and
+        /// with or without the title. On macOS 26 a compact toolbar started it below the title
+        /// bar, with the window buttons on a bare strip, and on macOS 15 the automatic style turned
+        /// compact while the title was hidden. Its gap to the window's top must match its gap to
+        /// the bottom: none on macOS 14, 15 and 27, the floating sidebar's inset on macOS 26.
+        @Test(
+            arguments: SidebarSettingsConfiguration.ToolbarStyle.allCases,
+            [SidebarSettingsConfiguration.TitleMode.followsPage, .hidden])
+        func sidebarRunsUnderTheToolbar(
+            style: SidebarSettingsConfiguration.ToolbarStyle,
+            title: SidebarSettingsConfiguration.TitleMode
+        ) async throws {
             var configuration = SidebarSettingsConfiguration.windowTest
             configuration.toolbarStyle = style
+            configuration.title = title
             try await withWindow(configuration: configuration) { window in
                 let content = try require(window.window.contentView, "the window's content view")
                 let sidebar = frameInWindow(window.sidebarView)
