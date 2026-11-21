@@ -1,5 +1,8 @@
 name: Probe
 
+# Probe branch only: can a runner capture the demo's window at 2x, by putting a HiDPI virtual
+# display in front of it? Nothing here is part of the kit.
+
 on:
   push:
     branches: [test/window-layout-probe]
@@ -10,7 +13,7 @@ permissions:
 
 jobs:
   probe:
-    name: Probe System Settings titles (${{ matrix.os }})
+    name: Probe 2x screenshots (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     strategy:
@@ -22,17 +25,99 @@ jobs:
             image-xcode: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # .xcode-version is the one place the Xcode version is written.
       - name: Select Xcode from .xcode-version
         if: ${{ !matrix.image-xcode }}
         run: |
           xcode_version=$(tr -d '[:space:]' <.xcode-version)
           developer_dir="/Applications/Xcode_$xcode_version.app/Contents/Developer"
+          [[ -d $developer_dir ]] || { echo "::error::Xcode $xcode_version (.xcode-version) is not installed on this runner"; exit 1; }
+          echo "XCODE_VERSION=$xcode_version" >>"$GITHUB_ENV"
           echo "DEVELOPER_DIR=$developer_dir" >>"$GITHUB_ENV"
           sudo DEVELOPER_DIR="$developer_dir" xcodebuild -runFirstLaunch
-      - run: scripts/glass-probe.sh
+          sw_vers
+          DEVELOPER_DIR="$developer_dir" xcodebuild -version
+      - name: Use the image's Xcode
+        if: ${{ matrix.image-xcode }}
+        run: |
+          echo "XCODE_VERSION=$(xcodebuild -version | awk 'NR == 1 { print $2 }')" >>"$GITHUB_ENV"
+          sw_vers
+          xcodebuild -version
+          swift --version
+      # The runner image turns both on; a Mac has them off. With Reduce Transparency on, macOS 26
+      # and 27 draw no glass, and their System Settings shows a line under the toolbar at rest.
+      - name: Turn off Reduce Transparency and Reduce Motion
+        run: |
+          defaults write com.apple.universalaccess reduceTransparency -bool false
+          defaults write com.apple.universalaccess reduceMotion -bool false
+          sleep 1
+          reduced=$(osascript -l JavaScript -e 'ObjC.import("AppKit"); $.NSWorkspace.sharedWorkspace.accessibilityDisplayShouldReduceTransparency')
+          [[ $reduced == false ]] || { echo "::error::Reduce Transparency is still on"; exit 1; }
+      - name: Log the displays before
+        run: |
+          mkdir -p probe-logs
+          { sw_vers; system_profiler SPDisplaysDataType; } | tee probe-logs/displays-before.txt
+          osascript -l JavaScript -e 'ObjC.import("AppKit"); $.NSScreen.screens.js.map(function (s) { return "screen " + s.frame.origin.x + "," + s.frame.origin.y + " " + s.frame.size.width + "x" + s.frame.size.height + " scale " + s.backingScaleFactor }).join("\n")' | tee -a probe-logs/displays-before.txt
+      - name: Build the HiDPI display tool
+        run: |
+          swift --version
+          swiftc -O scripts/hidpi-display/main.swift \
+            -import-objc-header scripts/hidpi-display/bridge.h \
+            -framework CoreGraphics -framework AppKit \
+            -Xlinker -undefined -Xlinker dynamic_lookup \
+            -o "$RUNNER_TEMP/hidpi-display"
+      # The display lives only while the tool runs, so the tool stays up for the captures below.
+      - name: Start the 2x virtual display
+        run: |
+          ready=$PWD/probe-logs/hidpi-ready
+          rm -f "$ready"
+          nohup "$RUNNER_TEMP/hidpi-display" "$ready" >probe-logs/hidpi.log 2>&1 &
+          echo $! >probe-logs/hidpi.pid
+          for _ in $(seq 1 90); do
+            [[ -e $ready ]] && break
+            sleep 1
+          done
+          cat probe-logs/hidpi.log
+          [[ -e $ready ]] || { echo "::error::the 2x virtual display never became ready"; exit 1; }
+      - name: Log the displays with the virtual display
+        run: |
+          { system_profiler SPDisplaysDataType; } | tee probe-logs/displays-after.txt
+          osascript -l JavaScript -e 'ObjC.import("AppKit"); $.NSScreen.screens.js.map(function (s) { return "screen " + s.frame.origin.x + "," + s.frame.origin.y + " " + s.frame.size.width + "x" + s.frame.size.height + " scale " + s.backingScaleFactor }).join("\n")' | tee -a probe-logs/displays-after.txt
+      - run: scripts/screenshots.sh screenshots 5
+      - name: Print the PNG sizes
+        run: |
+          if compgen -G "screenshots/*.png" >/dev/null; then
+            sips -g pixelWidth -g pixelHeight screenshots/*.png | tee probe-logs/png-sizes.txt
+          else
+            echo "::error::no PNG was captured"
+            exit 1
+          fi
+      - name: Fail unless every PNG is 2x
+        run: |
+          status=0
+          for png in screenshots/*.png; do
+            width=$(sips -g pixelWidth "$png" | awk '/pixelWidth/ { print $2 }')
+            echo "$png: ${width}px wide"
+            if [[ $width != 1430 ]]; then
+              echo "::error file=$png::${png##*/} is ${width}px wide, not 1430px (2x of a 715pt window)"
+              status=1
+            fi
+          done
+          exit $status
+      - name: Stop the virtual display
+        if: always()
+        run: |
+          if [[ -s probe-logs/hidpi.pid ]]; then
+            kill "$(cat probe-logs/hidpi.pid)" 2>/dev/null || true
+          fi
+          pkill -f hidpi-display || true
+          cat probe-logs/hidpi.log || true
+      # Upload even on failure: the logs say how far the display got.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: glass-${{ matrix.os }}
-          path: glass/
-          if-no-files-found: error
+          name: probe-2x-${{ matrix.os }}
+          path: |
+            screenshots/
+            probe-logs/
+          if-no-files-found: warn
