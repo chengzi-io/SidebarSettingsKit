@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "Balik";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "Maju";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "Cari";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "Seting…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "Tiada Hasil";

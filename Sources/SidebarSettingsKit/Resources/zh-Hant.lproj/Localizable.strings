@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "返回";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "前進";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "搜尋";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "設定⋯";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "沒有結果";

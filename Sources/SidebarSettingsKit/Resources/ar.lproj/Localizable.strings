@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "الخلف";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "الأمام";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "بحث";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "الإعدادات…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "لا توجد نتائج";

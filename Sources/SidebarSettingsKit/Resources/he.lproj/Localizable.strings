@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "אחורה";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "קדימה";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "חיפוש";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "הגדרות…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "אין תוצאות";

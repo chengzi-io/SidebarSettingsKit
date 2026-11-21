@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "Tilbake";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "Fram";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "Søk";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "Innstillinger…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "Ingen treff";

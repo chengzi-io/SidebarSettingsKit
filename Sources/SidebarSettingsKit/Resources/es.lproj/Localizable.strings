@@ -1,0 +1,14 @@
+/* The settings window's toolbar button that shows the previous page. */
+"Back" = "Atrás";
+
+/* The settings window's toolbar button that shows the next page. */
+"Forward" = "Adelante";
+
+/* Placeholder of the search field above the settings pages. */
+"Search" = "Buscar";
+
+/* The app menu item that opens the settings window. */
+"Settings…" = "Ajustes…";
+
+/* Shown in the sidebar in place of the pages when a search finds none. */
+"No Results" = "Ningún resultado";
